@@ -15,35 +15,31 @@ export default function LivePage({ params }: { params: { slug: string } }) {
     fetchPage();
   }, [params.slug]);
 
-  // REKURENCYJNY RENDERER DLA KLIENTA
+  // POTĘŻNY RENDERER DRZEWA
   const renderBlock = (b: any) => {
-    const isAbs = b.layering.position === 'absolute';
-    const style = { 
-      ...b.styles, 
-      position: b.layering.position, 
-      top: isAbs ? `${b.layering.top}px` : undefined, 
-      left: isAbs ? `${b.layering.left}px` : undefined, 
-      zIndex: b.layering.zIndex 
-    };
-
     return (
-      <div key={b.id} style={style}>
-        {b.type === 'h1' && <h1 style={{fontSize: b.styles.fontSize, fontWeight: b.styles.fontWeight}}>{b.text}</h1>}
-        {b.type === 'p' && <p>{b.text}</p>}
-        {(b.type === 'section' || b.type === 'container') && (
-          <div className="w-full h-full relative">
-             {b.children?.map((child: any) => renderBlock(child))}
+      <div key={b.id} style={b.styles}>
+        {b.type === 'h1' && <h1 style={{fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign: b.styles.textAlign, margin:0}}>{b.text}</h1>}
+        {b.type === 'p' && <p style={{fontSize:'inherit', color:'inherit', textAlign: b.styles.textAlign, margin:0}}>{b.text}</p>}
+        {b.type === 'img' && <img src={b.src} alt="Media" className="w-full h-full" style={{objectFit: b.styles.objectFit, borderRadius: b.styles.borderRadius}}/>}
+        {b.type === 'button' && <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center'}}>{b.text}</div>}
+        
+        {/* Renderowanie zagnieżdżeń (Kontenery, Sekcje, Grid) */}
+        {b.children && (
+          <div style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', gridTemplateColumns: 'inherit', alignItems: 'inherit', justifyItems: 'inherit', justifyContent: 'inherit', width: '100%', height: '100%' }}>
+            {b.children.map((child: any) => renderBlock(child))}
           </div>
         )}
       </div>
     );
   };
 
-  if (loading) return <div className="bg-black h-screen text-white flex items-center justify-center">V2 LOADING...</div>;
+  if (loading) return <div className="bg-[#111] h-screen w-full flex items-center justify-center text-white font-mono text-xs tracking-widest">Wczytywanie architektury V2...</div>;
+  if (!blocks || blocks.length === 0) return <div className="bg-[#111] h-screen w-full flex items-center justify-center text-red-500 font-mono">Błąd 404: Strona {params.slug} nie istnieje.</div>;
 
   return (
-    <div className="min-h-screen w-full bg-neutral-100 flex justify-center py-10">
-      <div className="w-[1200px] bg-white shadow-2xl relative">
+    <div className="min-h-screen w-full bg-neutral-100 flex justify-center">
+      <div className="w-[1200px] bg-white min-h-screen relative shadow-2xl">
         {blocks.map(b => renderBlock(b))}
       </div>
     </div>
