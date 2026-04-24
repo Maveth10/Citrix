@@ -48,7 +48,6 @@ export default function Home() {
   const updateStyle = (k: string, v: any) => activeId && setBlocks(blocks.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, [k]: v } } : b));
   const updateLayer = (k: string, v: any) => activeId && setBlocks(blocks.map(b => b.id === activeId ? { ...b, layering: { ...b.layering, [k]: v } } : b));
   
-  // ZWRÓCONE BRAKUJĄCE FUNKCJE:
   const moveBlock = (dir: 'up' | 'down') => {
     if (!activeId) return;
     const idx = blocks.findIndex(b => b.id === activeId);
@@ -104,7 +103,7 @@ export default function Home() {
       
       <header className="h-14 bg-[#1A1A1A] text-neutral-400 flex items-center justify-between px-4 shrink-0 z-50 shadow-md">
         <div className="flex items-center gap-4 w-1/3">
-          <div className="text-white font-bold text-lg"><span className="text-blue-500">X</span>ON <span className="text-[10px] text-emerald-400 ml-1">v1.3 [Wizualna Edycja]</span></div>
+          <div className="text-white font-bold text-lg"><span className="text-blue-500">X</span>ON <span className="text-[10px] text-emerald-400 ml-1">v1.3.1</span></div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase">Slug:</span>
             <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase().replace(/ /g, '-'))} className="bg-neutral-800 text-white text-[11px] px-2 py-1 rounded w-32 outline-none focus:border-blue-500 border border-neutral-700 transition" />
@@ -112,9 +111,10 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-1 bg-neutral-900 p-1 rounded-lg border border-neutral-800">
           {[
+            // POPRAWIONE IKONY: Tablet jest poziomy, Telefon jest bardzo wąski
             {key:'desktop', icon:'<rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>'},
-            {key:'tablet', icon:'<rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>'},
-            {key:'mobile', icon:'<rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>'}
+            {key:'tablet', icon:'<rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="16" x2="12.01" y2="16"></line>'},
+            {key:'mobile', icon:'<rect x="7" y="2" width="10" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line>'}
           ].map(d => (
             <button key={d.key} onClick={() => setDeviceView(d.key as any)} className={`p-2 rounded transition-all ${deviceView === d.key ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-white'}`} dangerouslySetInnerHTML={{__html: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">${d.icon}</svg>`}} />
           ))}
@@ -155,6 +155,8 @@ export default function Home() {
                     className={`cursor-pointer transition-all ${isAbsolute ? 'select-none' : ''} ${isActive ? 'ring-2 ring-blue-500 ring-offset-2 z-50' : 'hover:ring-1 hover:ring-blue-200'} ${b.animationClass || ''}`} 
                     style={{ ...b.styles, ...pos, margin: pos.position === 'absolute' ? 0 : undefined, marginBottom: pos.position === 'absolute' ? 0 : b.styles.marginBottom }}
                     
+                    // POPRAWKA: Blokujemy bąbelkowanie kliknięcia do tła
+                    onClick={(e) => { e.stopPropagation(); }}
                     onMouseDown={(e) => {
                       e.stopPropagation(); setActiveId(b.id);
                       if (isAbsolute) {
@@ -169,6 +171,7 @@ export default function Home() {
                         <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-full cursor-sw-resize pointer-events-none"></div>
                         
                         <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-600 rounded-full shadow-lg border-2 border-white cursor-se-resize hover:scale-125 transition-transform flex items-center justify-center"
+                          onClick={(e) => e.stopPropagation()}
                           onMouseDown={(e) => {
                             e.stopPropagation(); setActiveId(b.id);
                             const rect = e.currentTarget.parentElement?.getBoundingClientRect();
