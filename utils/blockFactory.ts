@@ -7,52 +7,47 @@ export const createBlock = (type: string, variant: string, label: string) => {
       hoverStyles: {}, entranceAnim: 'none',
       styles: { 
         position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', 
-        padding: '20px', margin: '0px', width: '300px', height: '200px', 
+        padding: '20px', margin: '0px', width: '300px', height: 'auto', 
         backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
         opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden',
         bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1
       },
     };
   
-    // --- LOGIKA NOWYCH KONTENERÓW (V15.4) ---
     if (type === 'container') {
       if (variant === 'empty') { newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.height = '150px'; }
-      if (variant === 'glass') { 
-        newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; 
-        newBlock.styles.backdropFilter = 'blur(10px)'; 
-        newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; 
-        newBlock.styles.borderRadius = '24px';
-      }
-      if (variant === 'neon') {
-        newBlock.styles.backgroundColor = '#000';
-        newBlock.styles.border = '2px solid #00f2ff';
-        newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff';
-        newBlock.styles.borderRadius = '12px';
-      }
-      if (variant === 'pill') {
-        newBlock.styles.backgroundColor = '#f3f4f6';
-        newBlock.styles.borderRadius = '999px';
-        newBlock.styles.height = '80px';
-        newBlock.styles.width = '400px';
-        newBlock.styles.padding = '0 40px';
-        newBlock.styles.alignItems = 'center';
-        newBlock.styles.justifyContent = 'center';
-      }
-      if (variant === 'shadow-pro') {
-        newBlock.styles.backgroundColor = '#fff';
-        newBlock.styles.borderRadius = '32px';
-        newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
-      }
-      if (variant === 'text-combo') {
-        newBlock.styles.width = '100%'; newBlock.styles.height = 'auto';
-        newBlock.children = [
-          {id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}},
-          {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}
-        ];
+      if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
+      if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
+      if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
+      if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
+      if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
+    }
+  
+    if (type === 'popup') {
+      newBlock.styles.position = 'fixed'; newBlock.styles.zIndex = 999;
+      if (variant === 'modal' || variant === '') { newBlock.styles.top = '50%'; newBlock.styles.left = '50%'; newBlock.styles.transform = 'translate(-50%, -50%)'; newBlock.styles.width = '400px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.padding = '40px'; newBlock.styles.borderRadius = '20px'; newBlock.styles.boxShadow = '0 0 0 9999px rgba(0,0,0,0.6)'; }
+      if (variant === 'toast') { newBlock.styles.bottom = '20px'; newBlock.styles.right = '20px'; newBlock.styles.width = '300px'; newBlock.styles.backgroundColor = '#111'; newBlock.styles.color = '#fff'; newBlock.styles.padding = '20px'; newBlock.styles.borderRadius = '12px'; newBlock.styles.boxShadow = '0 10px 30px rgba(0,0,0,0.5)'; }
+      if (variant === 'banner') { newBlock.styles.bottom = '0px'; newBlock.styles.left = '0px'; newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#3b82f6'; newBlock.styles.color = '#fff'; newBlock.styles.padding = '15px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
+    }
+  
+    // --- LOGIKA LIST I KROKÓW (V15.9) ---
+    if (type === 'list') {
+      if (variant === 'steps') {
+        newBlock.text = '<ol style="padding-left: 20px; list-style-type: decimal; font-size: 20px; font-weight: bold; display: flex; flex-direction: column; gap: 15px; margin: 0;"><li>Krok pierwszy<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Dokładny opis tego, co należy zrobić w pierwszym kroku.</div></li><li>Krok drugi<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Instrukcje do drugiego etapu procesu.</div></li><li>Krok trzeci<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Zakończenie i podsumowanie akcji.</div></li></ol>';
+        newBlock.styles.backgroundColor = '#f9fafb';
+        newBlock.styles.padding = '30px';
+        newBlock.styles.borderRadius = '16px';
+        newBlock.styles.width = '100%';
+      } else {
+        newBlock.text = '<ul style="padding-left: 20px; list-style-type: disc; margin: 0;"><li>Pierwszy punkt</li><li>Drugi punkt</li><li>Trzeci punkt</li></ul>';
+        newBlock.styles.fontSize = '16px';
+        newBlock.styles.lineHeight = '2';
+        newBlock.styles.width = '100%';
       }
     }
   
-    // Pozostała logika (tekst, obrazy, etc. - zostaje bez zmian dla stabilności)
+    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
+    
     if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
