@@ -7,32 +7,61 @@ export const createBlock = (type: string, variant: string, label: string) => {
       hoverStyles: {}, entranceAnim: 'none',
       styles: { 
         position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', 
-        padding: '20px', margin: '0px', width: '300px', height: 'auto', 
+        padding: '20px', margin: '0px', 
+        width: '100%', // NAPRAWA V17.5: Zmieniono z twardych 300px na 100%!
+        height: 'auto', 
         backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
         opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden',
         bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1
       },
     };
   
-    // --- NAPRAWA V17.1: PUSTE POLA (DROPZONES) SĄ TERAZ WYRAŹNIE WIDOCZNE ---
     if (type === 'container') {
-        if (variant === 'empty') { 
-          newBlock.styles.border = '2px dashed #cbd5e1'; 
-          newBlock.styles.backgroundColor = '#f8fafc'; 
-          newBlock.styles.minHeight = '120px'; 
-          // USUNIĘTO height: '100%', teraz kontener słucha się rodzica!
-          newBlock.styles.width = '100%';
-          newBlock.styles.borderRadius = '12px';
-          newBlock.styles.display = 'flex';
-          newBlock.styles.flexDirection = 'column';
-          newBlock.styles.gap = '10px';
-        }
-        if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
-        if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
-        if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
-        if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
-        if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
+      if (variant === 'empty') { 
+        newBlock.styles.border = '2px dashed #cbd5e1'; 
+        newBlock.styles.backgroundColor = '#f8fafc'; 
+        newBlock.styles.minHeight = '120px'; 
+        newBlock.styles.width = '100%';
+        newBlock.styles.borderRadius = '12px';
+        newBlock.styles.display = 'flex';
+        newBlock.styles.flexDirection = 'column';
+        newBlock.styles.gap = '10px';
       }
+      if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
+      if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
+      if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
+      if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
+      if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
+    }
+  
+    // --- NOWOŚĆ V17.5: CALLOUTY (Powiadomienia) ---
+    if (type === 'alert') {
+      newBlock.styles.padding = '20px';
+      newBlock.styles.borderRadius = '8px';
+      newBlock.styles.borderLeft = '6px solid'; // Gruby boczny border
+      newBlock.styles.display = 'flex';
+      newBlock.styles.alignItems = 'center';
+      newBlock.styles.fontSize = '15px';
+  
+      if (variant === 'success') {
+        newBlock.text = '✅ <strong>Sukces!</strong> Wszystkie systemy działają poprawnie.';
+        newBlock.styles.backgroundColor = '#ecfdf5';
+        newBlock.styles.borderColor = '#10b981';
+        newBlock.styles.color = '#065f46';
+      }
+      if (variant === 'warning') {
+        newBlock.text = '⚠️ <strong>Uwaga:</strong> Ta operacja jest nieodwracalna.';
+        newBlock.styles.backgroundColor = '#fffbeb';
+        newBlock.styles.borderColor = '#f59e0b';
+        newBlock.styles.color = '#92400e';
+      }
+      if (variant === 'tip') {
+        newBlock.text = '💡 <strong>Wskazówka:</strong> Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.';
+        newBlock.styles.backgroundColor = '#eff6ff';
+        newBlock.styles.borderColor = '#3b82f6';
+        newBlock.styles.color = '#1e3a8a';
+      }
+    }
   
     if (type === 'popup') {
       newBlock.styles.position = 'fixed'; newBlock.styles.zIndex = 999;
@@ -63,7 +92,15 @@ export const createBlock = (type: string, variant: string, label: string) => {
       if (variant === 'vector-chart') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="50" width="20" height="40" fill="%233b82f6" rx="4"/><rect x="40" y="30" width="20" height="60" fill="%238b5cf6" rx="4"/><rect x="70" y="10" width="20" height="80" fill="%236366f1" rx="4"/></svg>'; newBlock.styles.width = '150px'; newBlock.styles.height = '150px'; newBlock.styles.objectFit = 'contain'; }
     }
   
-    if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; }
+    if (type === 'button') { 
+      newBlock.text = 'Przycisk'; 
+      newBlock.styles.padding = '14px 28px'; 
+      newBlock.styles.borderRadius = '8px'; 
+      newBlock.styles.backgroundColor = '#000'; 
+      newBlock.styles.color = '#fff'; 
+      newBlock.styles.width = 'max-content'; // Przycisk nie rozciąga się na całą stronę
+    }
+    
     if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
     if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
     if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; }

@@ -73,13 +73,10 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
 
-      {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1')}
+{['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1')}
       {b.type === 'p' && renderTextElement('p')}
-      {b.type === 'list' && renderTextElement('div')}
-      {b.type === 'faq' && renderTextElement('div')}
-      {b.type === 'button' && renderTextElement('div')}
+      {['list', 'faq', 'button', 'social', 'alert'].includes(b.type) && renderTextElement('div')}
       {b.type === 'menu' && renderTextElement('nav')}
-      {b.type === 'social' && renderTextElement('div')}
       
       {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
       {b.type === 'video' && <div className="w-full h-full flex items-center justify-center bg-black text-red-500 font-bold border border-neutral-800 pointer-events-none z-10 relative text-4xl">▶</div>}
