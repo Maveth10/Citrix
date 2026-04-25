@@ -35,7 +35,7 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v17-smart');
+  const [pageSlug, setPageSlug] = useState('titan-v17');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
@@ -59,7 +59,7 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
-  // --- NOWOŚĆ V17.2: Smart Layout Changer (wypełnianie pojemników) ---
+  // --- NAPRAWA V17.3: Inteligentne Dopełnianie Brakujących Kolumn ---
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
@@ -80,11 +80,14 @@ export default function Home() {
           if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
 
           let newChildren = [...b.children];
-          // Jeśli kontener był pusty i wybrano siatkę, wypełnij go od razu dropzonami!
-          if (newChildren.length === 0 && layout !== 'flex-col') {
-            newChildren = Array.from({ length: childCount }).map((_, i) => 
-              createBlock('container', 'empty', `Kolumna ${i + 1}`)
-            );
+
+          // TU BYŁ BŁĄD! Teraz system zawsze dobija brakujące klocki, 
+          // nawet jeśli w środku jest już jakiś napis czy przycisk.
+          if (layout !== 'flex-col' && newChildren.length < childCount) {
+            const missingSlots = childCount - newChildren.length;
+            for (let i = 0; i < missingSlots; i++) {
+              newChildren.push(createBlock('container', 'empty', 'Puste Pole'));
+            }
           }
 
           return { ...b, styles: newStyles, children: newChildren };
@@ -126,35 +129,32 @@ export default function Home() {
     setActiveId(newSection.id);
   };
 
-  // --- NOWOŚĆ V17.2: Smart Insertion (Rodzeństwo) ---
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const newBlock = createBlock(type, variant, label);
     
     setBlocks(prevBlocks => {
-      // Jeśli brak zaznaczenia - Auto Wrapper (dla zwykłych klocków) lub Root (dla sekcji)
+      // 1. Brak zaznaczenia -> Generujemy automatyczną sekcję-matkę (Auto-Wrapper)
       if (!activeId) {
         const isStructural = ['section', 'container', 'grid'].includes(type);
         if (!isStructural) {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '150px', width: '100%', backgroundColor: '#ffffff' };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
         return [...prevBlocks, newBlock];
       }
 
-      // Jeśli jest zaznaczenie: rekurencyjne inteligentne wstawianie
+      // 2. Jeśli coś jest zaznaczone -> wrzucamy do środka (jeśli to kontener) lub jako rodzeństwo
       let inserted = false;
       const insertRecursive = (arr: Block[]): Block[] => {
         let result: Block[] = [];
         for (const b of arr) {
           if (b.id === activeId) {
             if (b.children) {
-              // Kliknięto Kontener -> wrzucamy do środka
               result.push({ ...b, children: [...b.children, newBlock] });
               inserted = true;
             } else {
-              // Kliknięto Tekst/Obraz -> wrzucamy OBOK niego jako rodzeństwo!
               result.push(b);
               result.push(newBlock);
               inserted = true;
@@ -170,8 +170,6 @@ export default function Home() {
       };
 
       const nextBlocks = insertRecursive(prevBlocks);
-      
-      // Fallback bezpieczeństwa, jeśli nie znaleziono
       if (!inserted) nextBlocks.push(newBlock);
       return nextBlocks;
     });
@@ -222,7 +220,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V17.2! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V17.3! Link: /live/${pageSlug}`);
   };
 
   const activeBlock = findBlockById(blocks, activeId);
@@ -314,7 +312,7 @@ export default function Home() {
           activeBlock={activeBlock} updateActiveBlock={updateActiveBlock}
           viewport={viewport} setViewport={setViewport}
           handleAddSection={handleAddSection} 
-          handleChangeLayout={handleChangeLayout} // Przekazanie potężnej funkcji!
+          handleChangeLayout={handleChangeLayout} 
         />
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
