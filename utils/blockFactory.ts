@@ -16,23 +16,23 @@ export const createBlock = (type: string, variant: string, label: string) => {
   
     // --- NAPRAWA V17.1: PUSTE POLA (DROPZONES) SĄ TERAZ WYRAŹNIE WIDOCZNE ---
     if (type === 'container') {
-      if (variant === 'empty') { 
-        newBlock.styles.border = '2px dashed #cbd5e1'; // Nowoczesna, przerywana linia (Slate-300)
-        newBlock.styles.backgroundColor = '#f8fafc'; // Lekko szare tło wypełnienia
-        newBlock.styles.minHeight = '120px'; 
-        newBlock.styles.height = '100%';
-        newBlock.styles.width = '100%';
-        newBlock.styles.borderRadius = '12px';
-        newBlock.styles.display = 'flex';
-        newBlock.styles.flexDirection = 'column';
-        newBlock.styles.gap = '10px';
+        if (variant === 'empty') { 
+          newBlock.styles.border = '2px dashed #cbd5e1'; 
+          newBlock.styles.backgroundColor = '#f8fafc'; 
+          newBlock.styles.minHeight = '120px'; 
+          // USUNIĘTO height: '100%', teraz kontener słucha się rodzica!
+          newBlock.styles.width = '100%';
+          newBlock.styles.borderRadius = '12px';
+          newBlock.styles.display = 'flex';
+          newBlock.styles.flexDirection = 'column';
+          newBlock.styles.gap = '10px';
+        }
+        if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
+        if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
+        if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
+        if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
+        if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
       }
-      if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
-      if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
-      if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
-      if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
-      if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
-    }
   
     if (type === 'popup') {
       newBlock.styles.position = 'fixed'; newBlock.styles.zIndex = 999;

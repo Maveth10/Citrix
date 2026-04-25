@@ -133,12 +133,22 @@ export default function Home() {
     const newBlock = createBlock(type, variant, label);
     
     setBlocks(prevBlocks => {
-      // 1. Brak zaznaczenia -> Generujemy automatyczną sekcję-matkę (Auto-Wrapper)
+      // 1. ZŁOTA ZASADA: Brak zaznaczenia -> Płótno przyjmuje TYLKO i WYŁĄCZNIE Sekcje.
+      // Wszystko inne (nawet kontenery i gridy) dostaje Auto-Wrapper!
       if (!activeId) {
-        const isStructural = ['section', 'container', 'grid'].includes(type);
-        if (!isStructural) {
+        if (type !== 'section') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' };
+           autoWrapper.styles = { 
+             ...autoWrapper.styles, 
+             display: 'flex', 
+             flexDirection: 'column', 
+             gap: '20px', 
+             padding: '40px', 
+             minHeight: '120px', 
+             width: '100%', 
+             backgroundColor: '#ffffff', 
+             border: '1px solid #e2e8f0' 
+           };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
