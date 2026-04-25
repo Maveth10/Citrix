@@ -35,7 +35,7 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v17');
+  const [pageSlug, setPageSlug] = useState('titan-v17-smart');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
@@ -59,13 +59,49 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
-  // --- ZMIANA V17.1: Tworzenie Sekcji z Gotowymi Polami ---
+  // --- NOWOŚĆ V17.2: Smart Layout Changer (wypełnianie pojemników) ---
+  const handleChangeLayout = (layout: string) => {
+    setBlocks(prevBlocks => {
+      const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
+        if (b.id === activeId && b.children) {
+          const newStyles = { ...b.styles };
+          newStyles.display = layout === 'flex-col' ? 'flex' : 'grid';
+          newStyles.gap = '20px';
+          newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
+          newStyles.gridTemplateColumns = 'unset';
+          newStyles.gridTemplateRows = 'unset';
+
+          let childCount = 1;
+          if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
+          if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
+          if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
+          if (layout === 'grid-left') { newStyles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
+          if (layout === 'grid-right') { newStyles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
+          if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+
+          let newChildren = [...b.children];
+          // Jeśli kontener był pusty i wybrano siatkę, wypełnij go od razu dropzonami!
+          if (newChildren.length === 0 && layout !== 'flex-col') {
+            newChildren = Array.from({ length: childCount }).map((_, i) => 
+              createBlock('container', 'empty', `Kolumna ${i + 1}`)
+            );
+          }
+
+          return { ...b, styles: newStyles, children: newChildren };
+        }
+        if (b.children) return { ...b, children: updateRecursive(b.children) };
+        return b;
+      });
+      return updateRecursive(prevBlocks);
+    });
+  };
+
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
     newSection.styles.display = layout === 'flex-col' ? 'flex' : 'grid';
     newSection.styles.gap = '20px';
     newSection.styles.padding = '40px'; 
-    newSection.styles.minHeight = '150px'; // Zmieniono na mniejsze, by dopasować do pustych kolumn
+    newSection.styles.minHeight = '150px';
     newSection.styles.width = '100%';
     newSection.styles.backgroundColor = '#ffffff';
 
@@ -80,50 +116,64 @@ export default function Home() {
       if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
       if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
       if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+      
+      newSection.children = Array.from({ length: childCount }).map((_, i) => 
+        createBlock('container', 'empty', `Kolumna ${i + 1}`)
+      );
     }
-
-    // AUTOMATYCZNIE WYPEŁNIA SEKCJĘ WIDOCZNYMI KOLUMNAMI!
-    newSection.children = Array.from({ length: childCount }).map((_, i) => 
-      createBlock('container', 'empty', `Kolumna ${i + 1}`)
-    );
 
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
   };
 
-  // --- ZMIANA V17.1: Auto-Wrapper dla elementów upuszczanych luzem ---
+  // --- NOWOŚĆ V17.2: Smart Insertion (Rodzeństwo) ---
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const newBlock = createBlock(type, variant, label);
     
-    setBlocks(prev => {
-      const activeBlock = findBlockById(prev, activeId);
-      
-      // Scenariusz A: Wrzucasz do istniejącego pojemnika
-      if (activeBlock && activeBlock.children) { 
-        const newArr = [...prev]; 
-        const target = findBlockById(newArr, activeId); 
-        target!.children!.push(newBlock); 
-        return newArr; 
-      } 
-      
-      // Scenariusz B: Wrzucasz ZWYKŁY element prosto na Główne Płótno
-      const isStructural = ['section', 'container', 'grid'].includes(type);
-      if (!isStructural) {
-        const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-        autoWrapper.styles.display = 'flex';
-        autoWrapper.styles.flexDirection = 'column';
-        autoWrapper.styles.gap = '20px';
-        autoWrapper.styles.padding = '40px';
-        autoWrapper.styles.minHeight = 'auto'; // Sekcja zaciska się na zawartości
-        autoWrapper.styles.width = '100%';
-        autoWrapper.styles.backgroundColor = '#ffffff';
-        
-        autoWrapper.children = [newBlock];
-        return [...prev, autoWrapper]; // Wrzucamy zapakowany na Płótno
+    setBlocks(prevBlocks => {
+      // Jeśli brak zaznaczenia - Auto Wrapper (dla zwykłych klocków) lub Root (dla sekcji)
+      if (!activeId) {
+        const isStructural = ['section', 'container', 'grid'].includes(type);
+        if (!isStructural) {
+           const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '150px', width: '100%', backgroundColor: '#ffffff' };
+           autoWrapper.children = [newBlock];
+           return [...prevBlocks, autoWrapper];
+        }
+        return [...prevBlocks, newBlock];
       }
 
-      // Scenariusz C: Wrzucasz Sekcję z bocznego panelu (zamiast z górnego)
-      return [...prev, newBlock];
+      // Jeśli jest zaznaczenie: rekurencyjne inteligentne wstawianie
+      let inserted = false;
+      const insertRecursive = (arr: Block[]): Block[] => {
+        let result: Block[] = [];
+        for (const b of arr) {
+          if (b.id === activeId) {
+            if (b.children) {
+              // Kliknięto Kontener -> wrzucamy do środka
+              result.push({ ...b, children: [...b.children, newBlock] });
+              inserted = true;
+            } else {
+              // Kliknięto Tekst/Obraz -> wrzucamy OBOK niego jako rodzeństwo!
+              result.push(b);
+              result.push(newBlock);
+              inserted = true;
+            }
+          } else if (b.children) {
+            const newChildren = insertRecursive(b.children);
+            result.push({ ...b, children: newChildren });
+          } else {
+            result.push(b);
+          }
+        }
+        return result;
+      };
+
+      const nextBlocks = insertRecursive(prevBlocks);
+      
+      // Fallback bezpieczeństwa, jeśli nie znaleziono
+      if (!inserted) nextBlocks.push(newBlock);
+      return nextBlocks;
     });
     
     setActiveId(newBlock.id);
@@ -172,7 +222,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V17.1! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V17.2! Link: /live/${pageSlug}`);
   };
 
   const activeBlock = findBlockById(blocks, activeId);
@@ -264,6 +314,7 @@ export default function Home() {
           activeBlock={activeBlock} updateActiveBlock={updateActiveBlock}
           viewport={viewport} setViewport={setViewport}
           handleAddSection={handleAddSection} 
+          handleChangeLayout={handleChangeLayout} // Przekazanie potężnej funkcji!
         />
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />

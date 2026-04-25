@@ -10,29 +10,19 @@ interface TopHeaderProps {
   viewport: 'desktop' | 'tablet' | 'mobile';
   setViewport: (v: 'desktop' | 'tablet' | 'mobile') => void;
   handleAddSection: (layout: string) => void;
+  handleChangeLayout: (layout: string) => void; // NOWOŚĆ V17.2
 }
 
 export default function TopHeader({ 
   canvasZoom, setCanvasZoom, showGrid, setShowGrid, pageSlug, setPageSlug, handlePublish, 
-  activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection 
+  activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection, handleChangeLayout 
 }: TopHeaderProps) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showAddSectionMenu, setShowAddSectionMenu] = useState(false);
 
-  const applyLayout = (type: string) => {
-    if (!activeBlock) return;
-    let updates: any = { display: 'grid', gap: '20px', flexDirection: 'unset', gridTemplateColumns: 'unset', gridTemplateRows: 'unset' };
-    
-    if (type === 'flex-col') updates = { display: 'flex', flexDirection: 'column', gap: '20px', gridTemplateColumns: 'unset', gridTemplateRows: 'unset' };
-    else if (type === 'grid-2') updates.gridTemplateColumns = 'repeat(2, 1fr)';
-    else if (type === 'grid-3') updates.gridTemplateColumns = 'repeat(3, 1fr)';
-    else if (type === 'grid-2-rows') { updates.gridTemplateRows = 'repeat(2, 1fr)'; updates.gridTemplateColumns = '1fr'; }
-    else if (type === 'grid-left') updates.gridTemplateColumns = '2fr 1fr';
-    else if (type === 'grid-right') updates.gridTemplateColumns = '1fr 2fr';
-    else if (type === 'grid-2x2') { updates.gridTemplateColumns = 'repeat(2, 1fr)'; updates.gridTemplateRows = 'repeat(2, 1fr)'; }
-
-    updateActiveBlock({ styles: updates });
+  const onApplyLayout = (type: string) => {
+    handleChangeLayout(type);
     setShowLayoutMenu(false);
   };
 
@@ -46,7 +36,6 @@ export default function TopHeader({
   return (
     <header className="h-16 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-[300]">
       
-      {/* WIDOKI (Modern Pill Shape) */}
       <div className="flex items-center bg-white/5 p-1 rounded-full border border-white/5 shadow-inner">
         <button onClick={() => setViewport('desktop')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'desktop' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>💻 <span className="hidden xl:inline">Desktop</span></button>
         <button onClick={() => setViewport('tablet')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'tablet' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Tablet</span></button>
@@ -55,7 +44,6 @@ export default function TopHeader({
 
       <div className="flex items-center gap-3 flex-1 justify-center relative">
         
-        {/* ADD SECTION (Gradient Button) */}
         <div className="relative mr-4 border-r border-white/10 pr-4">
           <button 
             onClick={() => { setShowAddSectionMenu(!showAddSectionMenu); setShowLayoutMenu(false); setShowBgMenu(false); }}
@@ -80,7 +68,6 @@ export default function TopHeader({
           )}
         </div>
 
-        {/* CONTEXT ACTIONS */}
         {activeBlock ? (
           <>
             <div className="relative">
@@ -96,13 +83,13 @@ export default function TopHeader({
                 <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[260px] animate-in fade-in slide-in-from-top-4">
                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz strukturę</span>
                   <div className="grid grid-cols-4 gap-2">
-                    <button onClick={() => applyLayout('flex-col')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex items-center justify-center p-1.5 transition-colors"><div className="w-full h-full bg-neutral-400 rounded"></div></button>
-                    <button onClick={() => applyLayout('grid-2')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/2 h-full bg-neutral-400 rounded"></div><div className="w-1/2 h-full bg-neutral-400 rounded"></div></button>
-                    <button onClick={() => applyLayout('grid-3')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
-                    <button onClick={() => applyLayout('grid-2-rows')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex flex-col gap-1 p-1.5 transition-colors"><div className="w-full h-1/2 bg-neutral-400 rounded"></div><div className="w-full h-1/2 bg-neutral-400 rounded"></div></button>
-                    <button onClick={() => applyLayout('grid-2x2')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 grid grid-cols-2 gap-1 p-1.5 transition-colors"><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div></button>
-                    <button onClick={() => applyLayout('grid-left')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-2/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
-                    <button onClick={() => applyLayout('grid-right')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-2/3 h-full bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('flex-col')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex items-center justify-center p-1.5 transition-colors"><div className="w-full h-full bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('grid-2')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/2 h-full bg-neutral-400 rounded"></div><div className="w-1/2 h-full bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('grid-3')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('grid-2-rows')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex flex-col gap-1 p-1.5 transition-colors"><div className="w-full h-1/2 bg-neutral-400 rounded"></div><div className="w-full h-1/2 bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('grid-2x2')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 grid grid-cols-2 gap-1 p-1.5 transition-colors"><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('grid-left')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-2/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
+                    <button onClick={() => onApplyLayout('grid-right')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-2/3 h-full bg-neutral-400 rounded"></div></button>
                   </div>
                 </div>
               )}
