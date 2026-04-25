@@ -8,7 +8,8 @@ import LeftSidebar from '../components/LeftSidebar';
 import RightPanel from '../components/RightPanel';
 import TextFormatToolbar from '../components/TextFormatToolbar';
 import TextPanel from '../components/TextPanel';
-import ImagePanel from '../components/ImagePanel'; // Wpinamy nową wtyczkę obrazów!
+import ImagePanel from '../components/ImagePanel';
+import ButtonPanel from '../components/ButtonPanel'; // Wpinamy nową wtyczkę przycisków!
 
 interface Block {
   id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
@@ -28,6 +29,7 @@ export default function Home() {
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
 
   const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
 
@@ -57,17 +59,26 @@ export default function Home() {
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen]);
 
+  // FIX SCROLLOWANIA: Synchroniczne zapobieganie przewijaniu
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
       if (!activeId || isMediaManagerOpen) return;
       const activeEl = document.getElementById(`block-${activeId}`);
       if (activeEl && activeEl.contains(e.target as Node)) {
-        setBlocks(prevBlocks => {
-          const currentBlock = findBlockById(prevBlocks, activeId); if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
-          e.preventDefault(); const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
-          const updateRecursive = (arr: Block[]): Block[] => arr.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, imageScale: newScale } } : (b.children ? { ...b, children: updateRecursive(b.children) } : b));
-          return updateRecursive(prevBlocks);
-        });
+        
+        // Sprawdzamy czy to klasa zdjęcia, żeby zablokować scrollowanie synchronicznie (bez czekania na Reacta)
+        if (activeEl.classList.contains('group/img')) {
+          e.preventDefault(); 
+          e.stopPropagation();
+
+          setBlocks(prevBlocks => {
+            const currentBlock = findBlockById(prevBlocks, activeId); 
+            if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
+            const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
+            const updateRecursive = (arr: Block[]): Block[] => arr.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, imageScale: newScale } } : (b.children ? { ...b, children: updateRecursive(b.children) } : b));
+            return updateRecursive(prevBlocks);
+          });
+        }
       }
     };
     window.addEventListener('wheel', handleGlobalWheel, { passive: false });
@@ -126,15 +137,15 @@ export default function Home() {
         className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
-        {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
+        {b.styles.bgOverlay && (b.styles.bgType === 'image' || b.styles.bgType === 'video') && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
         {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
         
         {isActive && !isEditing && (
           <>
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] shadow-md hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
+            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
           </>
         )}
 
@@ -160,12 +171,13 @@ export default function Home() {
           </div>
         )}
 
-        {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: b.styles.zIndex || 1, position: 'relative'}}></div>}
+        {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
         {b.type === 'embed' && b.styles.backgroundColor === '#111' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">⚙️ {b.text}</div>}
         {b.type === 'embed' && b.styles.backgroundColor !== '#111' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">🌍 iFrame URL: {b.src}</div>}
         {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none z-10 relative">🗺️ Mapa Google</div>}
         {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50 z-10 relative">{b.text}</div>}
         
+        {/* Tu dodajemy klase group/img, dzieki ktorej dziala powyzszy fix na scroll */}
         {b.type === 'img' && (
           <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: b.styles.zIndex || 1}} className="group/img">
             <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500 ${b.styles.imgHoverZoom ? 'group-hover/img:scale-110' : ''} ${b.styles.imgGrayscale ? 'grayscale group-hover/img:grayscale-0' : ''}`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: b.styles.imgHoverZoom ? undefined : `scale(${b.styles.imageScale || 1})`}} />
@@ -193,7 +205,7 @@ export default function Home() {
 
   const isTextType = activeBlock && ['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type);
 
-  // Zredukowane menu - "tekst" i "obraz" usunięte z głównego słownika, bo mają własne Wtyczki
+  // Zredukowane menu - "tekst", "obraz" i "przycisk" usunięte z głównego słownika
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
     { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
@@ -202,7 +214,6 @@ export default function Home() {
   ];
 
   const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
-    przycisk: [ { label: 'Pełny kolor', type: 'button', variant: '' }, { label: 'Tylko Obrys', type: 'button', variant: 'outline' }, { label: 'Gradient', type: 'button', variant: 'gradient' } ],
     grafika: [ { label: 'Kwadrat', type: 'shape', variant: 'box' }, { label: 'Koło', type: 'shape', variant: 'circle' }, { label: 'Linia', type: 'shape', variant: 'line' } ],
     pola: [ { label: 'Sekcja Klasyczna', type: 'section', variant: '' }, { label: '🎬 Wideo Hero', type: 'section', variant: 'video-hero' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane', type: 'container', variant: 'designed' } ],
     wideo: [ { label: 'YouTube Wideo', type: 'video', variant: '' } ],
@@ -259,11 +270,12 @@ export default function Home() {
           <div className="absolute left-[100%] top-0 w-[340px] bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.6)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-4 border-b border-neutral-800 bg-[#161616]"><h3 className="text-[11px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
             
-            {/* WTYCZKI ARCHITEKTURY MARS BASE */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
-              {addCategory !== 'tekst' && addCategory !== 'obraz' && menuOptions[addCategory]?.map((opt, i) => (
+              {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
+              
+              {addCategory !== 'tekst' && addCategory !== 'obraz' && addCategory !== 'przycisk' && menuOptions[addCategory]?.map((opt, i) => (
                 <button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition border-l-4 hover:border-l-blue-500"><span className="text-sm font-bold text-white block">{opt.label}</span></button>
               ))}
             </div>
@@ -285,7 +297,6 @@ export default function Home() {
 
       <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
 
-      {/* MEDIA MANAGER MODAL */}
       {isMediaManagerOpen && activeBlock && activeBlock.images && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center font-sans">
           <div className="bg-white w-[1000px] h-[650px] rounded-xl shadow-2xl flex flex-col text-neutral-800 overflow-hidden animate-in fade-in zoom-in-95">
