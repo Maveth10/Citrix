@@ -7,11 +7,12 @@ interface CanvasBlockProps {
   isEditing: boolean;
   setIsEditing: (val: boolean) => void;
   isMediaManagerOpen: boolean;
+  setIsMediaManagerOpen: (val: boolean) => void; // Odbieramy funkcję!
   setInteraction: (val: any) => void;
   updateActiveBlock: (updates: any) => void;
 }
 
-export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setInteraction, updateActiveBlock }: CanvasBlockProps) {
+export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock }: CanvasBlockProps) {
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
   
@@ -37,7 +38,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
       onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        // NOWOŚĆ V16.5: Jeśli to obraz lub galeria, otwórz Media Manager!
+        // Teraz funkcja jest zdefiniowana i gotowa do użycia!
         if (b.type === 'img' || b.images) {
           setIsMediaManagerOpen(true);
         }
@@ -88,12 +89,24 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
       
+      {/* REKURENCJA - Podajemy funkcję w dół do kolejnych dzieci! */}
       {b.children && (
         <div className="w-full h-full min-h-[40px] relative pointer-events-none" style={{zIndex: 10}}>
            {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
            <div className="pointer-events-auto w-full h-full" style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', gridTemplateColumns: 'inherit', alignItems: 'inherit', justifyItems: 'inherit', justifyContent: 'inherit' }}>
               {b.children.map((child: any) => (
-                 <CanvasBlock key={child.id} b={child} activeId={activeId} setActiveId={setActiveId} isEditing={isEditing} setIsEditing={setIsEditing} isMediaManagerOpen={isMediaManagerOpen} setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} />
+                 <CanvasBlock 
+                   key={child.id} 
+                   b={child} 
+                   activeId={activeId} 
+                   setActiveId={setActiveId} 
+                   isEditing={isEditing} 
+                   setIsEditing={setIsEditing} 
+                   isMediaManagerOpen={isMediaManagerOpen} 
+                   setIsMediaManagerOpen={setIsMediaManagerOpen} /* <--- PRZEKAZANIE DALEJ */
+                   setInteraction={setInteraction} 
+                   updateActiveBlock={updateActiveBlock} 
+                 />
               ))}
            </div>
         </div>

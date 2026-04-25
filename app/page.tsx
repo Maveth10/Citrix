@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { createBlock } from '../utils/blockFactory';
 import TopHeader from '../components/TopHeader';
-import RightPanel from '../components/RightPanel'; // <-- Zwróć uwagę: zniknął LeftSidebar!
+import RightPanel from '../components/RightPanel';
 import TextFormatToolbar from '../components/TextFormatToolbar';
 import TextPanel from '../components/TextPanel';
 import ImagePanel from '../components/ImagePanel';
@@ -112,7 +112,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V16.3! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano Architekture Modułową! Link: /live/${pageSlug}`);
   };
 
   const activeBlock = findBlockById(blocks, activeId);
@@ -146,7 +146,6 @@ export default function Home() {
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
-      {/* --- POPRAWNY, POJEDYNCZY LEWY PANEL NAWIGACYJNY --- */}
       <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
         <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab === 'add' ? 'bg-blue-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab === 'layers' ? 'bg-blue-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
@@ -206,11 +205,6 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         
-        <div className="flex justify-center items-center h-10 bg-[#161616] text-[10px] text-neutral-500 gap-4 border-b border-black">
-          <span>{blocks.length} Elementów</span>
-          <span>Szerokość: {getCanvasWidth()}</span>
-        </div>
-
         <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
           <div 
             style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
@@ -218,7 +212,18 @@ export default function Home() {
           >
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              {blocks.map(b => (
-               <CanvasBlock key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} isEditing={isEditing} setIsEditing={setIsEditing} isMediaManagerOpen={isMediaManagerOpen} setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} />
+               <CanvasBlock 
+                 key={b.id} 
+                 b={b} 
+                 activeId={activeId} 
+                 setActiveId={setActiveId} 
+                 isEditing={isEditing} 
+                 setIsEditing={setIsEditing} 
+                 isMediaManagerOpen={isMediaManagerOpen} 
+                 setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                 setInteraction={setInteraction} 
+                 updateActiveBlock={updateActiveBlock} 
+               />
              ))}
           </div>
         </main>

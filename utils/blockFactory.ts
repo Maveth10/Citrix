@@ -30,29 +30,49 @@ export const createBlock = (type: string, variant: string, label: string) => {
       if (variant === 'banner') { newBlock.styles.bottom = '0px'; newBlock.styles.left = '0px'; newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#3b82f6'; newBlock.styles.color = '#fff'; newBlock.styles.padding = '15px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
     }
   
-    // --- LOGIKA LIST I KROKÓW (V15.9) ---
     if (type === 'list') {
-      if (variant === 'steps') {
-        newBlock.text = '<ol style="padding-left: 20px; list-style-type: decimal; font-size: 20px; font-weight: bold; display: flex; flex-direction: column; gap: 15px; margin: 0;"><li>Krok pierwszy<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Dokładny opis tego, co należy zrobić w pierwszym kroku.</div></li><li>Krok drugi<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Instrukcje do drugiego etapu procesu.</div></li><li>Krok trzeci<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Zakończenie i podsumowanie akcji.</div></li></ol>';
-        newBlock.styles.backgroundColor = '#f9fafb';
-        newBlock.styles.padding = '30px';
-        newBlock.styles.borderRadius = '16px';
-        newBlock.styles.width = '100%';
-      } else {
-        newBlock.text = '<ul style="padding-left: 20px; list-style-type: disc; margin: 0;"><li>Pierwszy punkt</li><li>Drugi punkt</li><li>Trzeci punkt</li></ul>';
-        newBlock.styles.fontSize = '16px';
-        newBlock.styles.lineHeight = '2';
-        newBlock.styles.width = '100%';
-      }
+      if (variant === 'steps') { newBlock.text = '<ol style="padding-left: 20px; list-style-type: decimal; font-size: 20px; font-weight: bold; display: flex; flex-direction: column; gap: 15px; margin: 0;"><li>Krok pierwszy<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Dokładny opis tego, co należy zrobić w pierwszym kroku.</div></li><li>Krok drugi<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Instrukcje do drugiego etapu procesu.</div></li><li>Krok trzeci<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Zakończenie i podsumowanie akcji.</div></li></ol>'; newBlock.styles.backgroundColor = '#f9fafb'; newBlock.styles.padding = '30px'; newBlock.styles.borderRadius = '16px'; newBlock.styles.width = '100%'; } 
+      else { newBlock.text = '<ul style="padding-left: 20px; list-style-type: disc; margin: 0;"><li>Pierwszy punkt</li><li>Drugi punkt</li><li>Trzeci punkt</li></ul>'; newBlock.styles.fontSize = '16px'; newBlock.styles.lineHeight = '2'; newBlock.styles.width = '100%'; }
     }
   
     if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
-    
     if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
     if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
-    if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; }
+    
+    // --- ZASOBY STOCKOWE (ZAKODOWANE W SVG) ---
+    if (type === 'img') { 
+      newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; 
+      newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
+  
+      // IKONY
+      if (variant === 'icon-star') {
+        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23facc15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
+        newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain';
+      }
+      if (variant === 'icon-heart') {
+        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ec4899"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+        newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain';
+      }
+      
+      // NAKLEJKI
+      if (variant === 'sticker-sale') {
+        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23ef4444"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="24" font-family="Arial" font-weight="bold">SALE</text></svg>';
+        newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain';
+      }
+      if (variant === 'sticker-new') {
+        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="%2310b981"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="20" font-family="Arial" font-weight="bold">NEW!</text></svg>';
+        newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain';
+      }
+  
+      // WEKTORY
+      if (variant === 'vector-chart') {
+        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="50" width="20" height="40" fill="%233b82f6" rx="4"/><rect x="40" y="30" width="20" height="60" fill="%238b5cf6" rx="4"/><rect x="70" y="10" width="20" height="80" fill="%236366f1" rx="4"/></svg>';
+        newBlock.styles.width = '150px'; newBlock.styles.height = '150px'; newBlock.styles.objectFit = 'contain';
+      }
+    }
+  
     if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; }
     if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
     if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
