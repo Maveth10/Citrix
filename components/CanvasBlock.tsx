@@ -29,7 +29,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     zIndex: b.styles.zIndex || 1 
   };
 
-  // NAPRAWA V16.7: Zdejmujemy style Grida/Flexa z GŁÓWNEJ warstwy, by kontener się nie zgniatał!
+  // Jeśli kontener ma dzieci, odbieramy mu grid/flex z głównego diva, by nie psuł zewnętrznego kształtu
   if (b.children) {
     containerStyles.display = 'flex';
     containerStyles.flexDirection = 'column';
@@ -104,31 +104,36 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
            {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
            
-           {/* NAPRAWA V16.7: Prawdziwy układ (Grid/Flex) nakładamy TYLKO na wewnetrzny pojemnik */}
+           {/* Prawidłowe zastosowanie Grida. Jeśli kontener ma ustawiony Grid, usuwamy sztywne szerokości z dzieci! */}
            <div className="pointer-events-auto w-full h-full" style={{ 
-             display: b.styles.display || 'flex', 
-             flexDirection: b.styles.flexDirection || 'column', 
-             gap: b.styles.gap, 
-             gridTemplateColumns: b.styles.gridTemplateColumns !== 'unset' ? b.styles.gridTemplateColumns : undefined, 
-             gridTemplateRows: b.styles.gridTemplateRows !== 'unset' ? b.styles.gridTemplateRows : undefined,
+             display: b.styles.display === 'grid' ? 'grid' : 'flex', 
+             flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), 
+             gap: b.styles.gap || '20px', 
+             gridTemplateColumns: b.styles.gridTemplateColumns, 
+             gridTemplateRows: b.styles.gridTemplateRows,
              alignItems: b.styles.alignItems, 
-             justifyItems: b.styles.justifyItems, 
              justifyContent: b.styles.justifyContent 
            }}>
-              {b.children.map((child: any) => (
-                 <CanvasBlock 
-                   key={child.id} 
-                   b={child} 
-                   activeId={activeId} 
-                   setActiveId={setActiveId} 
-                   isEditing={isEditing} 
-                   setIsEditing={setIsEditing} 
-                   isMediaManagerOpen={isMediaManagerOpen} 
-                   setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                   setInteraction={setInteraction} 
-                   updateActiveBlock={updateActiveBlock} 
-                 />
-              ))}
+              {b.children.map((child: any) => {
+                 // Sprytny hack: Jeśli rodzic jest gridem, dziecko ma się rozciągać i nie mieć sztywnych 300px!
+                 if (b.styles.display === 'grid') {
+                   child.styles.width = '100%';
+                 }
+                 return (
+                   <CanvasBlock 
+                     key={child.id} 
+                     b={child} 
+                     activeId={activeId} 
+                     setActiveId={setActiveId} 
+                     isEditing={isEditing} 
+                     setIsEditing={setIsEditing} 
+                     isMediaManagerOpen={isMediaManagerOpen} 
+                     setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                     setInteraction={setInteraction} 
+                     updateActiveBlock={updateActiveBlock} 
+                   />
+                 );
+              })}
            </div>
         </div>
       )}

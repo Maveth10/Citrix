@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface MediaManagerProps {
   activeBlock: any;
@@ -8,8 +8,9 @@ interface MediaManagerProps {
 
 export default function MediaManager({ activeBlock, updateActiveBlock, setIsMediaManagerOpen }: MediaManagerProps) {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'project' | 'upload' | 'stock'>('project');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Automatycznie zaznacz pierwsze zdjęcie po otwarciu
   useEffect(() => {
     if (activeBlock && (activeBlock.images || activeBlock.type === 'img')) {
       setSelectedMediaIndex(0);
@@ -18,119 +19,140 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
 
   if (!activeBlock) return null;
 
-  // ROZPOZNAWANIE TYPU: Czy to pojedynczy obraz, czy galeria?
   const isSingleImage = activeBlock.type === 'img';
   const images = isSingleImage ? [activeBlock.src || ''] : (activeBlock.images || []);
 
-  if (!images.length && !isSingleImage) return null;
-
   const handleUpdateMedia = (url: string) => {
-    if (selectedMediaIndex === null) return;
     if (isSingleImage) {
       updateActiveBlock({ src: url });
     } else {
+      if (selectedMediaIndex === null) return;
       const newImages = [...images];
       newImages[selectedMediaIndex] = url;
       updateActiveBlock({ images: newImages });
     }
   };
 
-  const handleAddMedia = () => {
-    if (isSingleImage) return; // Zablokowane dla pojedynczych zdjęć
-    const newImages = [...images, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe'];
-    updateActiveBlock({ images: newImages });
-    setSelectedMediaIndex(newImages.length - 1);
+  const handleAddMedia = (url: string = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe') => {
+    if (isSingleImage) {
+      updateActiveBlock({ src: url }); // Podmienia zdjęcie
+      setActiveTab('project');
+    } else {
+      const newImages = [...images, url];
+      updateActiveBlock({ images: newImages });
+      setSelectedMediaIndex(newImages.length - 1);
+      setActiveTab('project');
+    }
   };
 
   const handleRemoveMedia = (index: number) => {
-    if (isSingleImage) return; // Zablokowane dla pojedynczych zdjęć
+    if (isSingleImage) return; 
     const newImages = images.filter((_: any, i: number) => i !== index);
     updateActiveBlock({ images: newImages });
     if (selectedMediaIndex === index) setSelectedMediaIndex(null);
   };
 
-  const handleMoveMedia = (index: number, dir: 'left' | 'right') => {
-    if (isSingleImage) return; // Zablokowane dla pojedynczych zdjęć
-    const newImages = [...images];
-    if (dir === 'left' && index > 0) {
-      [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
-      setSelectedMediaIndex(index - 1);
+  // UPLOAD LOKALNY Z DYSKU (Generuje ObjectURL dla przeglądarki)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const localUrl = URL.createObjectURL(file);
+      handleAddMedia(localUrl);
     }
-    if (dir === 'right' && index < newImages.length - 1) {
-      [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]];
-      setSelectedMediaIndex(index + 1);
-    }
-    updateActiveBlock({ images: newImages });
   };
 
+  // Symulacja bazy Stock (w pełnej wersji podpinamy tu API Unsplash/Pexels)
+  const stockPhotos = [
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
+    'https://images.unsplash.com/photo-1551288049-bebda4e38f71',
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c',
+    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8',
+    'https://images.unsplash.com/photo-1555099962-4199c345e5dd',
+    'https://images.unsplash.com/photo-1504384308090-c894fdcc538d',
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
+    'https://images.unsplash.com/photo-1542744173-8e7e53415bb0',
+  ];
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center font-sans">
-      <div className="bg-white w-[1000px] h-[650px] rounded-xl shadow-2xl flex flex-col text-neutral-800 overflow-hidden animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[999] flex items-center justify-center font-sans">
+      <div className="bg-[#111] w-[1000px] h-[700px] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col text-white overflow-hidden animate-in fade-in zoom-in-95 border border-neutral-800">
         
-        {/* HEADER MODALA */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-neutral-200">
-          <h2 className="font-bold text-lg">{isSingleImage ? 'Edytuj Obraz' : 'Menedżer Galerii'}</h2>
-          <button onClick={() => { setIsMediaManagerOpen(false); setSelectedMediaIndex(null); }} className="text-neutral-400 hover:text-black font-bold text-xl">✕</button>
-        </div>
-        
-        {/* PASEK NARZĘDZI */}
-        <div className="flex justify-between items-center px-6 py-3 border-b border-neutral-200 bg-neutral-50 h-14">
-          <div className="flex gap-4 text-sm text-neutral-500">
-            <span className="text-neutral-800 font-bold">Wybrano {selectedMediaIndex !== null ? 1 : 0}</span>
-            {!isSingleImage && (
-              <>
-                <button onClick={() => setSelectedMediaIndex(null)} className="hover:text-blue-600">Odznacz</button>
-                <button onClick={() => selectedMediaIndex !== null && handleRemoveMedia(selectedMediaIndex)} className={`hover:text-red-600 ${selectedMediaIndex === null ? 'opacity-50 cursor-not-allowed' : ''}`}>Usuń</button>
-              </>
-            )}
+        {/* HEADER MODALA ZE ZAKŁADKAMI */}
+        <div className="flex justify-between items-center px-6 py-0 border-b border-neutral-800 bg-[#161616]">
+          <div className="flex gap-6 h-14">
+            <button onClick={() => setActiveTab('project')} className={`font-bold text-sm border-b-2 transition ${activeTab === 'project' ? 'border-blue-500 text-blue-400' : 'border-transparent text-neutral-400 hover:text-white'}`}>Pliki Projektu</button>
+            <button onClick={() => setActiveTab('upload')} className={`font-bold text-sm border-b-2 transition ${activeTab === 'upload' ? 'border-blue-500 text-blue-400' : 'border-transparent text-neutral-400 hover:text-white'}`}>Wgraj z Dysku</button>
+            <button onClick={() => setActiveTab('stock')} className={`font-bold text-sm border-b-2 transition ${activeTab === 'stock' ? 'border-blue-500 text-blue-400' : 'border-transparent text-neutral-400 hover:text-white'}`}>Biblioteka Stock</button>
           </div>
-          {!isSingleImage && (
-            <button onClick={handleAddMedia} className="bg-[#1C58F2] hover:bg-blue-600 text-white font-bold py-2 px-6 rounded text-sm transition shadow">+ Dodaj obrazy</button>
-          )}
+          <button onClick={() => { setIsMediaManagerOpen(false); setSelectedMediaIndex(null); }} className="text-neutral-500 hover:text-white font-bold text-xl">✕</button>
         </div>
 
         {/* WORKSPACE */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden bg-[#0A0A0A]">
           
-          {/* SIATKA OBRAZÓW */}
-          <div className="flex-1 p-6 overflow-y-auto bg-white">
-            <div className="grid grid-cols-4 gap-6">
-              {images.map((img: string, i: number) => (
-                <div key={i} onClick={() => setSelectedMediaIndex(i)} className={`relative aspect-square bg-neutral-100 rounded-lg cursor-pointer overflow-hidden transition-all border-2 ${selectedMediaIndex === i ? 'border-[#1C58F2] shadow-lg ring-4 ring-blue-500/20' : 'border-transparent hover:border-neutral-300'}`}>
-                  {!isSingleImage && <div className="absolute top-2 left-2 bg-white/80 backdrop-blur w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold text-neutral-600 z-10 shadow-sm">{i + 1}</div>}
-                  <img src={img} className="w-full h-full object-cover" alt={`Media ${i}`} />
-                  
-                  {/* Przyciski przesuwania (Tylko dla galerii) */}
-                  {!isSingleImage && (
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 flex justify-between opacity-0 hover:opacity-100 transition-opacity">
-                      <button onClick={(e) => { e.stopPropagation(); handleMoveMedia(i, 'left'); }} className="text-white hover:text-blue-400 font-bold">◀</button>
-                      <button onClick={(e) => { e.stopPropagation(); handleMoveMedia(i, 'right'); }} className="text-white hover:text-blue-400 font-bold">▶</button>
+          {/* ZAKŁADKA 1: PLIKI PROJEKTU */}
+          {activeTab === 'project' && (
+            <>
+              <div className="flex-1 p-6 overflow-y-auto">
+                <div className="grid grid-cols-4 gap-4">
+                  {images.length === 0 && <div className="col-span-4 text-neutral-600 text-center py-20 font-bold">Brak obrazów. Dodaj coś z biblioteki lub dysku.</div>}
+                  {images.map((img: string, i: number) => (
+                    <div key={i} onClick={() => setSelectedMediaIndex(i)} className={`relative aspect-square bg-neutral-900 rounded-lg cursor-pointer overflow-hidden transition-all border-2 ${selectedMediaIndex === i ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-neutral-800 hover:border-neutral-600'}`}>
+                      <img src={img} className="w-full h-full object-cover" alt="Media" />
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+              {/* INSPEKTOR POJEDYNCZEGO ZDJĘCIA */}
+              <div className="w-[320px] bg-[#111] border-l border-neutral-800 flex flex-col p-6 gap-4">
+                {selectedMediaIndex !== null && images[selectedMediaIndex] ? (
+                  <>
+                    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden border border-neutral-800"><img src={images[selectedMediaIndex]} className="w-full h-full object-contain" /></div>
+                    <div>
+                      <label className="text-xs font-bold text-neutral-500 uppercase block mb-2">Link do obrazka</label>
+                      <textarea value={images[selectedMediaIndex]} onChange={(e) => handleUpdateMedia(e.target.value)} className="w-full p-3 text-xs bg-black border border-neutral-800 rounded focus:border-blue-500 outline-none text-white resize-none" rows={4}/>
+                    </div>
+                    {!isSingleImage && <button onClick={() => handleRemoveMedia(selectedMediaIndex)} className="py-2 bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white rounded text-xs font-bold transition mt-auto">Usuń z Galerii</button>}
+                  </>
+                ) : (
+                   <div className="flex-1 flex flex-col items-center justify-center text-neutral-600"><span className="text-4xl mb-2">🖼️</span>Wybierz plik</div>
+                )}
+              </div>
+            </>
+          )}
 
-          {/* INSPEKTOR POJEDYNCZEGO ZDJĘCIA */}
-          <div className="w-[320px] bg-neutral-50 border-l border-neutral-200 flex flex-col shadow-inner">
-            {selectedMediaIndex !== null ? (
-              <div className="p-6 flex flex-col gap-6 overflow-y-auto">
-                <div className="w-full aspect-video bg-neutral-200 rounded-lg overflow-hidden border border-neutral-300 shadow-sm">
-                  <img src={images[selectedMediaIndex]} className="w-full h-full object-cover" alt="Selected media" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-bold text-neutral-500">Adres URL Obrazu</label>
-                  <textarea value={images[selectedMediaIndex]} onChange={(e) => handleUpdateMedia(e.target.value)} className="w-full p-3 text-xs border border-neutral-300 rounded focus:border-blue-500 outline-none bg-white resize-none shadow-sm" rows={5}/>
-                </div>
+          {/* ZAKŁADKA 2: UPLOAD Z DYSKU */}
+          {activeTab === 'upload' && (
+            <div className="flex-1 flex items-center justify-center p-10">
+              <div className="w-full max-w-md bg-[#161616] border-2 border-dashed border-neutral-700 hover:border-blue-500 rounded-2xl p-10 flex flex-col items-center justify-center text-center transition group">
+                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📂</span>
+                <h3 className="text-xl font-bold text-white mb-2">Wgraj własne pliki</h3>
+                <p className="text-sm text-neutral-500 mb-6">Wspierane formaty: JPG, PNG, SVG, WEBP, MP4.</p>
+                <button onClick={() => fileInputRef.current?.click()} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg">Przeglądaj Dysk</button>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,video/*" />
               </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 p-6 text-center">
-                <div className="text-4xl mb-4">🖼️</div>
-                <p className="text-sm font-bold text-neutral-600">Nie wybrano obrazu</p>
+            </div>
+          )}
+
+          {/* ZAKŁADKA 3: STOCK LIBRARY */}
+          {activeTab === 'stock' && (
+            <div className="flex-1 flex flex-col p-6">
+              <div className="flex gap-4 mb-6">
+                <input type="text" placeholder="Szukaj w darmowej bibliotece... (np. biuro, natura)" className="flex-1 bg-[#161616] border border-neutral-800 p-3 rounded-lg text-white outline-none focus:border-blue-500" />
+                <button className="bg-neutral-800 px-6 font-bold rounded-lg hover:bg-neutral-700">Szukaj</button>
               </div>
-            )}
-          </div>
+              <div className="grid grid-cols-4 gap-4 overflow-y-auto pr-2">
+                {stockPhotos.map((url, i) => (
+                  <div key={i} className="relative aspect-video bg-neutral-900 rounded-lg overflow-hidden group cursor-pointer border border-neutral-800 hover:border-blue-500" onClick={() => handleAddMedia(url)}>
+                    <img src={url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded shadow">Użyj zdjęcia</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
