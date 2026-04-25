@@ -42,6 +42,11 @@ export default function Home() {
     });
   };
 
+  const findBlockById = (arr: Block[], id: number | null): Block | null => {
+    for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
+  };
+
+  // --- SILNIK MYSZKI: DRAG & RESIZE ---
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId) return;
@@ -66,14 +71,40 @@ export default function Home() {
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom]);
 
-  const handleFocusActive = () => {
-    if (!activeId) return;
-    setCanvasZoom(1.25);
-    setTimeout(() => {
-      const el = document.getElementById(`block-${activeId}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-    }, 50);
-  };
+  // --- NOWOŚĆ: SILNIK SCROLLA (ZOOM WNĘTRZA OBRAZU) ---
+  useEffect(() => {
+    const handleGlobalWheel = (e: WheelEvent) => {
+      if (!activeId) return;
+      const activeEl = document.getElementById(`block-${activeId}`);
+      
+      // Jeśli kółko myszy jest używane i kursor jest w obrębie zaznaczonego elementu
+      if (activeEl && activeEl.contains(e.target as Node)) {
+        setBlocks(prevBlocks => {
+          const currentBlock = findBlockById(prevBlocks, activeId);
+          // Pozwalamy na zoom tylko dla obrazków
+          if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
+          
+          e.preventDefault(); // Blokujemy przewijanie strony
+          
+          // Obliczamy nową skalę (od 1 do 10x)
+          const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
+          
+          const updateRecursive = (arr: Block[]): Block[] => {
+            return arr.map(b => {
+              if (b.id === activeId) return { ...b, styles: { ...b.styles, imageScale: newScale } };
+              if (b.children) return { ...b, children: updateRecursive(b.children) };
+              return b;
+            });
+          };
+          return updateRecursive(prevBlocks);
+        });
+      }
+    };
+
+    // Używamy { passive: false } aby móc zablokować domyślne przewijanie strony e.preventDefault()
+    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleGlobalWheel);
+  }, [activeId]);
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const generateId = () => Math.floor(Math.random() * 10000000);
@@ -82,17 +113,17 @@ export default function Home() {
       id: generateId(), type, name: label.toUpperCase(),
       children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
       hoverStyles: {}, entranceAnim: 'none',
-      styles: { position: 'relative', left: '0px', top: '0px', display: 'block', padding: '10px', margin: '0px', width: '300px', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease' },
+      styles: { position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', padding: '10px', margin: '0px', width: '300px', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden' }, // ZMIANA: Domyślny overflow: hidden zapobiegający wylewaniu
     };
 
     if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px'; newBlock.styles.width='fit-content';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; if(variant==='brand'){newBlock.styles.borderBottom='3px solid #3b82f6'; newBlock.styles.width='fit-content';} }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu. Możesz go edytować.'; newBlock.styles.fontSize = '16px'; if(variant==='brand'){newBlock.styles.fontStyle='italic'; newBlock.styles.borderLeft='4px solid #3b82f6'; newBlock.styles.paddingLeft='15px';} }
-    if (type === 'marquee') { newBlock.text = 'PRZEWIJANY TEKST • OGŁOSZENIE • '; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = 'bold'; newBlock.styles.width = '100%'; }
+    if (type === 'marquee') { newBlock.text = 'PRZEWIJANY TEKST • OGŁOSZENIE • '; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = 'bold'; newBlock.styles.width = '100%'; newBlock.styles.overflow = 'hidden'; }
     if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ\n\nOdpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
     
     if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; }
-    if (type === 'container' && variant === 'text-combo') { newBlock.styles.display='flex'; newBlock.styles.flexDirection='column'; newBlock.styles.gap='10px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}] }
+    if (type === 'container' && variant === 'text-combo') { newBlock.styles.gap='10px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold', overflow:'hidden', wordBreak:'break-word'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px', overflow:'hidden', wordBreak:'break-word'}}] }
     if (type === 'container' && variant === 'empty') { newBlock.styles.minHeight = '150px'; newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.width = '100%'; }
     if (type === 'container' && variant === 'designed') { newBlock.styles.minHeight = '200px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '16px'; newBlock.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; newBlock.styles.padding = '30px'; newBlock.styles.width = '100%'; }
     
@@ -103,7 +134,7 @@ export default function Home() {
       if(variant==='photo'){newBlock.styles.border='8px solid #fff'; newBlock.styles.boxShadow='0 4px 6px rgba(0,0,0,0.1)';} 
     }
     
-    if (type === 'button') { newBlock.text = variant==='share' ? '🔗 Udostępnij' : 'Przycisk'; newBlock.styles.backgroundColor = variant==='share' ? '#f3f4f6' : '#000'; newBlock.styles.color = variant==='share' ? '#000' : '#fff'; newBlock.styles.padding = '12px 24px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; }
+    if (type === 'button') { newBlock.text = variant==='share' ? '🔗 Udostępnij' : 'Przycisk'; newBlock.styles.backgroundColor = variant==='share' ? '#f3f4f6' : '#000'; newBlock.styles.color = variant==='share' ? '#000' : '#fff'; newBlock.styles.padding = '12px 24px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; }
     if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='line'){newBlock.styles.width='100%'; newBlock.styles.height='2px'; newBlock.styles.backgroundColor='#ccc';} }
     if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
     if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
@@ -114,7 +145,7 @@ export default function Home() {
     if (type === 'map') { newBlock.src = 'https://maps.google.com/maps?q=Warszawa&t=&z=13&ie=UTF8&iwloc=&output=embed'; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
     if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? 'Tu wklej kod HTML' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; newBlock.styles.backgroundColor = variant==='html' ? '#111' : 'transparent'; newBlock.styles.color = '#0f0'; }
     if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
-    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover'}}]; }
+    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover', overflow:'hidden'}}]; }
     if (type === 'popup') { newBlock.styles.position='fixed'; newBlock.styles.top='50%'; newBlock.styles.left='50%'; newBlock.styles.transform='translate(-50%, -50%)'; newBlock.styles.width='400px'; newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='40px'; newBlock.styles.borderRadius='20px'; newBlock.styles.boxShadow='0 0 0 9999px rgba(0,0,0,0.5)'; newBlock.styles.zIndex='999'; }
 
     setBlocks(prev => {
@@ -128,10 +159,6 @@ export default function Home() {
       return [...prev, newBlock];
     });
     setActiveId(newBlock.id);
-  };
-
-  const findBlockById = (arr: Block[], id: number | null): Block | null => {
-    for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
   const removeActiveBlock = () => {
@@ -193,12 +220,13 @@ export default function Home() {
           </>
         )}
 
-        {['h1', 'h2', 'marquee'].includes(b.type) && <h1 style={{fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0}}>{b.text}</h1>}
-        {b.type === 'p' && <p style={{fontSize:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', fontStyle:b.styles.fontStyle, margin:0}}>{b.text}</p>}
-        {b.type === 'button' && <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent: b.styles.textAlign === 'center' ? 'center' : b.styles.textAlign === 'right' ? 'flex-end' : 'flex-start'}}>{b.text}</div>}
+        {/* ZMIANA V6.6: Twarde blokowanie wylewania się tekstu przy zmianie ramki */}
+        {['h1', 'h2', 'marquee'].includes(b.type) && <h1 style={{fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word'}}>{b.text}</h1>}
+        {b.type === 'p' && <p style={{fontSize:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', fontStyle:b.styles.fontStyle, margin:0, overflow:'hidden', wordBreak:'break-word'}}>{b.text}</p>}
+        {b.type === 'button' && <div style={{width:'100%', height:'100%', display:'flex', alignItems:b.styles.alignItems, justifyContent: b.styles.justifyContent, overflow:'hidden', wordBreak:'break-word'}}>{b.text}</div>}
         {b.type === 'shape' && <div style={{width:'100%', height:'100%'}}></div>}
-        {b.type === 'menu' && b.variant !== 'menu-hamburger' ? <nav style={{width:'100%', height:'100%', whiteSpace: b.styles.whiteSpace}}>{b.text}</nav> : b.text}
-        {b.type === 'social' && <div style={{width:'100%', height:'100%'}}>{b.text}</div>}
+        {b.type === 'menu' && b.variant !== 'menu-hamburger' ? <nav style={{width:'100%', height:'100%', whiteSpace: b.styles.whiteSpace, overflow:'hidden'}}>{b.text}</nav> : <div style={{overflow:'hidden'}}>{b.text}</div>}
+        {b.type === 'social' && <div style={{width:'100%', height:'100%', overflow:'hidden'}}>{b.text}</div>}
         {b.type === 'faq' && <div className="font-bold text-sm pointer-events-none">{b.text?.split('\n\n')[0]} ▼</div>}
         {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4">🌍 {b.src || b.text}</div>}
         {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none">🗺️ Mapa Google</div>}
@@ -206,7 +234,8 @@ export default function Home() {
 
         {b.type === 'img' && (
           <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative'}}>
-            <img src={b.src} className="w-full h-full pointer-events-none" style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`, transition: interaction ? 'none' : 'transform 0.2s ease, object-position 0.2s ease'}} />
+            <img src={b.src} className="w-full h-full pointer-events-none" style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`, transition: interaction ? 'none' : 'transform 0.1s ease'}} />
+            {isActive && <div className="absolute top-1 left-1 bg-black/50 text-white text-[8px] px-1 rounded opacity-50 pointer-events-none">Zoom Myszki</div>}
           </div>
         )}
         
@@ -332,7 +361,7 @@ export default function Home() {
             <div className="p-4 bg-[#111] border-b border-neutral-800 flex justify-between items-center">
               <span className="font-black text-xs text-white truncate max-w-[150px]">{activeBlock.name}</span>
               <div className="flex gap-2">
-                <button onClick={handleFocusActive} className="bg-blue-900/30 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] px-2 py-1 rounded transition">🔍 SKUP</button>
+                {/* Wycofano zepsuty przycisk SKUP */}
                 <button onClick={removeActiveBlock} className="bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white text-[10px] px-2 py-1 rounded transition">USUŃ</button>
               </div>
             </div>
@@ -360,18 +389,12 @@ export default function Home() {
                         <div className="flex justify-between items-center"><span className="text-neutral-400">Odstęp (Gap)</span><input type="text" value={activeBlock.styles.gap || '0px'} onChange={e => updateActiveBlock({ styles: { gap: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded w-16 text-right" /></div>
                       </div>
                     )}
-                    {activeBlock.styles.display === 'grid' && (
-                      <div className="flex flex-col gap-2 mt-3 text-xs">
-                        <div className="flex justify-between items-center"><span className="text-neutral-400">Kolumny (CSS)</span><input type="text" value={activeBlock.styles.gridTemplateColumns || 'repeat(2, 1fr)'} onChange={e => updateActiveBlock({ styles: { gridTemplateColumns: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded w-32 text-right" /></div>
-                      </div>
-                    )}
                   </div>
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800">
                     <label className="text-[9px] font-bold text-neutral-500 block mb-2">POZYCJA W DOKUMENCIE</label>
                     <select value={activeBlock.styles.position} onChange={e => updateActiveBlock({ styles: { position: e.target.value }})} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none mb-2">
                       <option value="relative">Naturalna (W siatce)</option><option value="absolute">Swobodna (Absolute)</option><option value="fixed">Zablokowana (Fixed)</option>
                     </select>
-                    {activeBlock.styles.position === 'absolute' && <p className="text-[9px] text-blue-400 italic">Złap element na płótnie, aby go przesunąć.</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Szerokość</label><input type="text" value={activeBlock.styles.width} onChange={e => updateActiveBlock({ styles: { width: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
@@ -387,10 +410,18 @@ export default function Home() {
                 <>
                   {activeBlock.type === 'img' && (
                     <div className="bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 flex flex-col gap-4">
-                      <label className="text-[10px] font-bold text-blue-400 block tracking-widest">KADROWANIE WNĘTRZA</label>
-                      <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Przybliżenie (Zoom)</span><span className="text-blue-300">{activeBlock.styles.imageScale || 1}x</span></div><input type="range" min="1" max="3" step="0.1" value={activeBlock.styles.imageScale || 1} onChange={e => updateActiveBlock({ styles: { imageScale: parseFloat(e.target.value) }})} className="w-full accent-blue-500" /></div>
-                      <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Pozycja Pozioma (X)</span><span className="text-blue-300">{activeBlock.styles.objectPositionX || 50}%</span></div><input type="range" min="0" max="100" value={activeBlock.styles.objectPositionX || 50} onChange={e => updateActiveBlock({ styles: { objectPositionX: parseInt(e.target.value) }})} className="w-full accent-blue-500" /></div>
-                      <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Pozycja Pionowa (Y)</span><span className="text-blue-300">{activeBlock.styles.objectPositionY || 50}%</span></div><input type="range" min="0" max="100" value={activeBlock.styles.objectPositionY || 50} onChange={e => updateActiveBlock({ styles: { objectPositionY: parseInt(e.target.value) }})} className="w-full accent-blue-500" /></div>
+                      <label className="text-[10px] font-bold text-blue-400 block tracking-widest">KADROWANIE (LUPA W MYSZCE)</label>
+                      <p className="text-[9px] text-blue-300 italic">Najedź kursorem na zaznaczony obraz na płótnie i zacznij używać scrolla (kółka myszy), aby go płynnie powiększyć wewnątrz ramki!</p>
+                      
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-xs"><span className="text-neutral-400">Przesunięcie Poziome (X)</span><span className="text-blue-300">{activeBlock.styles.objectPositionX || 50}%</span></div>
+                        <input type="range" min="0" max="100" value={activeBlock.styles.objectPositionX || 50} onChange={e => updateActiveBlock({ styles: { objectPositionX: parseInt(e.target.value) }})} className="w-full accent-blue-500" />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-xs"><span className="text-neutral-400">Przesunięcie Pionowe (Y)</span><span className="text-blue-300">{activeBlock.styles.objectPositionY || 50}%</span></div>
+                        <input type="range" min="0" max="100" value={activeBlock.styles.objectPositionY || 50} onChange={e => updateActiveBlock({ styles: { objectPositionY: parseInt(e.target.value) }})} className="w-full accent-blue-500" />
+                      </div>
                     </div>
                   )}
 
