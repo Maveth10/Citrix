@@ -35,7 +35,7 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v16');
+  const [pageSlug, setPageSlug] = useState('titan-v17');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
@@ -57,6 +57,30 @@ export default function Home() {
 
   const findBlockById = (arr: Block[], id: number | null): Block | null => {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
+  };
+
+  const handleAddSection = (layout: string) => {
+    const newSection = createBlock('section', '', 'Sekcja Strony');
+    newSection.styles.display = layout === 'flex-col' ? 'flex' : 'grid';
+    newSection.styles.gap = '20px';
+    newSection.styles.padding = '40px'; 
+    newSection.styles.minHeight = '300px';
+    newSection.styles.width = '100%';
+    newSection.styles.backgroundColor = '#ffffff';
+
+    if (layout === 'flex-col') {
+      newSection.styles.flexDirection = 'column';
+    } else {
+      if (layout === 'grid-2') newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)';
+      if (layout === 'grid-3') newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)';
+      if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; }
+      if (layout === 'grid-left') newSection.styles.gridTemplateColumns = '2fr 1fr';
+      if (layout === 'grid-right') newSection.styles.gridTemplateColumns = '1fr 2fr';
+      if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; }
+    }
+
+    setBlocks(prev => [...prev, newSection]);
+    setActiveId(newSection.id);
   };
 
   useEffect(() => {
@@ -112,7 +136,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano Architekture Modułową! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V17! Link: /live/${pageSlug}`);
   };
 
   const activeBlock = findBlockById(blocks, activeId);
@@ -134,7 +158,7 @@ export default function Home() {
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">
-        <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-600 text-white font-bold' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
+        <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-500/20 text-blue-400 font-bold border-l-2 border-blue-500' : 'text-neutral-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
           {b.children ? '📂' : '📄'} {b.name}
         </button>
         {b.children && renderLayerTree(b.children, depth + 1)}
@@ -143,38 +167,39 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
+    // MODERN BACKGROUND COLOR (Zinc-950)
+    <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
-      <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
-        <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab === 'add' ? 'bg-blue-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
-        <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab === 'layers' ? 'bg-blue-600 text-white' : 'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
+      <aside className="w-16 bg-[#09090b] border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
+        <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'add' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>+</button>
+        <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'layers' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>☰</button>
       </aside>
 
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
-          <div className="w-56 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
-            <div className="px-5 py-4 border-b border-neutral-800"><span className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">DODAJ ELEMENT</span></div>
-            <div className="flex-1 overflow-y-auto py-2 scrollbar-hide">
+          <div className="w-56 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+            <div className="px-6 py-5 border-b border-white/5"><span className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">DODAJ ELEMENT</span></div>
+            <div className="flex-1 overflow-y-auto py-3 scrollbar-hide px-2">
               {categories.map(cat => (
-                <button key={cat.id} onMouseEnter={() => setAddCategory(cat.id)} onClick={() => setAddCategory(cat.id)} className={`w-full text-left px-5 py-3 text-xs font-semibold transition flex items-center gap-3 border-l-2 ${addCategory === cat.id ? 'bg-neutral-800 text-white border-blue-500' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 border-transparent'}`}><span className="w-4 text-center">{cat.icon}</span> {cat.label}</button>
+                <button key={cat.id} onMouseEnter={() => setAddCategory(cat.id)} onClick={() => setAddCategory(cat.id)} className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-3 mb-1 ${addCategory === cat.id ? 'bg-blue-600/10 text-blue-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}><span className="w-4 text-center">{cat.icon}</span> {cat.label}</button>
               ))}
             </div>
           </div>
         )}
         
         {leftTab === 'layers' && (
-          <div className="w-64 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
-            <div className="px-5 py-4 border-b border-neutral-800 flex justify-between items-center"><h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
+          <div className="w-64 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
             <div className="flex-1 overflow-y-auto py-2">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
         
         {leftTab === 'add' && addCategory && (
-          <div className="absolute left-[100%] top-0 w-[340px] bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.6)] z-30 flex flex-col">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-neutral-800 bg-[#161616]"><h3 className="text-[11px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
+          <div className="absolute left-[100%] top-0 w-[340px] bg-[#0c0c0e]/95 backdrop-blur-xl border-r border-white/5 h-full shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-30 flex flex-col">
+            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5"><h3 className="text-[10px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
             
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
@@ -193,7 +218,10 @@ export default function Home() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col relative bg-[#222]">
+      <div className="flex-1 flex flex-col relative bg-[#09090b]">
+        {/* DOT GRID BACKGROUND (Miro/Figma style) */}
+        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+
         <TopHeader 
           canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} 
           showGrid={showGrid} setShowGrid={setShowGrid} 
@@ -201,14 +229,15 @@ export default function Home() {
           handlePublish={handlePublish} 
           activeBlock={activeBlock} updateActiveBlock={updateActiveBlock}
           viewport={viewport} setViewport={setViewport}
+          handleAddSection={handleAddSection} 
         />
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         
-        <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
+        <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
           <div 
             style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-            className="min-h-screen bg-white text-black shadow-2xl relative overflow-hidden"
+            className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col overflow-x-hidden pb-40"
           >
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              {blocks.map(b => (
