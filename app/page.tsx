@@ -9,7 +9,12 @@ import RightPanel from '../components/RightPanel';
 import TextFormatToolbar from '../components/TextFormatToolbar';
 import TextPanel from '../components/TextPanel';
 import ImagePanel from '../components/ImagePanel';
-import ButtonPanel from '../components/ButtonPanel'; // Wpinamy nową wtyczkę przycisków!
+import ButtonPanel from '../components/ButtonPanel';
+import GraphicsPanel from '../components/GraphicsPanel';
+import LayoutPanel from '../components/LayoutPanel';
+import VideoPanel from '../components/VideoPanel';
+import FormPanel from '../components/FormPanel';
+import MenuPanel from '../components/MenuPanel'; // NOWOŚĆ V15.7
 
 interface Block {
   id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
@@ -24,7 +29,6 @@ export default function Home() {
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
   const [pageSlug, setPageSlug] = useState('titan-v15');
-  
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -59,18 +63,13 @@ export default function Home() {
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen]);
 
-  // FIX SCROLLOWANIA: Synchroniczne zapobieganie przewijaniu
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
       if (!activeId || isMediaManagerOpen) return;
       const activeEl = document.getElementById(`block-${activeId}`);
       if (activeEl && activeEl.contains(e.target as Node)) {
-        
-        // Sprawdzamy czy to klasa zdjęcia, żeby zablokować scrollowanie synchronicznie (bez czekania na Reacta)
         if (activeEl.classList.contains('group/img')) {
-          e.preventDefault(); 
-          e.stopPropagation();
-
+          e.preventDefault(); e.stopPropagation();
           setBlocks(prevBlocks => {
             const currentBlock = findBlockById(prevBlocks, activeId); 
             if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
@@ -105,7 +104,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano Architekture Modułową! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V15.7! Link: /live/${pageSlug}`);
   };
 
   const activeBlock = findBlockById(blocks, activeId);
@@ -113,7 +112,7 @@ export default function Home() {
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements, b: Block) => {
     const isActive = activeId === b.id;
     return (
-      <Tag style={{ fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, zIndex: b.styles.zIndex || 1, position: 'relative' }}
+      <Tag style={{ fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, zIndex: 10, position: 'relative' }}
         contentEditable={isActive && isEditing} suppressContentEditableWarning={true}
         onDoubleClick={(e: any) => { e.stopPropagation(); setIsEditing(true); }}
         onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }} dangerouslySetInnerHTML={{ __html: b.text || '' }}
@@ -124,7 +123,6 @@ export default function Home() {
   const renderCanvasBlock = (b: Block) => {
     const isActive = activeId === b.id;
     const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
-    
     const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
     const bgStyles = { ...b.styles };
     if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
@@ -134,31 +132,13 @@ export default function Home() {
     return (
       <div id={`block-${b.id}`} key={b.id} style={containerStyles} onClick={(e) => { e.stopPropagation(); }} 
         onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
-        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
+        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
-        {b.styles.bgOverlay && (b.styles.bgType === 'image' || b.styles.bgType === 'video') && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
-        {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
-        
-        {isActive && !isEditing && (
-          <>
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
-          </>
-        )}
-
-        {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1', b)}
-        {b.type === 'p' && renderTextElement('p', b)}
-        {b.type === 'list' && renderTextElement('div', b)}
-        {b.type === 'faq' && renderTextElement('div', b)}
-        {b.type === 'button' && renderTextElement('div', b)}
-        {b.type === 'menu' && renderTextElement('nav', b)}
-        {b.type === 'social' && renderTextElement('div', b)}
+        {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
         
         {b.type === 'ribbon' && b.ribbonItems && (
-          <div style={{ overflow: 'hidden', width: '100%', display: 'flex', whiteSpace: 'nowrap', alignItems: 'center', height: '100%', zIndex: b.styles.zIndex || 1, position: 'relative', pointerEvents:'none' }}>
+          <div style={{ overflow: 'hidden', width: '100%', display: 'flex', whiteSpace: 'nowrap', alignItems: 'center', height: '100%', zIndex: 10, position: 'relative', pointerEvents:'none' }}>
              {[1, 2].map(group => (
                <div key={group} style={{ display: 'flex', flexShrink: 0, minWidth: '100%', justifyContent: 'space-around', animation: 'scroll-marquee 15s linear infinite' }}>
                  {b.ribbonItems!.map((item, i) => (
@@ -171,16 +151,25 @@ export default function Home() {
           </div>
         )}
 
+        {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1', b)}
+        {b.type === 'p' && renderTextElement('p', b)}
+        {b.type === 'list' && renderTextElement('div', b)}
+        {b.type === 'faq' && renderTextElement('div', b)}
+        {b.type === 'button' && renderTextElement('div', b)}
+        {b.type === 'menu' && renderTextElement('nav', b)}
+        {b.type === 'social' && renderTextElement('div', b)}
+        
         {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
-        {b.type === 'embed' && b.styles.backgroundColor === '#111' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">⚙️ {b.text}</div>}
-        {b.type === 'embed' && b.styles.backgroundColor !== '#111' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">🌍 iFrame URL: {b.src}</div>}
-        {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none z-10 relative">🗺️ Mapa Google</div>}
+        
+        {b.type === 'video' && <div className="w-full h-full flex items-center justify-center bg-black text-red-500 font-bold border border-neutral-800 pointer-events-none z-10 relative text-4xl">▶</div>}
+        
+        {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">⚙️ Kod/iFrame</div>}
+        {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none z-10 relative">🗺️ Mapa</div>}
         {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50 z-10 relative">{b.text}</div>}
         
-        {/* Tu dodajemy klase group/img, dzieki ktorej dziala powyzszy fix na scroll */}
         {b.type === 'img' && (
-          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: b.styles.zIndex || 1}} className="group/img">
-            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500 ${b.styles.imgHoverZoom ? 'group-hover/img:scale-110' : ''} ${b.styles.imgGrayscale ? 'grayscale group-hover/img:grayscale-0' : ''}`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: b.styles.imgHoverZoom ? undefined : `scale(${b.styles.imageScale || 1})`}} />
+          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: 10}} className="group/img">
+            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`}} />
           </div>
         )}
         
@@ -192,12 +181,22 @@ export default function Home() {
         )}
         
         {b.children && (
-          <div className="w-full h-full min-h-[40px] relative pointer-events-none" style={{zIndex: b.styles.zIndex || 1}}>
+          <div className="w-full h-full min-h-[40px] relative pointer-events-none" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
              <div className="pointer-events-auto w-full h-full" style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', gridTemplateColumns: 'inherit', alignItems: 'inherit', justifyItems: 'inherit', justifyContent: 'inherit' }}>
                 {b.children.map(child => renderCanvasBlock(child))}
              </div>
           </div>
+        )}
+
+        {isActive && !isEditing && (
+          <>
+            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200]">{b.name}</div>
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
+            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[200] hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
+          </>
         )}
       </div>
     );
@@ -205,22 +204,19 @@ export default function Home() {
 
   const isTextType = activeBlock && ['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type);
 
-  // Zredukowane menu - "tekst", "obraz" i "przycisk" usunięte z głównego słownika
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące okna', icon: '🪟' },
-    { id: 'social', label: 'Social Media', icon: '❤️' }, { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
+    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' },
+    { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'social', label: 'Social Media', icon: '❤️' },
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
   ];
 
+  // Usunięto Menu z tego słownika
   const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
-    grafika: [ { label: 'Kwadrat', type: 'shape', variant: 'box' }, { label: 'Koło', type: 'shape', variant: 'circle' }, { label: 'Linia', type: 'shape', variant: 'line' } ],
-    pola: [ { label: 'Sekcja Klasyczna', type: 'section', variant: '' }, { label: '🎬 Wideo Hero', type: 'section', variant: 'video-hero' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane', type: 'container', variant: 'designed' } ],
-    wideo: [ { label: 'YouTube Wideo', type: 'video', variant: '' } ],
-    formularze: [ { label: 'Formularz Kontaktowy', type: 'form', variant: '' }, { label: 'Pole Tekstowe', type: 'input', variant: '' }, { label: 'Wiadomość', type: 'textarea', variant: '' }, { label: 'Mapa Google', type: 'map', variant: '' } ],
-    menu: [ { label: 'Menu Poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu Pionowe', type: 'menu', variant: 'vertical' }, { label: 'Menu Hamburger', type: 'menu', variant: 'hamburger'} ],
     wyskakujace: [ { label: 'Popup', type: 'popup', variant: '' } ],
-    social: [ { label: 'Ikonki Social', type: 'social', variant: '' }, { label: 'Pasek Udostępniania', type: 'button', variant: 'share' }, { label: 'Kanał Insta', type: 'grid', variant: 'insta'} ],
+    lista: [ { label: 'Zwykła Lista', type: 'list', variant: '' } ],
+    social: [ { label: 'Ikonki Social', type: 'social', variant: '' }, { label: 'Kanał Insta', type: 'grid', variant: 'insta'} ],
     osadzona: [ { label: 'iFrame Strony', type: 'embed', variant: 'site' }, { label: 'Własny kod HTML', type: 'embed', variant: 'html' } ]
   };
 
@@ -244,10 +240,7 @@ export default function Home() {
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
-      <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
-        <button onClick={() => { setLeftTab(leftTab==='add'?null:'add'); if(leftTab!=='add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
-        <button onClick={() => setLeftTab(leftTab==='layers'?null:'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='layers'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
-      </aside>
+      <LeftSidebar leftTab={leftTab} setLeftTab={setLeftTab} addCategory={addCategory} setAddCategory={setAddCategory} handleAddBlock={handleAddBlock} blocks={blocks} activeId={activeId} setActiveId={setActiveId} setIsEditing={setIsEditing} />
 
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
@@ -274,9 +267,14 @@ export default function Home() {
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
+              {addCategory === 'grafika' && <GraphicsPanel handleAddBlock={handleAddBlock} />}
+              {addCategory === 'pola' && <LayoutPanel handleAddBlock={handleAddBlock} />}
+              {addCategory === 'wideo' && <VideoPanel handleAddBlock={handleAddBlock} />}
+              {addCategory === 'formularze' && <FormPanel handleAddBlock={handleAddBlock} />}
+              {addCategory === 'menu' && <MenuPanel handleAddBlock={handleAddBlock} />}
               
-              {addCategory !== 'tekst' && addCategory !== 'obraz' && addCategory !== 'przycisk' && menuOptions[addCategory]?.map((opt, i) => (
-                <button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition border-l-4 hover:border-l-blue-500"><span className="text-sm font-bold text-white block">{opt.label}</span></button>
+              {!['tekst', 'obraz', 'przycisk', 'grafika', 'pola', 'wideo', 'formularze', 'menu'].includes(addCategory) && menuOptions[addCategory]?.map((opt, i) => (
+                <button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full mb-2 border-l-4 hover:border-l-blue-500"><span className="text-sm font-bold text-white block">{opt.label}</span></button>
               ))}
             </div>
             
@@ -287,6 +285,12 @@ export default function Home() {
       <div className="flex-1 flex flex-col relative bg-[#222]">
         <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} />
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
+        
+        <div className="flex justify-center items-center h-10 bg-[#161616] text-[10px] text-neutral-500 gap-4 border-b border-black">
+          <span>{blocks.length} Elementów</span>
+          <span>Zoom: {Math.round(canvasZoom * 100)}%</span>
+        </div>
+
         <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
           <div style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'transform 0.2s ease-out' }} className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative overflow-hidden">
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
@@ -297,6 +301,7 @@ export default function Home() {
 
       <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
 
+      {/* MEDIA MANAGER MODAL */}
       {isMediaManagerOpen && activeBlock && activeBlock.images && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center font-sans">
           <div className="bg-white w-[1000px] h-[650px] rounded-xl shadow-2xl flex flex-col text-neutral-800 overflow-hidden animate-in fade-in zoom-in-95">
