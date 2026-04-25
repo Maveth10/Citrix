@@ -14,8 +14,19 @@ export const createBlock = (type: string, variant: string, label: string) => {
       },
     };
   
+    // --- NAPRAWA V17.1: PUSTE POLA (DROPZONES) SĄ TERAZ WYRAŹNIE WIDOCZNE ---
     if (type === 'container') {
-      if (variant === 'empty') { newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.height = '150px'; }
+      if (variant === 'empty') { 
+        newBlock.styles.border = '2px dashed #cbd5e1'; // Nowoczesna, przerywana linia (Slate-300)
+        newBlock.styles.backgroundColor = '#f8fafc'; // Lekko szare tło wypełnienia
+        newBlock.styles.minHeight = '120px'; 
+        newBlock.styles.height = '100%';
+        newBlock.styles.width = '100%';
+        newBlock.styles.borderRadius = '12px';
+        newBlock.styles.display = 'flex';
+        newBlock.styles.flexDirection = 'column';
+        newBlock.styles.gap = '10px';
+      }
       if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
       if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
       if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
@@ -41,36 +52,15 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
     if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
     
-    // --- ZASOBY STOCKOWE (ZAKODOWANE W SVG) ---
     if (type === 'img') { 
       newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; 
       newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
   
-      // IKONY
-      if (variant === 'icon-star') {
-        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23facc15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>';
-        newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain';
-      }
-      if (variant === 'icon-heart') {
-        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ec4899"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
-        newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain';
-      }
-      
-      // NAKLEJKI
-      if (variant === 'sticker-sale') {
-        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23ef4444"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="24" font-family="Arial" font-weight="bold">SALE</text></svg>';
-        newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain';
-      }
-      if (variant === 'sticker-new') {
-        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="%2310b981"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="20" font-family="Arial" font-weight="bold">NEW!</text></svg>';
-        newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain';
-      }
-  
-      // WEKTORY
-      if (variant === 'vector-chart') {
-        newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="50" width="20" height="40" fill="%233b82f6" rx="4"/><rect x="40" y="30" width="20" height="60" fill="%238b5cf6" rx="4"/><rect x="70" y="10" width="20" height="80" fill="%236366f1" rx="4"/></svg>';
-        newBlock.styles.width = '150px'; newBlock.styles.height = '150px'; newBlock.styles.objectFit = 'contain';
-      }
+      if (variant === 'icon-star') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23facc15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'; newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain'; }
+      if (variant === 'icon-heart') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ec4899"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'; newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain'; }
+      if (variant === 'sticker-sale') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23ef4444"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="24" font-family="Arial" font-weight="bold">SALE</text></svg>'; newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain'; }
+      if (variant === 'sticker-new') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="%2310b981"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="20" font-family="Arial" font-weight="bold">NEW!</text></svg>'; newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain'; }
+      if (variant === 'vector-chart') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="50" width="20" height="40" fill="%233b82f6" rx="4"/><rect x="40" y="30" width="20" height="60" fill="%238b5cf6" rx="4"/><rect x="70" y="10" width="20" height="80" fill="%236366f1" rx="4"/></svg>'; newBlock.styles.width = '150px'; newBlock.styles.height = '150px'; newBlock.styles.objectFit = 'contain'; }
     }
   
     if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; }

@@ -59,28 +59,74 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
+  // --- ZMIANA V17.1: Tworzenie Sekcji z Gotowymi Polami ---
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
     newSection.styles.display = layout === 'flex-col' ? 'flex' : 'grid';
     newSection.styles.gap = '20px';
     newSection.styles.padding = '40px'; 
-    newSection.styles.minHeight = '300px';
+    newSection.styles.minHeight = '150px'; // Zmieniono na mniejsze, by dopasować do pustych kolumn
     newSection.styles.width = '100%';
     newSection.styles.backgroundColor = '#ffffff';
 
+    let childCount = 1;
     if (layout === 'flex-col') {
       newSection.styles.flexDirection = 'column';
+      childCount = 1;
     } else {
-      if (layout === 'grid-2') newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)';
-      if (layout === 'grid-3') newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)';
-      if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; }
-      if (layout === 'grid-left') newSection.styles.gridTemplateColumns = '2fr 1fr';
-      if (layout === 'grid-right') newSection.styles.gridTemplateColumns = '1fr 2fr';
-      if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; }
+      if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
+      if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
+      if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
+      if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
+      if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
+      if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
     }
+
+    // AUTOMATYCZNIE WYPEŁNIA SEKCJĘ WIDOCZNYMI KOLUMNAMI!
+    newSection.children = Array.from({ length: childCount }).map((_, i) => 
+      createBlock('container', 'empty', `Kolumna ${i + 1}`)
+    );
 
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
+  };
+
+  // --- ZMIANA V17.1: Auto-Wrapper dla elementów upuszczanych luzem ---
+  const handleAddBlock = (type: string, variant: string, label: string) => {
+    const newBlock = createBlock(type, variant, label);
+    
+    setBlocks(prev => {
+      const activeBlock = findBlockById(prev, activeId);
+      
+      // Scenariusz A: Wrzucasz do istniejącego pojemnika
+      if (activeBlock && activeBlock.children) { 
+        const newArr = [...prev]; 
+        const target = findBlockById(newArr, activeId); 
+        target!.children!.push(newBlock); 
+        return newArr; 
+      } 
+      
+      // Scenariusz B: Wrzucasz ZWYKŁY element prosto na Główne Płótno
+      const isStructural = ['section', 'container', 'grid'].includes(type);
+      if (!isStructural) {
+        const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
+        autoWrapper.styles.display = 'flex';
+        autoWrapper.styles.flexDirection = 'column';
+        autoWrapper.styles.gap = '20px';
+        autoWrapper.styles.padding = '40px';
+        autoWrapper.styles.minHeight = 'auto'; // Sekcja zaciska się na zawartości
+        autoWrapper.styles.width = '100%';
+        autoWrapper.styles.backgroundColor = '#ffffff';
+        
+        autoWrapper.children = [newBlock];
+        return [...prev, autoWrapper]; // Wrzucamy zapakowany na Płótno
+      }
+
+      // Scenariusz C: Wrzucasz Sekcję z bocznego panelu (zamiast z górnego)
+      return [...prev, newBlock];
+    });
+    
+    setActiveId(newBlock.id);
   };
 
   useEffect(() => {
@@ -116,16 +162,6 @@ export default function Home() {
     return () => window.removeEventListener('wheel', handleGlobalWheel);
   }, [activeId, isMediaManagerOpen]);
 
-  const handleAddBlock = (type: string, variant: string, label: string) => {
-    const newBlock = createBlock(type, variant, label);
-    setBlocks(prev => {
-      const activeBlock = findBlockById(prev, activeId);
-      if (activeBlock && activeBlock.children) { const newArr = [...prev]; const target = findBlockById(newArr, activeId); target!.children!.push(newBlock); return newArr; } 
-      return [...prev, newBlock];
-    });
-    setActiveId(newBlock.id);
-  };
-
   const removeActiveBlock = () => {
     setBlocks(prev => {
       const removeRecursive = (arr: Block[]): Block[] => arr.filter(b => b.id !== activeId).map(b => ({ ...b, children: b.children ? removeRecursive(b.children) : undefined }));
@@ -136,7 +172,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V17! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V17.1! Link: /live/${pageSlug}`);
   };
 
   const activeBlock = findBlockById(blocks, activeId);
@@ -167,7 +203,6 @@ export default function Home() {
   };
 
   return (
-    // MODERN BACKGROUND COLOR (Zinc-950)
     <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
@@ -219,7 +254,6 @@ export default function Home() {
       </div>
 
       <div className="flex-1 flex flex-col relative bg-[#09090b]">
-        {/* DOT GRID BACKGROUND (Miro/Figma style) */}
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <TopHeader 
