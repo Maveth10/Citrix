@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import RightPanel from '../components/RightPanel';
+import TextPanel from '../components/TextPanel'; // Wpinamy naszą nową wtyczkę!
 
 interface Block {
   id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
@@ -17,7 +18,7 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v14-zindex');
+  const [pageSlug, setPageSlug] = useState('titan-v15');
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -81,70 +82,57 @@ export default function Home() {
     return () => window.removeEventListener('wheel', handleGlobalWheel);
   }, [activeId, isMediaManagerOpen]);
 
-  const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące okna', icon: '🪟' },
-    { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' },
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
-  ];
-
-  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
-    tekst: [ { label: 'Tytuł (H1)', type: 'h1', variant: '' }, { label: 'Nagłówek (H2)', type: 'h2', variant: '' }, { label: 'Akapit (P)', type: 'p', variant: '' }, { label: '🌟 Wstęga', type: 'ribbon', variant: '' }, { label: 'Zwijane FAQ', type: 'faq', variant: '' } ],
-    obraz: [ { label: 'Zdjęcie', type: 'img', variant: 'photo' }, { label: 'Wycięte (PNG)', type: 'img', variant: 'transparent' } ],
-    przycisk: [ { label: 'Pełny kolor', type: 'button', variant: '' }, { label: 'Tylko Obrys', type: 'button', variant: 'outline' }, { label: 'Gradient', type: 'button', variant: 'gradient' } ],
-    grafika: [ { label: 'Kwadrat', type: 'shape', variant: 'box' }, { label: 'Koło', type: 'shape', variant: 'circle' }, { label: 'Linia', type: 'shape', variant: 'line' } ],
-    pola: [ { label: 'Sekcja', type: 'section', variant: '' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane', type: 'container', variant: 'designed' } ],
-    wideo: [ { label: 'YouTube Wideo', type: 'video', variant: '' } ],
-    formularze: [ { label: 'Formularz Kontaktowy', type: 'form', variant: '' }, { label: 'Pole Tekstowe', type: 'input', variant: '' }, { label: 'Wiadomość', type: 'textarea', variant: '' } ],
-    menu: [ { label: 'Menu Poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu Hamburger', type: 'menu', variant: 'hamburger'} ],
-    wyskakujace: [ { label: 'Popup', type: 'popup', variant: '' } ],
-    lista: [ { label: 'Lista punktowana', type: 'list', variant: '' } ],
-    galeria: [ { label: '✨ Siatka', type: 'grid', variant: 'gallery-grid' }, { label: 'Karuzela', type: 'carousel', variant: '' } ],
-    social: [ { label: 'Ikonki Social', type: 'social', variant: '' } ],
-    osadzona: [ { label: 'iFrame Strony', type: 'embed', variant: 'site' }, { label: 'Kod HTML', type: 'embed', variant: 'html' } ]
-  };
-
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const generateId = () => Math.floor(Math.random() * 10000000);
+    
     let newBlock: Block = {
-      id: generateId(), type, name: label.toUpperCase(), children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined, hoverStyles: {},
+      id: generateId(), type, name: label.toUpperCase(),
+      children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
+      hoverStyles: {}, entranceAnim: 'none',
       styles: { 
         position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', 
         padding: '10px', margin: '0px', width: '300px', height: 'auto', 
-        backgroundColor: 'transparent', zIndex: 1, overflow: 'hidden', // Z-INDEX domyślny 1, żeby obiekty z 'absolute' na siebie wpadały poprawnie
-        bgType: 'color', filterBlur: 0, filterBrightness: 100, filterContrast: 100, mixBlendMode: 'normal'
+        backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
+        opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden', zIndex: 1,
+        bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)',
+        filterBlur: 0, filterBrightness: 100, filterContrast: 100, mixBlendMode: 'normal', textShadow: 'none'
       },
     };
 
-    if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; }
-    if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
-    if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
-    if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = '900'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
-    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
-    if (type === 'list') { newBlock.text = '• Pierwszy<br>• Drugi<br>• Trzeci'; newBlock.styles.fontSize = '16px'; newBlock.styles.lineHeight = '2'; }
+    if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px'; newBlock.styles.width='fit-content';} }
+    if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; if(variant==='brand'){newBlock.styles.borderBottom='3px solid #3b82f6'; newBlock.styles.width='fit-content';} }
+    if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu. Możesz go edytować.'; newBlock.styles.fontSize = '16px'; if(variant==='brand'){newBlock.styles.fontStyle='italic'; newBlock.styles.borderLeft='4px solid #3b82f6'; newBlock.styles.paddingLeft='15px';} }
+    if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.color = '#000'; newBlock.styles.padding = '20px 0'; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = '900'; newBlock.styles.display = 'block'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 GORĄCA WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }, { type: 'text', value: '-50% NA WSZYSTKO' }]; }
+    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
     
-    if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; }
+    if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.children = [{id:generateId(), type:'h1', name:'TYTUŁ HERO', text:'Przyszłość Kina', styles:{fontSize:'64px', fontWeight:'900', color:'#fff', textAlign:'center', overflow:'hidden', wordBreak:'break-word', margin:'0'}}, {id:generateId(), type:'p', name:'SUBTYTUŁ', text:'Tło wideo z przyciemnieniem, działające natywnie w HTML5.', styles:{fontSize:'20px', color:'#ccc', textAlign:'center', overflow:'hidden', wordBreak:'break-word'}}]; } }
+    if (type === 'container' && variant === 'text-combo') { newBlock.styles.gap='10px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold', overflow:'hidden', wordBreak:'break-word'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px', overflow:'hidden', wordBreak:'break-word'}}] }
     if (type === 'container' && variant === 'empty') { newBlock.styles.minHeight = '150px'; newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.width = '100%'; }
     if (type === 'container' && variant === 'designed') { newBlock.styles.minHeight = '200px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '16px'; newBlock.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; newBlock.styles.padding = '30px'; newBlock.styles.width = '100%'; }
     
-    if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; newBlock.styles.objectPositionX = 50; newBlock.styles.objectPositionY = 50; if(variant==='transparent'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain'; newBlock.styles.height='200px'; newBlock.styles.width='200px';} }
-    if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.fontWeight = 'bold'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; }
-    if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
-    
+    if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; newBlock.styles.objectPositionX = 50; newBlock.styles.objectPositionY = 50; if(variant==='transparent'||variant==='illustration'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain';} if(variant==='photo'){newBlock.styles.border='8px solid #fff'; newBlock.styles.boxShadow='0 4px 6px rgba(0,0,0,0.1)';} }
+    if (type === 'button') { newBlock.text = variant==='share' ? '🔗 Udostępnij' : 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.fontWeight = 'bold'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; if (!variant) { newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; } if (variant === 'outline') { newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.color = '#000'; newBlock.styles.border = '2px solid #000'; } if (variant === 'gradient') { newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.bgType = 'image'; newBlock.styles.bgImage = 'linear-gradient(135deg, #f43f5e, #8b5cf6)'; newBlock.styles.color = '#fff'; newBlock.styles.border = 'none'; } }
+    if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='line'){newBlock.styles.width='100%'; newBlock.styles.height='2px'; newBlock.styles.backgroundColor='#ccc';} }
     if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
-    if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; }
+    if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
     if (type === 'form') { newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='30px'; newBlock.styles.borderRadius='12px'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.05)'; newBlock.styles.width = '100%'; }
+    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME<br><br>O NAS<br><br>KONTAKT';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
     if (type === 'input') { newBlock.name = 'email'; newBlock.text = 'Adres e-mail'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#f9fafb'; }
-    if (type === 'textarea') { newBlock.name = 'message'; newBlock.text = 'Wiadomość...'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.height = '120px'; }
-    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? '<button>HTML</button>' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
-    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; }
-    if (type === 'popup') { newBlock.styles.position='fixed'; newBlock.styles.top='50%'; newBlock.styles.left='50%'; newBlock.styles.transform='translate(-50%, -50%)'; newBlock.styles.width='400px'; newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='40px'; newBlock.styles.borderRadius='20px'; newBlock.styles.zIndex=999; }
-    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
+    if (type === 'textarea') { newBlock.name = 'message'; newBlock.text = 'Twoja wiadomość...'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.height = '120px'; }
+    if (type === 'map') { newBlock.src = 'https://maps.google.com/maps?q=Warszawa&t=&z=13&ie=UTF8&iwloc=&output=embed'; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
+    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? 'Tu wklej kod HTML' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; newBlock.styles.backgroundColor = variant==='html' ? '#111' : 'transparent'; newBlock.styles.color = '#0f0'; }
+    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0', 'https://images.unsplash.com/photo-1555421689-491a97ff2040']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
+    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover', overflow:'hidden'}}]; }
+    if (type === 'popup') { newBlock.styles.position='fixed'; newBlock.styles.top='50%'; newBlock.styles.left='50%'; newBlock.styles.transform='translate(-50%, -50%)'; newBlock.styles.width='400px'; newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='40px'; newBlock.styles.borderRadius='20px'; newBlock.styles.boxShadow='0 0 0 9999px rgba(0,0,0,0.5)'; newBlock.styles.zIndex='999'; }
 
     setBlocks(prev => {
       const activeBlock = findBlockById(prev, activeId);
-      if (activeBlock && activeBlock.children) { const newArr = [...prev]; const target = findBlockById(newArr, activeId); target!.children!.push(newBlock); return newArr; } 
+      if (activeBlock && activeBlock.children) {
+        const newArr = [...prev];
+        const target = findBlockById(newArr, activeId);
+        target!.children!.push(newBlock);
+        return newArr;
+      } 
       return [...prev, newBlock];
     });
     setActiveId(newBlock.id);
@@ -160,7 +148,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V14.5! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V15 (Moduły)! Link: /live/${pageSlug}`);
   };
 
   const handleAddMedia = () => { if (!activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe']; updateActiveBlock({ images: newImages }); setSelectedMediaIndex(newImages.length - 1); };
@@ -182,10 +170,18 @@ export default function Home() {
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements, b: Block) => {
     const isActive = activeId === b.id;
     return (
-      <Tag style={{ fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, zIndex: 10, position: 'relative' }}
+      <Tag
+        style={{
+          fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, 
+          lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', 
+          outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow,
+          width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', 
+          alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, zIndex: 10, position: 'relative'
+        }}
         contentEditable={isActive && isEditing} suppressContentEditableWarning={true}
         onDoubleClick={(e: any) => { e.stopPropagation(); setIsEditing(true); }}
-        onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }} dangerouslySetInnerHTML={{ __html: b.text || '' }}
+        onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }}
+        dangerouslySetInnerHTML={{ __html: b.text || '' }}
       />
     );
   };
@@ -193,26 +189,42 @@ export default function Home() {
   const renderCanvasBlock = (b: Block) => {
     const isActive = activeId === b.id;
     const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
+    
+    const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
     const bgStyles = { ...b.styles };
     if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
-    if (b.styles.bgType === 'image' || b.styles.bgType === 'video') bgStyles.backgroundColor = 'transparent';
-    const containerStyles = { ...bgStyles, filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, mixBlendMode: b.styles.mixBlendMode || 'normal', cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default' };
+    if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
+    const containerStyles = {
+      ...bgStyles,
+      filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`,
+      mixBlendMode: b.styles.mixBlendMode || 'normal',
+      cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default'
+    };
 
     return (
-      <div id={`block-${b.id}`} key={b.id} style={containerStyles} onClick={(e) => { e.stopPropagation(); }} 
-        onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
-        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
+      <div 
+        id={`block-${b.id}`} key={b.id} style={containerStyles} onClick={(e) => { e.stopPropagation(); }} 
+        onMouseDown={(e) => {
+          e.stopPropagation(); 
+          if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); }
+          if ((isActive && isEditing) || isMediaManagerOpen) return;
+          if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 });
+        }}
+        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
-        {b.styles.bgOverlay && (b.styles.bgType === 'image' || b.styles.bgType === 'video') && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
-        {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200]">{b.name}</div>}
+        {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
+
+        {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
         
         {isActive && !isEditing && (
           <>
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
+            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] shadow-md hover:bg-blue-500 transition-colors"
+              onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }}
+            />
           </>
         )}
 
@@ -246,7 +258,7 @@ export default function Home() {
         
         {b.type === 'img' && (
           <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: 10}} className="group/img">
-            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`}} />
+            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500 ${b.styles.imgHoverZoom ? 'group-hover/img:scale-110' : ''} ${b.styles.imgGrayscale ? 'grayscale group-hover/img:grayscale-0' : ''}`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: b.styles.imgHoverZoom ? undefined : `scale(${b.styles.imageScale || 1})`}} />
           </div>
         )}
         
@@ -271,6 +283,29 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
   const isTextType = activeBlock && ['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type);
+
+  // --- ZREDUKOWANE KATEGORIE (TEKST USUNIĘTY - JEST WE WTYCZCE) ---
+  const categories = [
+    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
+    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
+    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące okna', icon: '🪟' },
+    { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' }, { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+  ];
+
+  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
+    // "tekst" USUNIĘTY Z TEJ LISTY - JEST OBSŁUGIWANY PRZEZ TextPanel.tsx!
+    obraz: [ { label: 'Zdjęcie', type: 'img', variant: 'photo' }, { label: 'Wycięte (PNG)', type: 'img', variant: 'transparent' } ],
+    przycisk: [ { label: 'Pełny kolor', type: 'button', variant: '' }, { label: 'Tylko Obrys', type: 'button', variant: 'outline' }, { label: 'Gradient', type: 'button', variant: 'gradient' } ],
+    grafika: [ { label: 'Kwadrat', type: 'shape', variant: 'box' }, { label: 'Linia', type: 'shape', variant: 'line' } ],
+    pola: [ { label: 'Sekcja Klasyczna', type: 'section', variant: '' }, { label: '🎬 Wideo Hero', type: 'section', variant: 'video-hero' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane', type: 'container', variant: 'designed' } ],
+    wideo: [ { label: 'YouTube Wideo', type: 'video', variant: '' } ],
+    formularze: [ { label: 'Formularz Kontaktowy', type: 'form', variant: '' }, { label: 'Pole Tekstowe', type: 'input', variant: '' }, { label: 'Wiadomość', type: 'textarea', variant: '' }, { label: 'Mapa Google', type: 'map', variant: '' } ],
+    menu: [ { label: 'Menu Poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu Pionowe', type: 'menu', variant: 'vertical' } ],
+    wyskakujace: [ { label: 'Popup', type: 'popup', variant: '' } ],
+    galeria: [ { label: '✨ Siatka z Zoomem', type: 'grid', variant: 'gallery-grid' }, { label: 'Karuzela (Slider)', type: 'carousel', variant: '' } ],
+    social: [ { label: 'Ikonki Social', type: 'social', variant: '' }, { label: 'Pasek Udostępniania', type: 'button', variant: 'share' }, { label: 'Kanał Insta', type: 'grid', variant: 'insta'} ],
+    osadzona: [ { label: 'iFrame Strony', type: 'embed', variant: 'site' }, { label: 'Własny kod HTML', type: 'embed', variant: 'html' } ]
+  };
 
   return (
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
@@ -299,11 +334,18 @@ export default function Home() {
           </div>
         )}
         {leftTab === 'add' && addCategory && (
-          <div className="absolute left-[100%] top-0 w-80 bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.6)] z-30 flex flex-col">
+          <div className="absolute left-[100%] top-0 w-[340px] bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.6)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-4 border-b border-neutral-800 bg-[#161616]"><h3 className="text-[11px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
+            
+            {/* NOWOŚĆ V15: ROUTING WTYCZEK */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-              {menuOptions[addCategory]?.map((opt, i) => (<button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition border-l-4 hover:border-l-blue-500"><span className="text-sm font-bold text-white block">{opt.label}</span></button>))}
+              {addCategory === 'tekst' ? (
+                <TextPanel handleAddBlock={handleAddBlock} />
+              ) : (
+                menuOptions[addCategory]?.map((opt, i) => (<button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition border-l-4 hover:border-l-blue-500"><span className="text-sm font-bold text-white block">{opt.label}</span></button>))
+              )}
             </div>
+            
           </div>
         )}
       </div>
@@ -324,7 +366,9 @@ export default function Home() {
 
         {activeBlock && isTextType && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-white border border-neutral-200 shadow-[0_10px_40px_rgba(0,0,0,0.2)] rounded-lg flex items-center px-2 py-1.5 gap-1 text-black animate-in fade-in slide-in-from-top-4">
-            <select value={activeBlock.type} onChange={e => updateActiveBlock({ type: e.target.value })} className="text-xs bg-transparent outline-none cursor-pointer p-1.5 font-bold border-r border-neutral-200 hover:bg-neutral-50 rounded"><option value="h1">Tytuł (H1)</option><option value="h2">Nagłówek (H2)</option><option value="p">Akapit (P)</option><option value="button">Przycisk</option></select>
+            <select value={activeBlock.type} onChange={e => updateActiveBlock({ type: e.target.value })} className="text-xs bg-transparent outline-none cursor-pointer p-1.5 font-bold border-r border-neutral-200 hover:bg-neutral-50 rounded">
+              <option value="h1">Tytuł (H1)</option><option value="h2">Nagłówek (H2)</option><option value="p">Akapit (P)</option><option value="button">Przycisk</option>
+            </select>
             <div className="flex items-center border-r border-neutral-200 px-2"><input type="text" value={activeBlock.styles.fontSize || '16px'} onChange={e => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="w-12 text-xs text-center outline-none bg-neutral-100 rounded py-1" /></div>
             <button onMouseDown={e => {e.preventDefault(); document.execCommand('bold');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded font-black text-sm">B</button>
             <button onMouseDown={e => {e.preventDefault(); document.execCommand('italic');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded italic font-serif text-sm">I</button>
@@ -334,7 +378,11 @@ export default function Home() {
             <button onClick={() => updateActiveBlock({ styles: { textAlign: 'center', justifyContent: 'center' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'center' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥⇤</button>
             <button onClick={() => updateActiveBlock({ styles: { textAlign: 'right', justifyContent: 'flex-end' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'right' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥</button>
             <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
-            <div className="relative flex items-center justify-center w-8 h-8 hover:bg-neutral-200 rounded cursor-pointer overflow-hidden" title="Kolor Tekstu"><span className="font-bold text-sm" style={{color: activeBlock.styles.color}}>A</span><div className="absolute bottom-1 w-4 h-1 rounded-sm" style={{backgroundColor: activeBlock.styles.color || '#000'}}></div><input type="color" value={activeBlock.styles.color || '#000000'} onChange={e => { updateActiveBlock({ styles: { color: e.target.value }}); document.execCommand('foreColor', false, e.target.value); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" /></div>
+            <div className="relative flex items-center justify-center w-8 h-8 hover:bg-neutral-200 rounded cursor-pointer overflow-hidden" title="Kolor Tekstu">
+               <span className="font-bold text-sm" style={{color: activeBlock.styles.color}}>A</span>
+               <div className="absolute bottom-1 w-4 h-1 rounded-sm" style={{backgroundColor: activeBlock.styles.color || '#000'}}></div>
+               <input type="color" value={activeBlock.styles.color || '#000000'} onChange={e => { updateActiveBlock({ styles: { color: e.target.value }}); document.execCommand('foreColor', false, e.target.value); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            </div>
           </div>
         )}
 
