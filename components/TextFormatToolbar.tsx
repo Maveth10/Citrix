@@ -1,29 +1,63 @@
 import React from 'react';
 
-interface TextFormatToolbarProps { activeBlock: any; updateActiveBlock: (u: any) => void; }
+interface TextFormatToolbarProps {
+  activeBlock: any;
+  updateActiveBlock: (updates: any) => void;
+}
 
 export default function TextFormatToolbar({ activeBlock, updateActiveBlock }: TextFormatToolbarProps) {
-  if (!activeBlock || !['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type)) return null;
+  if (!activeBlock || !['h1', 'h2', 'p', 'button', 'marquee', 'list', 'faq'].includes(activeBlock.type)) return null;
+
+  // Słownik profesjonalnych fontów webowych
+  const fonts = [
+    { label: 'Systemowa (Domyślna)', value: 'inherit' },
+    { label: 'Inter (Nowoczesna)', value: '"Inter", sans-serif' },
+    { label: 'Arial (Klasyczna)', value: 'Arial, Helvetica, sans-serif' },
+    { label: 'Times New Roman (Seryfowa)', value: '"Times New Roman", Times, serif' },
+    { label: 'Courier New (Mono)', value: '"Courier New", Courier, monospace' },
+    { label: 'Georgia (Elegancka)', value: 'Georgia, serif' },
+    { label: 'Impact (Plakatowa)', value: 'Impact, fantasy' }
+  ];
 
   return (
-    <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-white border border-neutral-200 shadow-[0_10px_40px_rgba(0,0,0,0.2)] rounded-lg flex items-center px-2 py-1.5 gap-1 text-black animate-in fade-in slide-in-from-top-4">
-      <select value={activeBlock.type} onChange={e => updateActiveBlock({ type: e.target.value })} className="text-xs bg-transparent outline-none cursor-pointer p-1.5 font-bold border-r border-neutral-200 hover:bg-neutral-50 rounded">
-        <option value="h1">Tytuł (H1)</option><option value="h2">Nagłówek (H2)</option><option value="p">Akapit (P)</option><option value="button">Przycisk</option>
+    <div className="h-12 bg-[#161616] border-b border-black flex items-center justify-center gap-3 text-xs z-[200] shadow-sm">
+      
+      {/* WYBÓR CZCIONKI */}
+      <select 
+        value={activeBlock.styles.fontFamily || 'inherit'} 
+        onChange={(e) => updateActiveBlock({ styles: { fontFamily: e.target.value }})}
+        className="bg-black text-white font-bold border border-neutral-700 rounded px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer"
+      >
+        {fonts.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
       </select>
-      <div className="flex items-center border-r border-neutral-200 px-2"><input type="text" value={activeBlock.styles.fontSize || '16px'} onChange={e => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="w-12 text-xs text-center outline-none bg-neutral-100 rounded py-1" /></div>
-      <button onMouseDown={e => {e.preventDefault(); document.execCommand('bold');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded font-black text-sm">B</button>
-      <button onMouseDown={e => {e.preventDefault(); document.execCommand('italic');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded italic font-serif text-sm">I</button>
-      <button onMouseDown={e => {e.preventDefault(); document.execCommand('underline');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded underline text-sm">U</button>
-      <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
-      <button onClick={() => updateActiveBlock({ styles: { textAlign: 'left', justifyContent: 'flex-start' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'left' ? 'bg-blue-100 text-blue-600' : ''}`}>⇤</button>
-      <button onClick={() => updateActiveBlock({ styles: { textAlign: 'center', justifyContent: 'center' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'center' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥⇤</button>
-      <button onClick={() => updateActiveBlock({ styles: { textAlign: 'right', justifyContent: 'flex-end' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'right' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥</button>
-      <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
-      <div className="relative flex items-center justify-center w-8 h-8 hover:bg-neutral-200 rounded cursor-pointer overflow-hidden" title="Kolor Tekstu">
-         <span className="font-bold text-sm" style={{color: activeBlock.styles.color}}>A</span>
-         <div className="absolute bottom-1 w-4 h-1 rounded-sm" style={{backgroundColor: activeBlock.styles.color || '#000'}}></div>
-         <input type="color" value={activeBlock.styles.color || '#000000'} onChange={e => { updateActiveBlock({ styles: { color: e.target.value }}); document.execCommand('foreColor', false, e.target.value); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+
+      <div className="w-px h-5 bg-neutral-800 mx-1"></div>
+
+      {/* WYRÓWNANIE TEKSTU */}
+      <div className="flex bg-black rounded border border-neutral-800 overflow-hidden">
+        <button onClick={() => updateActiveBlock({ styles: { textAlign: 'left' }})} className={`px-3 py-1.5 hover:bg-neutral-800 transition ${activeBlock.styles.textAlign === 'left' ? 'text-blue-400 bg-neutral-800' : 'text-neutral-400'}`}>⫷</button>
+        <div className="w-px bg-neutral-800"></div>
+        <button onClick={() => updateActiveBlock({ styles: { textAlign: 'center' }})} className={`px-3 py-1.5 hover:bg-neutral-800 transition ${activeBlock.styles.textAlign === 'center' ? 'text-blue-400 bg-neutral-800' : 'text-neutral-400'}`}>⫼</button>
+        <div className="w-px bg-neutral-800"></div>
+        <button onClick={() => updateActiveBlock({ styles: { textAlign: 'right' }})} className={`px-3 py-1.5 hover:bg-neutral-800 transition ${activeBlock.styles.textAlign === 'right' ? 'text-blue-400 bg-neutral-800' : 'text-neutral-400'}`}>⫸</button>
       </div>
+      
+      <div className="w-px h-5 bg-neutral-800 mx-1"></div>
+      
+      {/* KOLOR TEKSTU */}
+      <div className="flex items-center gap-2 bg-black px-2 py-1 rounded border border-neutral-800">
+        <span className="text-neutral-500">Kolor:</span>
+        <input type="color" value={activeBlock.styles.color || '#000000'} onChange={(e) => updateActiveBlock({ styles: { color: e.target.value }})} className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded overflow-hidden" title="Kolor tekstu"/>
+      </div>
+      
+      <div className="w-px h-5 bg-neutral-800 mx-1"></div>
+      
+      {/* ROZMIAR TEKSTU */}
+      <div className="flex items-center gap-1 bg-black px-2 py-1.5 rounded border border-neutral-800">
+        <span className="text-neutral-500">Wielkość:</span>
+        <input type="text" value={activeBlock.styles.fontSize || '16px'} onChange={(e) => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="w-14 bg-transparent text-white font-mono outline-none text-center" placeholder="np. 24px" />
+      </div>
+
     </div>
   );
 }

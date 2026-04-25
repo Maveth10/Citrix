@@ -35,13 +35,18 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
   return (
     <div id={`block-${b.id}`} style={containerStyles} onClick={(e) => { e.stopPropagation(); }} 
       onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        // NOWOŚĆ V16.5: Jeśli to obraz lub galeria, otwórz Media Manager!
+        if (b.type === 'img' || b.images) {
+          setIsMediaManagerOpen(true);
+        }
+      }}
       className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
     >
-      {/* Tła Wideo i Overlay */}
       {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
       {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
       
-      {/* Elementy Wstęgi (Marquee) */}
       {b.type === 'ribbon' && b.ribbonItems && (
         <div style={{ overflow: 'hidden', width: '100%', display: 'flex', whiteSpace: 'nowrap', alignItems: 'center', height: '100%', zIndex: 10, position: 'relative', pointerEvents:'none' }}>
            {[1, 2].map(group => (
@@ -56,7 +61,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
 
-      {/* Teksty i Przyciski */}
       {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1')}
       {b.type === 'p' && renderTextElement('p')}
       {b.type === 'list' && renderTextElement('div')}
@@ -65,21 +69,18 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
       {b.type === 'menu' && renderTextElement('nav')}
       {b.type === 'social' && renderTextElement('div')}
       
-      {/* Kształty, Mapy i Kody */}
       {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
       {b.type === 'video' && <div className="w-full h-full flex items-center justify-center bg-black text-red-500 font-bold border border-neutral-800 pointer-events-none z-10 relative text-4xl">▶</div>}
       {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">⚙️ Kod/iFrame</div>}
       {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none z-10 relative">🗺️ Mapa</div>}
       {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50 z-10 relative">{b.text}</div>}
       
-      {/* Zdjęcia */}
       {b.type === 'img' && (
         <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: 10}} className="group/img">
           <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`}} />
         </div>
       )}
       
-      {/* Galerie */}
       {b.type === 'carousel' && b.images && (
         <div className="w-full h-full relative overflow-hidden bg-neutral-100 pointer-events-none z-10">
           <img src={b.images[0]} className="w-full h-full object-cover" />
@@ -87,7 +88,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
       
-      {/* REKURENCJA: Renderowanie Dzieci wewnątrz Kontenerów */}
       {b.children && (
         <div className="w-full h-full min-h-[40px] relative pointer-events-none" style={{zIndex: 10}}>
            {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
@@ -99,7 +99,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
 
-      {/* UCHWYTY TRANSFORM BOX */}
       {isActive && !isEditing && (
         <>
           <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200]">{b.name}</div>
