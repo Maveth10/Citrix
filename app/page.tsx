@@ -15,8 +15,11 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v6');
+  const [pageSlug, setPageSlug] = useState('titan-v7');
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
+  
+  // NOWOŚĆ V7.0: Stan edycji tekstu bezpośrednio na płótnie (Inline Editing)
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const [interaction, setInteraction] = useState<{
     type: 'drag' | 'resize'; startX: number; startY: number;
@@ -46,10 +49,10 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
-  // --- SILNIK MYSZKI: DRAG & RESIZE ---
+  // --- SILNIK MYSZKI ---
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!interaction || !activeId) return;
+      if (!interaction || !activeId || isEditing) return; // Zablokuj przeciąganie, gdy piszemy tekst!
       e.preventDefault();
       
       const dx = (e.clientX - interaction.startX) / canvasZoom;
@@ -69,39 +72,24 @@ export default function Home() {
       window.addEventListener('mouseup', handleMouseUp);
     }
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [interaction, activeId, canvasZoom]);
+  }, [interaction, activeId, canvasZoom, isEditing]);
 
-  // --- NOWOŚĆ: SILNIK SCROLLA (ZOOM WNĘTRZA OBRAZU) ---
+  // --- SILNIK SCROLLA W OBRAZACH ---
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
       if (!activeId) return;
       const activeEl = document.getElementById(`block-${activeId}`);
-      
-      // Jeśli kółko myszy jest używane i kursor jest w obrębie zaznaczonego elementu
       if (activeEl && activeEl.contains(e.target as Node)) {
         setBlocks(prevBlocks => {
           const currentBlock = findBlockById(prevBlocks, activeId);
-          // Pozwalamy na zoom tylko dla obrazków
           if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
-          
-          e.preventDefault(); // Blokujemy przewijanie strony
-          
-          // Obliczamy nową skalę (od 1 do 10x)
+          e.preventDefault();
           const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
-          
-          const updateRecursive = (arr: Block[]): Block[] => {
-            return arr.map(b => {
-              if (b.id === activeId) return { ...b, styles: { ...b.styles, imageScale: newScale } };
-              if (b.children) return { ...b, children: updateRecursive(b.children) };
-              return b;
-            });
-          };
+          const updateRecursive = (arr: Block[]): Block[] => arr.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, imageScale: newScale } } : (b.children ? { ...b, children: updateRecursive(b.children) } : b));
           return updateRecursive(prevBlocks);
         });
       }
     };
-
-    // Używamy { passive: false } aby móc zablokować domyślne przewijanie strony e.preventDefault()
     window.addEventListener('wheel', handleGlobalWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleGlobalWheel);
   }, [activeId]);
@@ -113,14 +101,14 @@ export default function Home() {
       id: generateId(), type, name: label.toUpperCase(),
       children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
       hoverStyles: {}, entranceAnim: 'none',
-      styles: { position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', padding: '10px', margin: '0px', width: '300px', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden' }, // ZMIANA: Domyślny overflow: hidden zapobiegający wylewaniu
+      styles: { position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', padding: '10px', margin: '0px', width: '300px', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden' },
     };
 
     if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px'; newBlock.styles.width='fit-content';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; if(variant==='brand'){newBlock.styles.borderBottom='3px solid #3b82f6'; newBlock.styles.width='fit-content';} }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu. Możesz go edytować.'; newBlock.styles.fontSize = '16px'; if(variant==='brand'){newBlock.styles.fontStyle='italic'; newBlock.styles.borderLeft='4px solid #3b82f6'; newBlock.styles.paddingLeft='15px';} }
     if (type === 'marquee') { newBlock.text = 'PRZEWIJANY TEKST • OGŁOSZENIE • '; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = 'bold'; newBlock.styles.width = '100%'; newBlock.styles.overflow = 'hidden'; }
-    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ\n\nOdpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
+    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
     
     if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; }
     if (type === 'container' && variant === 'text-combo') { newBlock.styles.gap='10px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold', overflow:'hidden', wordBreak:'break-word'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px', overflow:'hidden', wordBreak:'break-word'}}] }
@@ -139,7 +127,7 @@ export default function Home() {
     if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
     if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
     if (type === 'form') { newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='30px'; newBlock.styles.borderRadius='12px'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.05)'; newBlock.styles.width = '100%'; }
-    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME\nO NAS\nKONTAKT'; newBlock.styles.whiteSpace='pre-wrap';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
+    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME<br><br>O NAS<br><br>KONTAKT';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
     if (type === 'input') { newBlock.name = 'email'; newBlock.text = 'Adres e-mail'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#f9fafb'; }
     if (type === 'textarea') { newBlock.name = 'message'; newBlock.text = 'Twoja wiadomość...'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.height = '120px'; }
     if (type === 'map') { newBlock.src = 'https://maps.google.com/maps?q=Warszawa&t=&z=13&ie=UTF8&iwloc=&output=embed'; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
@@ -167,22 +155,44 @@ export default function Home() {
       return removeRecursive(prev);
     });
     setActiveId(null);
+    setIsEditing(false);
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V7! Link: /live/${pageSlug}`);
   };
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">
-        <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-600 text-white font-bold' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
+        <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-600 text-white font-bold' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
           {b.children ? '📂' : '📄'} {b.name}
         </button>
         {b.children && renderLayerTree(b.children, depth + 1)}
       </div>
     ));
+  };
+
+  // --- RENDERER ELEMENTU Z INLINE EDITING V7.0 ---
+  const renderTextElement = (Tag: keyof JSX.IntrinsicElements, b: Block) => {
+    const isActive = activeId === b.id;
+    return (
+      <Tag
+        style={{
+          fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, 
+          lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', 
+          outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit',
+          width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', 
+          alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent
+        }}
+        contentEditable={isActive && isEditing}
+        suppressContentEditableWarning={true}
+        onDoubleClick={(e: any) => { e.stopPropagation(); setIsEditing(true); }}
+        onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }}
+        dangerouslySetInnerHTML={{ __html: b.text || '' }}
+      />
+    );
   };
 
   const renderCanvasBlock = (b: Block) => {
@@ -193,17 +203,22 @@ export default function Home() {
       <div 
         id={`block-${b.id}`}
         key={b.id} 
-        style={b.styles} 
-        onClick={(e) => { e.stopPropagation(); setActiveId(b.id); }} 
+        style={{...b.styles, cursor: isAbsolute && !isEditing ? 'move' : 'default'}} 
+        onClick={(e) => { e.stopPropagation(); }} 
         onMouseDown={(e) => {
-          e.stopPropagation(); setActiveId(b.id);
+          e.stopPropagation(); 
+          if (activeId !== b.id) {
+            setActiveId(b.id);
+            setIsEditing(false); // Reset edycji przy zmianie obiektu
+          }
+          if (isActive && isEditing) return; // Zezwól na natywne zaznaczanie tekstu podczas edycji
           if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 });
         }}
-        className={`group transition-all duration-200 ${isAbsolute ? 'cursor-move' : ''} ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
+        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
-        {isActive && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
+        {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
         
-        {isActive && (
+        {isActive && !isEditing && (
           <>
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
@@ -212,22 +227,22 @@ export default function Home() {
               className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] shadow-md hover:bg-blue-500 transition-colors"
               onMouseDown={(e) => {
                 e.stopPropagation();
-                const currentWidth = e.currentTarget.parentElement?.offsetWidth || 0;
-                const currentHeight = e.currentTarget.parentElement?.offsetHeight || 0;
-                setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: currentWidth, initialHeight: currentHeight });
+                setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 });
               }}
             />
           </>
         )}
 
-        {/* ZMIANA V6.6: Twarde blokowanie wylewania się tekstu przy zmianie ramki */}
-        {['h1', 'h2', 'marquee'].includes(b.type) && <h1 style={{fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word'}}>{b.text}</h1>}
-        {b.type === 'p' && <p style={{fontSize:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', fontStyle:b.styles.fontStyle, margin:0, overflow:'hidden', wordBreak:'break-word'}}>{b.text}</p>}
-        {b.type === 'button' && <div style={{width:'100%', height:'100%', display:'flex', alignItems:b.styles.alignItems, justifyContent: b.styles.justifyContent, overflow:'hidden', wordBreak:'break-word'}}>{b.text}</div>}
+        {/* Wdrożenie komponentów tekstowych z obsługą WYSIWYG */}
+        {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1', b)}
+        {b.type === 'p' && renderTextElement('p', b)}
+        {b.type === 'list' && renderTextElement('div', b)}
+        {b.type === 'faq' && renderTextElement('div', b)}
+        {b.type === 'button' && renderTextElement('div', b)}
+        {b.type === 'social' && renderTextElement('div', b)}
+        {b.type === 'menu' && renderTextElement('nav', b)}
+        
         {b.type === 'shape' && <div style={{width:'100%', height:'100%'}}></div>}
-        {b.type === 'menu' && b.variant !== 'menu-hamburger' ? <nav style={{width:'100%', height:'100%', whiteSpace: b.styles.whiteSpace, overflow:'hidden'}}>{b.text}</nav> : <div style={{overflow:'hidden'}}>{b.text}</div>}
-        {b.type === 'social' && <div style={{width:'100%', height:'100%', overflow:'hidden'}}>{b.text}</div>}
-        {b.type === 'faq' && <div className="font-bold text-sm pointer-events-none">{b.text?.split('\n\n')[0]} ▼</div>}
         {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4">🌍 {b.src || b.text}</div>}
         {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none">🗺️ Mapa Google</div>}
         {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50">{b.text}</div>}
@@ -235,7 +250,7 @@ export default function Home() {
         {b.type === 'img' && (
           <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative'}}>
             <img src={b.src} className="w-full h-full pointer-events-none" style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`, transition: interaction ? 'none' : 'transform 0.1s ease'}} />
-            {isActive && <div className="absolute top-1 left-1 bg-black/50 text-white text-[8px] px-1 rounded opacity-50 pointer-events-none">Zoom Myszki</div>}
+            {isActive && <div className="absolute top-1 left-1 bg-black/50 text-white text-[8px] px-1 rounded opacity-50 pointer-events-none">Mysz: Zoom</div>}
           </div>
         )}
         
@@ -248,7 +263,7 @@ export default function Home() {
         
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none">
-             {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy tutaj</span>}
+             {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
              <div className="pointer-events-auto w-full h-full" style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', gridTemplateColumns: 'inherit', alignItems: 'inherit', justifyItems: 'inherit', justifyContent: 'inherit' }}>
                 {b.children.map(child => renderCanvasBlock(child))}
              </div>
@@ -259,6 +274,7 @@ export default function Home() {
   };
 
   const activeBlock = findBlockById(blocks, activeId);
+  const isTextType = activeBlock && ['h1', 'h2', 'p', 'button', 'list', 'faq', 'menu', 'social', 'marquee'].includes(activeBlock.type);
 
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
@@ -348,7 +364,39 @@ export default function Home() {
           <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition shadow-[0_0_15px_rgba(37,99,235,0.4)]">ZAPISZ PROJEKT</button>
         </header>
 
-        <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => setActiveId(null)}>
+        {/* NOWOŚĆ V7.0: PŁYWAJĄCY PASEK FORMATOWANIA (TOP TOOLBAR) */}
+        {activeBlock && isTextType && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-white border border-neutral-200 shadow-[0_10px_40px_rgba(0,0,0,0.2)] rounded-lg flex items-center px-2 py-1.5 gap-1 text-black animate-in fade-in slide-in-from-top-4">
+            
+            <select value={activeBlock.type} onChange={e => updateActiveBlock({ type: e.target.value })} className="text-xs bg-transparent outline-none cursor-pointer p-1.5 font-bold border-r border-neutral-200 hover:bg-neutral-50 rounded">
+              <option value="h1">Tytuł (H1)</option><option value="h2">Nagłówek (H2)</option><option value="p">Akapit (P)</option><option value="button">Przycisk</option>
+            </select>
+            
+            <div className="flex items-center border-r border-neutral-200 px-2">
+              <input type="text" value={activeBlock.styles.fontSize || '16px'} onChange={e => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="w-12 text-xs text-center outline-none bg-neutral-100 rounded py-1" />
+            </div>
+
+            <button onMouseDown={e => {e.preventDefault(); document.execCommand('bold');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded font-black text-sm">B</button>
+            <button onMouseDown={e => {e.preventDefault(); document.execCommand('italic');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded italic font-serif text-sm">I</button>
+            <button onMouseDown={e => {e.preventDefault(); document.execCommand('underline');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded underline text-sm">U</button>
+            
+            <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
+
+            <button onClick={() => updateActiveBlock({ styles: { textAlign: 'left', justifyContent: 'flex-start' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'left' ? 'bg-blue-100 text-blue-600' : ''}`}>⇤</button>
+            <button onClick={() => updateActiveBlock({ styles: { textAlign: 'center', justifyContent: 'center' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'center' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥⇤</button>
+            <button onClick={() => updateActiveBlock({ styles: { textAlign: 'right', justifyContent: 'flex-end' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'right' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥</button>
+
+            <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
+
+            <div className="relative flex items-center justify-center w-8 h-8 hover:bg-neutral-200 rounded cursor-pointer overflow-hidden" title="Kolor Tekstu">
+               <span className="font-bold text-sm" style={{color: activeBlock.styles.color}}>A</span>
+               <div className="absolute bottom-1 w-4 h-1 rounded-sm" style={{backgroundColor: activeBlock.styles.color || '#000'}}></div>
+               <input type="color" value={activeBlock.styles.color || '#000000'} onChange={e => { updateActiveBlock({ styles: { color: e.target.value }}); document.execCommand('foreColor', false, e.target.value); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+            </div>
+          </div>
+        )}
+
+        <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
           <div style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'transform 0.2s ease-out' }} className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative">
              {blocks.map(b => renderCanvasBlock(b))}
           </div>
@@ -361,7 +409,6 @@ export default function Home() {
             <div className="p-4 bg-[#111] border-b border-neutral-800 flex justify-between items-center">
               <span className="font-black text-xs text-white truncate max-w-[150px]">{activeBlock.name}</span>
               <div className="flex gap-2">
-                {/* Wycofano zepsuty przycisk SKUP */}
                 <button onClick={removeActiveBlock} className="bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white text-[10px] px-2 py-1 rounded transition">USUŃ</button>
               </div>
             </div>
@@ -387,6 +434,11 @@ export default function Home() {
                         <div className="flex justify-between items-center"><span className="text-neutral-400">Kierunek</span><select value={activeBlock.styles.flexDirection} onChange={e => updateActiveBlock({ styles: { flexDirection: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded"><option value="row">Wiersz ➡</option><option value="column">Kolumna ⬇</option></select></div>
                         <div className="flex justify-between items-center"><span className="text-neutral-400">Wyrównanie ↕</span><select value={activeBlock.styles.alignItems} onChange={e => updateActiveBlock({ styles: { alignItems: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded"><option value="flex-start">Góra / Lewo</option><option value="center">Środek</option><option value="flex-end">Dół / Prawo</option></select></div>
                         <div className="flex justify-between items-center"><span className="text-neutral-400">Odstęp (Gap)</span><input type="text" value={activeBlock.styles.gap || '0px'} onChange={e => updateActiveBlock({ styles: { gap: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded w-16 text-right" /></div>
+                      </div>
+                    )}
+                    {activeBlock.styles.display === 'grid' && (
+                      <div className="flex flex-col gap-2 mt-3 text-xs">
+                        <div className="flex justify-between items-center"><span className="text-neutral-400">Kolumny (CSS)</span><input type="text" value={activeBlock.styles.gridTemplateColumns || 'repeat(2, 1fr)'} onChange={e => updateActiveBlock({ styles: { gridTemplateColumns: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded w-32 text-right" /></div>
                       </div>
                     )}
                   </div>
@@ -428,13 +480,12 @@ export default function Home() {
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800 flex flex-col gap-3">
                     <label className="text-[9px] font-bold text-neutral-500 block">KOLORY I TŁO</label>
                     <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Kolor tła</span><input type="color" value={activeBlock.styles.backgroundColor || 'transparent'} onChange={e => updateActiveBlock({ styles: { backgroundColor: e.target.value }})} className="w-8 h-8 rounded border-0 p-0 bg-transparent cursor-pointer" /></div>
-                    <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Kolor tekstu</span><input type="color" value={activeBlock.styles.color || '#000000'} onChange={e => updateActiveBlock({ styles: { color: e.target.value }})} className="w-8 h-8 rounded border-0 p-0 bg-transparent cursor-pointer" /></div>
                   </div>
 
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800 flex flex-col gap-3">
                     <label className="text-[9px] font-bold text-neutral-500 block">TYPOGRAFIA PRO</label>
-                    <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Rozmiar</span><input type="text" value={activeBlock.styles.fontSize || ''} onChange={e => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="bg-black text-white p-1.5 border border-neutral-700 rounded w-20 text-right"/></div>
-                    <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Grubość</span><input type="text" value={activeBlock.styles.fontWeight || ''} onChange={e => updateActiveBlock({ styles: { fontWeight: e.target.value }})} className="bg-black text-white p-1.5 border border-neutral-700 rounded w-20 text-right" placeholder="bold"/></div>
+                    <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Grubość (np. 900)</span><input type="text" value={activeBlock.styles.fontWeight || ''} onChange={e => updateActiveBlock({ styles: { fontWeight: e.target.value }})} className="bg-black text-white p-1.5 border border-neutral-700 rounded w-20 text-right" placeholder="bold"/></div>
+                    <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Transformacja</span><select value={activeBlock.styles.textTransform || 'none'} onChange={e => updateActiveBlock({ styles: { textTransform: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded"><option value="none">Brak</option><option value="uppercase">DUŻE LITERY</option></select></div>
                   </div>
                 </>
               )}
@@ -467,19 +518,23 @@ export default function Home() {
               {/* --- ZAKŁADKA 4: TREŚĆ --- */}
               {rightTab === 'interactions' && (
                 <div className="flex flex-col gap-3 text-xs">
-                  <label className="text-[9px] font-bold text-neutral-500 block uppercase">Dane logiczne i treści</label>
+                  <label className="text-[9px] font-bold text-neutral-500 block uppercase">Dane logiczne i źródła</label>
                   <label className="text-neutral-400">Nazwa warstwy:</label>
                   <input type="text" value={activeBlock.name} onChange={e => updateActiveBlock({ name: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full" />
                   
-                  {['h1', 'h2', 'p', 'button', 'input', 'textarea', 'menu', 'list', 'social', 'marquee', 'faq'].includes(activeBlock.type) && <><label className="text-neutral-400 mt-2">Treść tekstowa:</label><textarea value={activeBlock.text} onChange={e => updateActiveBlock({ text: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full mt-2" rows={4} placeholder="Wpisz treść..." /></>}
+                  {isTextType && (
+                    <>
+                      <label className="text-neutral-400 mt-2 text-blue-400">Kod Źródłowy HTML (Opcjonalnie):</label>
+                      <textarea value={activeBlock.text} onChange={e => updateActiveBlock({ text: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full mt-2 font-mono text-[10px]" rows={6} placeholder="Kliknij dwa razy na obiekt na płótnie, aby edytować tekst prościej!" />
+                    </>
+                  )}
                   
                   {['img', 'embed', 'map'].includes(activeBlock.type) && <><label className="text-neutral-400 mt-2">Link Źródłowy (URL/iFrame src):</label><textarea value={activeBlock.src} onChange={e => updateActiveBlock({ src: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full mt-2" rows={3} /></>}
-                  
                   {activeBlock.type === 'video' && <><label className="text-neutral-400 mt-2">ID z YouTube:</label><input type="text" value={activeBlock.videoId} onChange={e => updateActiveBlock({ videoId: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full" /></>}
                   
                   {['carousel'].includes(activeBlock.type) && (
                     <>
-                      <label className="text-neutral-400 mt-2">Obrazy Galerii (Jeden pod drugim URL):</label>
+                      <label className="text-neutral-400 mt-2">Obrazy Galerii (URL jeden pod drugim):</label>
                       <textarea value={activeBlock.images?.join('\n')} onChange={e => updateActiveBlock({ images: e.target.value.split('\n').filter(s=>s.trim()!=='') })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full" rows={6} />
                     </>
                   )}
