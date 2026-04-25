@@ -14,8 +14,8 @@ export default function Home() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   
-  // NOWOŚĆ: Stan wybranej podkategorii w menu "Dodaj"
-  const [addCategory, setAddCategory] = useState<string>('tekst');
+  // ZMIANA V5.1: Kategoria startuje jako null (pusta), żeby menu boczne było domyślnie ukryte
+  const [addCategory, setAddCategory] = useState<string | null>(null);
   
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
   const [pageSlug, setPageSlug] = useState('wix-killer');
@@ -31,9 +31,9 @@ export default function Home() {
     };
 
     // 1. TEKST
-    if (type === 'h1') { newBlock.text = 'Wielki Nagłówek'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; newBlock.styles.lineHeight = '1.2'; }
-    if (type === 'h2') { newBlock.text = 'Podtytuł sekcji'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
-    if (type === 'p') { newBlock.text = 'To jest akapit. Kliknij tutaj, aby edytować tekst i dodać własną treść.'; newBlock.styles.fontSize = '16px'; newBlock.styles.color = '#4b5563'; }
+    if (type === 'h1') { newBlock.text = 'Wielki Tytuł'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; newBlock.styles.lineHeight = '1.2'; }
+    if (type === 'h2') { newBlock.text = 'Mały Tytuł'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
+    if (type === 'p') { newBlock.text = 'Akapit tekstu... Kliknij tutaj, aby edytować tekst i dodać własną treść.'; newBlock.styles.fontSize = '16px'; newBlock.styles.color = '#4b5563'; }
     
     // 2. OBRAZ
     if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80'; newBlock.styles.width = '100%'; newBlock.styles.height = '300px'; newBlock.styles.objectFit = 'cover'; newBlock.styles.borderRadius = '12px'; }
@@ -168,7 +168,7 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
 
-  // LISTA KATEGORII WIX
+  // KATEGORIE - Ikonografia dopasowana do oczekiwań
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' },
     { id: 'obraz', label: 'Obraz', icon: '🖼️' },
@@ -190,118 +190,127 @@ export default function Home() {
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
       
       {/* 1. WĄSKI PASEK NARZĘDZI (FAR LEFT) */}
-      <aside className="w-14 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-4 gap-4 z-50">
-        <button onClick={() => setLeftTab(leftTab==='add'?null:'add')} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
-        <button onClick={() => setLeftTab(leftTab==='layers'?null:'layers')} className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg transition ${leftTab==='layers'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
+      <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
+        <button onClick={() => { setLeftTab(leftTab==='add'?null:'add'); if(leftTab!=='add') setAddCategory(null); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
+        <button onClick={() => setLeftTab(leftTab==='layers'?null:'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='layers'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
       </aside>
 
-      {/* 2. ROZWIJANY PANEL ELEMENTÓW (WIX STYLE - 2 KOLUMNY DLA 'ADD') */}
-      {leftTab && (
-        <div className={`${leftTab === 'add' ? 'w-[450px] flex flex-row' : 'w-64 flex flex-col'} bg-[#161616] border-r border-neutral-800 h-full shadow-2xl z-40 transition-all`}>
-          
-          {leftTab === 'add' ? (
-            <>
-              {/* Kolumna lewa: Kategorie */}
-              <div className="w-1/3 bg-[#111] border-r border-neutral-800 h-full flex flex-col overflow-y-auto pt-2">
-                <div className="px-4 py-3 border-b border-neutral-800 mb-2 font-bold text-xs uppercase tracking-widest text-neutral-500">Dodaj</div>
-                {categories.map(cat => (
-                  <button key={cat.id} onClick={() => setAddCategory(cat.id)} className={`w-full text-left px-4 py-3 text-[11px] font-medium transition flex items-center gap-2 ${addCategory === cat.id ? 'bg-neutral-800 text-white border-l-2 border-blue-500' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 border-l-2 border-transparent'}`}>
-                    <span>{cat.icon}</span> {cat.label}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Kolumna prawa: Elementy do dodania */}
-              <div className="w-2/3 h-full overflow-y-auto p-5 bg-[#161616]">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">{categories.find(c => c.id === addCategory)?.label}</h3>
-                  <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button>
-                </div>
+      {/* 2. ROZWIJANY PANEL BOCZNY (KASKADA WIX) */}
+      <div className="relative z-40 h-full flex">
+        
+        {/* KOLUMNA 1: Kategorie (Widoczna gdy kliknięty +) */}
+        {leftTab === 'add' && (
+          <div className="w-64 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+            <div className="px-5 py-4 border-b border-neutral-800 flex justify-between items-center">
+              <span className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">DODAJ</span>
+              <button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-2">
+              {categories.map(cat => (
+                <button 
+                  key={cat.id} 
+                  onClick={() => setAddCategory(cat.id)} 
+                  className={`w-full text-left px-5 py-3 text-xs font-semibold transition flex items-center gap-3 border-l-2 ${addCategory === cat.id ? 'bg-neutral-800/50 text-white border-blue-500' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 border-transparent'}`}
+                >
+                  <span className="w-4 text-center">{cat.icon}</span> {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-                <div className="flex flex-col gap-3">
-                  {addCategory === 'tekst' && (
-                    <>
-                      <button onClick={() => handleAddBlock('h1')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-left transition"><span className="text-2xl font-black block">Wielki Tytuł</span><span className="text-[10px] text-neutral-400">Nagłówek sekcji (H1)</span></button>
-                      <button onClick={() => handleAddBlock('h2')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-left transition"><span className="text-lg font-bold block">Mały Tytuł</span><span className="text-[10px] text-neutral-400">Podtytuł (H2)</span></button>
-                      <button onClick={() => handleAddBlock('p')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-left transition"><span className="text-sm block">Akapit tekstu...</span><span className="text-[10px] text-neutral-400 mt-1 block">Zwykły blok tekstu</span></button>
-                    </>
-                  )}
-                  {addCategory === 'obraz' && (
-                    <>
-                      <button onClick={() => handleAddBlock('img')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs font-bold text-left transition flex gap-3 items-center"><div className="w-12 h-12 bg-neutral-600 rounded flex items-center justify-center">🖼️</div> <div>Wypełnienie (Cover)<br/><span className="text-[9px] text-neutral-400 font-normal">Obraz na całą szerokość</span></div></button>
-                      <button onClick={() => handleAddBlock('img-contain')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs font-bold text-left transition flex gap-3 items-center"><div className="w-12 h-12 bg-neutral-600 rounded flex items-center justify-center text-xs">Logo</div> <div>Dopasowanie (Contain)<br/><span className="text-[9px] text-neutral-400 font-normal">Idealne dla logo i ikon</span></div></button>
-                    </>
-                  )}
-                  {addCategory === 'przycisk' && (
-                    <button onClick={() => handleAddBlock('button')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-center transition"><div className="bg-blue-600 text-white font-bold py-2 px-6 rounded inline-block text-xs">Standardowy Przycisk</div></button>
-                  )}
-                  {addCategory === 'grafika' && (
-                    <>
-                      <button onClick={() => handleAddBlock('shape-box')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-left">🟩 Kolorowy Kwadrat</button>
-                      <button onClick={() => handleAddBlock('shape-circle')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-left">🔵 Koło (Kropka)</button>
-                      <button onClick={() => handleAddBlock('line')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-left">➖ Linia separatora</button>
-                    </>
-                  )}
-                  {addCategory === 'pole' && (
-                    <>
-                      <button onClick={() => handleAddBlock('section')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs font-bold text-left border border-neutral-600">🟩 Sekcja (Cała szerokość)</button>
-                      <button onClick={() => handleAddBlock('container')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs font-bold text-left border border-neutral-700">🟦 Kontener (Pudełko)</button>
-                      <button onClick={() => handleAddBlock('grid')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs font-bold text-left border border-neutral-700">🔲 Siatka (2 kolumny)</button>
-                    </>
-                  )}
-                  {addCategory === 'wideo' && (
-                    <button onClick={() => handleAddBlock('video')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-center transition"><span className="text-3xl">▶️</span><br/><span className="text-xs mt-2 block font-bold">Odtwarzacz YouTube</span></button>
-                  )}
-                  {addCategory === 'formularz' && (
-                    <>
-                      <button onClick={() => handleAddBlock('form')} className="p-3 bg-emerald-900/20 hover:bg-emerald-900/40 border border-emerald-900/50 text-emerald-400 rounded-lg text-xs font-bold text-left">📝 Cały Formularz (Wysyła dane!)</button>
-                      <button onClick={() => handleAddBlock('input')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-left">Krótkie Pole (Input)</button>
-                      <button onClick={() => handleAddBlock('textarea')} className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-xs text-left">Długa Wiadomość (Textarea)</button>
-                    </>
-                  )}
-                  {addCategory === 'menu' && (
-                    <button onClick={() => handleAddBlock('menu')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-center transition font-bold text-xs tracking-widest border border-neutral-600">HOME | O NAS | KONTAKT</button>
-                  )}
-                  {addCategory === 'popup' && (
-                    <button onClick={() => handleAddBlock('popup')} className="p-4 bg-purple-900/20 hover:bg-purple-900/40 border border-purple-900/50 text-purple-400 rounded-lg text-center transition text-xs font-bold">🪟 Okno Wyskakujące (Modal / Z-index 999)</button>
-                  )}
-                  {addCategory === 'lista' && (
-                    <button onClick={() => handleAddBlock('list')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-left transition text-xs leading-loose">• Opcja A<br/>• Opcja B<br/>• Opcja C</button>
-                  )}
-                  {addCategory === 'galeria' && (
-                    <button onClick={() => handleAddBlock('gallery')} className="p-4 bg-indigo-900/20 hover:bg-indigo-900/40 border border-indigo-900/50 text-indigo-400 rounded-lg text-center transition font-bold text-xs">🎠 Karuzela Zdjęć (Slider)</button>
-                  )}
-                  {addCategory === 'social' && (
-                    <button onClick={() => handleAddBlock('social')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-center transition text-xl tracking-widest">📘 📸 🐦</button>
-                  )}
-                  {addCategory === 'embed' && (
-                    <button onClick={() => handleAddBlock('embed')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-center transition text-xs font-bold">🌍 Osadź Mapę Google (iFrame)</button>
-                  )}
-                  {addCategory === 'app' && (
-                    <button onClick={() => handleAddBlock('app')} className="p-4 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-center transition text-xs font-bold border border-dashed border-neutral-500">🧩 Zewnętrzny Widget Aplikacji</button>
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="p-4 border-b border-neutral-800 flex justify-between items-center bg-[#111]">
-                <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">Nawigator DOM</h2>
-                <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button>
-              </div>
-              <div className="flex-1 overflow-y-auto py-2">
-                {blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}
-              </div>
-            </>
-          )}
-        </div>
-      )}
+        {leftTab === 'layers' && (
+          <div className="w-64 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+            <div className="px-5 py-4 border-b border-neutral-800 flex justify-between items-center">
+              <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">Nawigator DOM</h2>
+              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-2">
+              {blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}
+            </div>
+          </div>
+        )}
+
+        {/* KOLUMNA 2: Wysuwany panel opcji dla danej kategorii (Kaskada) */}
+        {leftTab === 'add' && addCategory && (
+          <div className="absolute left-[100%] top-0 w-72 bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.5)] z-30 animate-in slide-in-from-left-8 flex flex-col">
+            <div className="flex justify-between items-center px-5 py-4 border-b border-neutral-800 bg-[#161616]">
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3>
+              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
+              {addCategory === 'tekst' && (
+                <>
+                  <button onClick={() => handleAddBlock('h1')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] hover:border-neutral-500 rounded-xl text-left transition"><span className="text-2xl font-black block text-white">Wielki Tytuł</span><span className="text-[10px] text-neutral-400 mt-1 block">Nagłówek sekcji (H1)</span></button>
+                  <button onClick={() => handleAddBlock('h2')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] hover:border-neutral-500 rounded-xl text-left transition"><span className="text-lg font-bold block text-white">Mały Tytuł</span><span className="text-[10px] text-neutral-400 mt-1 block">Podtytuł (H2)</span></button>
+                  <button onClick={() => handleAddBlock('p')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] hover:border-neutral-500 rounded-xl text-left transition"><span className="text-sm block text-neutral-300">Akapit tekstu...</span><span className="text-[10px] text-neutral-500 mt-2 block">Zwykły blok tekstu</span></button>
+                </>
+              )}
+              {addCategory === 'obraz' && (
+                <>
+                  <button onClick={() => handleAddBlock('img')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left transition flex gap-3 items-center"><div className="w-12 h-12 bg-[#333] rounded flex items-center justify-center text-lg">🖼️</div> <div>Wypełnienie (Cover)<br/><span className="text-[9px] text-neutral-500 font-normal block mt-1">Obraz na całą szerokość</span></div></button>
+                  <button onClick={() => handleAddBlock('img-contain')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left transition flex gap-3 items-center"><div className="w-12 h-12 bg-[#333] rounded flex items-center justify-center text-xs">Logo</div> <div>Dopasowanie (Contain)<br/><span className="text-[9px] text-neutral-500 font-normal block mt-1">Idealne dla logo i ikon</span></div></button>
+                </>
+              )}
+              {addCategory === 'przycisk' && (
+                <button onClick={() => handleAddBlock('button')} className="p-5 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-center transition flex justify-center"><div className="bg-white text-black font-bold py-2.5 px-6 rounded-full inline-block text-xs">Standardowy Przycisk</div></button>
+              )}
+              {addCategory === 'grafika' && (
+                <>
+                  <button onClick={() => handleAddBlock('shape-box')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left flex items-center gap-3"><div className="w-6 h-6 bg-blue-500 rounded-sm"></div> Kolorowy Kwadrat</button>
+                  <button onClick={() => handleAddBlock('shape-circle')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left flex items-center gap-3"><div className="w-6 h-6 bg-pink-500 rounded-full"></div> Koło (Kropka)</button>
+                  <button onClick={() => handleAddBlock('line')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left flex items-center gap-3"><div className="w-8 h-0.5 bg-neutral-400"></div> Linia separatora</button>
+                </>
+              )}
+              {addCategory === 'pole' && (
+                <>
+                  <button onClick={() => handleAddBlock('section')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-blue-900/50 rounded-xl text-xs font-bold text-left text-blue-400">🟩 Sekcja (Szeroka)</button>
+                  <button onClick={() => handleAddBlock('container')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left">🟦 Kontener (Pudełko)</button>
+                  <button onClick={() => handleAddBlock('grid')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-xs font-bold text-left">🔲 Siatka (2 kolumny)</button>
+                </>
+              )}
+              {addCategory === 'wideo' && (
+                <button onClick={() => handleAddBlock('video')} className="p-6 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-center transition flex flex-col items-center justify-center gap-2"><span className="text-4xl">▶️</span><span className="text-xs font-bold text-white mt-1">Odtwarzacz YouTube</span></button>
+              )}
+              {addCategory === 'formularz' && (
+                <>
+                  <button onClick={() => handleAddBlock('form')} className="p-4 bg-emerald-900/20 hover:bg-emerald-900/40 border border-emerald-900/50 text-emerald-400 rounded-xl text-xs font-bold text-left mb-2">📝 Formularz Leadów</button>
+                  <button onClick={() => handleAddBlock('input')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-[11px] text-left">Krótkie Pole (Input)</button>
+                  <button onClick={() => handleAddBlock('textarea')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-[11px] text-left">Wiadomość (Textarea)</button>
+                </>
+              )}
+              {addCategory === 'menu' && (
+                <button onClick={() => handleAddBlock('menu')} className="p-5 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-center transition font-bold text-[9px] tracking-widest text-neutral-300">HOME &nbsp;&nbsp; OFERTA &nbsp;&nbsp; KONTAKT</button>
+              )}
+              {addCategory === 'popup' && (
+                <button onClick={() => handleAddBlock('popup')} className="p-4 bg-purple-900/20 hover:bg-purple-900/40 border border-purple-900/50 text-purple-400 rounded-xl text-center transition text-xs font-bold">🪟 Wygeneruj Popup (Modal)</button>
+              )}
+              {addCategory === 'lista' && (
+                <button onClick={() => handleAddBlock('list')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-left transition text-xs leading-loose text-neutral-300 font-mono">1. Krok pierwszy<br/>2. Krok drugi<br/>3. Krok trzeci</button>
+              )}
+              {addCategory === 'galeria' && (
+                <button onClick={() => handleAddBlock('gallery')} className="p-5 bg-indigo-900/20 hover:bg-indigo-900/40 border border-indigo-900/50 text-indigo-400 rounded-xl text-center transition font-bold text-xs">🎠 Karuzela Zdjęć (Slider)</button>
+              )}
+              {addCategory === 'social' && (
+                <button onClick={() => handleAddBlock('social')} className="p-5 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-center transition text-2xl tracking-widest">📘 📸 🐦</button>
+              )}
+              {addCategory === 'embed' && (
+                <button onClick={() => handleAddBlock('embed')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] rounded-xl text-center transition text-xs font-bold text-neutral-300">🌍 Osadź Mapę (iFrame)</button>
+              )}
+              {addCategory === 'app' && (
+                <button onClick={() => handleAddBlock('app')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-[#333] border-dashed rounded-xl text-center transition text-xs font-bold text-neutral-400">🧩 Zewnętrzna Aplikacja</button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* 3. ŚRODEK (PŁÓTNO) */}
       <div className="flex-1 flex flex-col relative bg-[#222]">
         <header className="h-12 bg-[#1A1A1A] border-b border-black flex items-center justify-between px-6 z-30 shadow-md">
           <div className="flex items-center gap-3">
-             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Adres Publikacji:</span>
+             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Adres:</span>
              <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-black text-white border border-neutral-800 text-xs px-3 py-1 rounded outline-none focus:border-blue-500 w-48" />
           </div>
           <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition">ZAPISZ PROJEKT</button>
@@ -315,7 +324,7 @@ export default function Home() {
       </div>
 
       {/* 4. PRAWY INSPEKTOR (PROPERTIES) */}
-      <aside className="w-[320px] bg-[#161616] border-l border-neutral-800 z-40 overflow-y-auto flex flex-col">
+      <aside className="w-[320px] bg-[#161616] border-l border-neutral-800 z-40 overflow-y-auto flex flex-col shrink-0">
         {activeBlock ? (
           <>
             <div className="p-4 bg-[#111] border-b border-neutral-800 flex justify-between items-center">
