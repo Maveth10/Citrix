@@ -7,7 +7,7 @@ interface CanvasBlockProps {
   isEditing: boolean;
   setIsEditing: (val: boolean) => void;
   isMediaManagerOpen: boolean;
-  setIsMediaManagerOpen: (val: boolean) => void; // Odbieramy funkcję!
+  setIsMediaManagerOpen: (val: boolean) => void;
   setInteraction: (val: any) => void;
   updateActiveBlock: (updates: any) => void;
 }
@@ -21,7 +21,19 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
   if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
   if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
   
-  const containerStyles = { ...bgStyles, filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, mixBlendMode: b.styles.mixBlendMode || 'normal', cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', zIndex: b.styles.zIndex || 1 };
+  const containerStyles: any = { 
+    ...bgStyles, 
+    filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
+    mixBlendMode: b.styles.mixBlendMode || 'normal', 
+    cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
+    zIndex: b.styles.zIndex || 1 
+  };
+
+  // NAPRAWA V16.7: Zdejmujemy style Grida/Flexa z GŁÓWNEJ warstwy, by kontener się nie zgniatał!
+  if (b.children) {
+    containerStyles.display = 'flex';
+    containerStyles.flexDirection = 'column';
+  }
 
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements) => {
     return (
@@ -38,7 +50,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
       onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        // Teraz funkcja jest zdefiniowana i gotowa do użycia!
         if (b.type === 'img' || b.images) {
           setIsMediaManagerOpen(true);
         }
@@ -89,11 +100,21 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
       
-      {/* REKURENCJA - Podajemy funkcję w dół do kolejnych dzieci! */}
       {b.children && (
-        <div className="w-full h-full min-h-[40px] relative pointer-events-none" style={{zIndex: 10}}>
+        <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
            {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-           <div className="pointer-events-auto w-full h-full" style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', gridTemplateColumns: 'inherit', alignItems: 'inherit', justifyItems: 'inherit', justifyContent: 'inherit' }}>
+           
+           {/* NAPRAWA V16.7: Prawdziwy układ (Grid/Flex) nakładamy TYLKO na wewnetrzny pojemnik */}
+           <div className="pointer-events-auto w-full h-full" style={{ 
+             display: b.styles.display || 'flex', 
+             flexDirection: b.styles.flexDirection || 'column', 
+             gap: b.styles.gap, 
+             gridTemplateColumns: b.styles.gridTemplateColumns !== 'unset' ? b.styles.gridTemplateColumns : undefined, 
+             gridTemplateRows: b.styles.gridTemplateRows !== 'unset' ? b.styles.gridTemplateRows : undefined,
+             alignItems: b.styles.alignItems, 
+             justifyItems: b.styles.justifyItems, 
+             justifyContent: b.styles.justifyContent 
+           }}>
               {b.children.map((child: any) => (
                  <CanvasBlock 
                    key={child.id} 
@@ -103,7 +124,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                    isEditing={isEditing} 
                    setIsEditing={setIsEditing} 
                    isMediaManagerOpen={isMediaManagerOpen} 
-                   setIsMediaManagerOpen={setIsMediaManagerOpen} /* <--- PRZEKAZANIE DALEJ */
+                   setIsMediaManagerOpen={setIsMediaManagerOpen} 
                    setInteraction={setInteraction} 
                    updateActiveBlock={updateActiveBlock} 
                  />
