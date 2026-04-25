@@ -17,8 +17,7 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v13');
-  
+  const [pageSlug, setPageSlug] = useState('titan-v13-mars');
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -82,9 +81,75 @@ export default function Home() {
     return () => window.removeEventListener('wheel', handleGlobalWheel);
   }, [activeId, isMediaManagerOpen]);
 
+  // --- PEŁNY SŁOWNIK KATEGORII ---
+  const categories = [
+    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
+    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
+    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące okna', icon: '🪟' },
+    { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' },
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+  ];
+
+  // --- PEŁNA LISTA TWOICH OPCJI Z BAZY NA MARSIE ---
+  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
+    tekst: [
+      { label: 'Markowy tytuł', type: 'h1', variant: 'brand' }, { label: 'Tytuł', type: 'h1', variant: '' },
+      { label: 'Markowy nagłówek', type: 'h2', variant: 'brand' }, { label: 'Nagłówek', type: 'h2', variant: '' },
+      { label: 'Markowy akapit', type: 'p', variant: 'brand' }, { label: 'Akapit', type: 'p', variant: '' },
+      { label: 'Kombinacja tekstu', type: 'container', variant: 'text-combo' },
+      { label: 'Tekst przewijany (Wstęga)', type: 'ribbon', variant: '' }, { label: 'Tekst zwijany', type: 'faq', variant: '' }
+    ],
+    obraz: [
+      { label: 'Obraz strony', type: 'img', variant: 'site' }, { label: 'Zdjęcie', type: 'img', variant: 'photo' },
+      { label: 'Ilustracja', type: 'img', variant: 'illustration' }, { label: 'Element z wyciętym tłem', type: 'img', variant: 'transparent' },
+      { label: 'Galeria', type: 'carousel', variant: '' }
+    ],
+    przycisk: [
+      { label: 'Przycisk Zwykły', type: 'button', variant: '' }, { label: 'Pasek społecznościowy', type: 'social', variant: '' },
+      { label: 'Przyciski udostępniania', type: 'button', variant: 'share' }
+    ],
+    grafika: [
+      { label: 'Podstawowe kształty', type: 'shape', variant: 'box' }, { label: 'Grafika wektorowa', type: 'img', variant: 'illustration' },
+      { label: 'Naklejki', type: 'img', variant: 'transparent' }, { label: 'Ikony', type: 'img', variant: 'transparent' },
+      { label: 'Logo', type: 'h1', variant: 'logo' }, { label: 'Linie', type: 'shape', variant: 'line' }
+    ],
+    pola: [
+      { label: 'Puste pole (Kontener)', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane pole', type: 'container', variant: 'designed' },
+      { label: 'Pokaz slajdów', type: 'carousel', variant: '' }, { label: '🎬 Sekcja Wideo Hero', type: 'section', variant: 'video-hero' }
+    ],
+    wideo: [
+      { label: 'Wideo (Szerokie)', type: 'video', variant: '' }, { label: 'Odtwarzacze wideo dla social mediów', type: 'video', variant: 'social' }
+    ],
+    formularze: [
+      { label: 'Formularze', type: 'form', variant: '' }, { label: 'FAQ', type: 'faq', variant: '' }, { label: 'Mapy google', type: 'map', variant: '' }
+    ],
+    menu: [
+      { label: 'Menu poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu pionowe', type: 'menu', variant: 'vertical' },
+      { label: 'Menu hamburger', type: 'menu', variant: 'hamburger' }
+    ],
+    wyskakujace: [
+      { label: 'Wyskakujące okna', type: 'popup', variant: '' }
+    ],
+    lista: [
+      { label: 'FAQ', type: 'faq', variant: '' }, { label: 'Zwykła Lista', type: 'list', variant: '' }
+    ],
+    galeria: [
+      { label: 'Galeria', type: 'carousel', variant: '' }, { label: 'Siatka z Zoomem Pro', type: 'grid', variant: 'gallery-grid' },
+      { label: 'Kanał instagram', type: 'grid', variant: 'insta' }
+    ],
+    social: [
+      { label: 'Pasek społecznościowy', type: 'social', variant: '' }, { label: 'Odtwarzacz wideo z social mediów', type: 'video', variant: 'social' },
+      { label: 'Przyciski udostępniania', type: 'button', variant: 'share' }, { label: 'Kanał z insta', type: 'grid', variant: 'insta' }
+    ],
+    osadzona: [
+      { label: 'Osadzony kod HTML', type: 'embed', variant: 'html' }, { label: 'Osadź stronę (iFrame)', type: 'embed', variant: 'site' }
+    ]
+  };
+
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const generateId = () => Math.floor(Math.random() * 10000000);
     
+    // Ustawienia domyślne klocka
     let newBlock: Block = {
       id: generateId(), type, name: label.toUpperCase(),
       children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
@@ -99,33 +164,64 @@ export default function Home() {
       },
     };
 
+    // --- LOGIKA WSZYSTKICH WARIANTÓW (THE MARS BASE ENGINE) ---
+    
+    // TEKSTY
     if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px'; newBlock.styles.width='fit-content';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; if(variant==='brand'){newBlock.styles.borderBottom='3px solid #3b82f6'; newBlock.styles.width='fit-content';} }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu. Możesz go edytować.'; newBlock.styles.fontSize = '16px'; if(variant==='brand'){newBlock.styles.fontStyle='italic'; newBlock.styles.borderLeft='4px solid #3b82f6'; newBlock.styles.paddingLeft='15px';} }
+    if (type === 'list') { newBlock.text = '• Element pierwszy<br>• Element drugi<br>• Element trzeci'; newBlock.styles.fontSize = '16px'; newBlock.styles.lineHeight = '2'; }
     if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.color = '#000'; newBlock.styles.padding = '20px 0'; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = '900'; newBlock.styles.display = 'block'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 GORĄCA WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }, { type: 'text', value: '-50% NA WSZYSTKO' }]; }
     if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
     
-    if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.children = [{id:generateId(), type:'h1', name:'TYTUŁ HERO', text:'Przyszłość Kina', styles:{fontSize:'64px', fontWeight:'900', color:'#fff', textAlign:'center', overflow:'hidden', wordBreak:'break-word', margin:'0'}}, {id:generateId(), type:'p', name:'SUBTYTUŁ', text:'Tło wideo z przyciemnieniem, działające natywnie w HTML5.', styles:{fontSize:'20px', color:'#ccc', textAlign:'center', overflow:'hidden', wordBreak:'break-word'}}]; } }
+    // POLA / KONTENERY
+    if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.children = [{id:generateId(), type:'h1', name:'TYTUŁ HERO', text:'Przyszłość Kina', styles:{fontSize:'64px', fontWeight:'900', color:'#fff', textAlign:'center', overflow:'hidden', wordBreak:'break-word', margin:'0'}}, {id:generateId(), type:'p', name:'SUBTYTUŁ', text:'Tło wideo z przyciemnieniem, działające natywnie w HTML5.', styles:{fontSize:'20px', color:'#ccc', textAlign:'center', overflow:'hidden', wordBreak:'break-word'}}]; } }
     if (type === 'container' && variant === 'text-combo') { newBlock.styles.gap='10px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold', overflow:'hidden', wordBreak:'break-word'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px', overflow:'hidden', wordBreak:'break-word'}}] }
     if (type === 'container' && variant === 'empty') { newBlock.styles.minHeight = '150px'; newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.width = '100%'; }
     if (type === 'container' && variant === 'designed') { newBlock.styles.minHeight = '200px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '16px'; newBlock.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; newBlock.styles.padding = '30px'; newBlock.styles.width = '100%'; }
     
-    if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; newBlock.styles.objectPositionX = 50; newBlock.styles.objectPositionY = 50; if(variant==='transparent'||variant==='illustration'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain';} if(variant==='photo'){newBlock.styles.border='8px solid #fff'; newBlock.styles.boxShadow='0 4px 6px rgba(0,0,0,0.1)';} }
-    if (type === 'button') { newBlock.text = variant==='share' ? '🔗 Udostępnij' : 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.fontWeight = 'bold'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; if (!variant) { newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; } if (variant === 'outline') { newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.color = '#000'; newBlock.styles.border = '2px solid #000'; } if (variant === 'gradient') { newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.bgType = 'image'; newBlock.styles.bgImage = 'linear-gradient(135deg, #f43f5e, #8b5cf6)'; newBlock.styles.color = '#fff'; newBlock.styles.border = 'none'; } }
+    // OBRAZY
+    if (type === 'img') { 
+      newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; newBlock.styles.objectPositionX = 50; newBlock.styles.objectPositionY = 50; 
+      if(variant==='site'){newBlock.styles.width='100%'; newBlock.styles.height='500px';}
+      if(variant==='transparent' || variant==='illustration'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain'; newBlock.styles.height='200px'; newBlock.styles.width='200px';} 
+      if(variant==='photo'){newBlock.styles.border='8px solid #fff'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.15)';} 
+    }
+    
+    // PRZYCISKI
+    if (type === 'button') { 
+      newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.fontWeight = 'bold'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; 
+      if (!variant) { newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; }
+      if (variant === 'share') { newBlock.text = '🔗 Udostępnij'; newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.color = '#000'; newBlock.styles.borderRadius = '20px'; }
+    }
+    
+    // GRAFIKA I KSZTAŁTY
     if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='line'){newBlock.styles.width='100%'; newBlock.styles.height='2px'; newBlock.styles.backgroundColor='#ccc';} }
+    
+    // SOCIAL I WIDEO
     if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
     if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
+    
+    // FORMULARZE, OSADZANIE I MAPY
     if (type === 'form') { newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='30px'; newBlock.styles.borderRadius='12px'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.05)'; newBlock.styles.width = '100%'; }
-    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME<br><br>O NAS<br><br>KONTAKT';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
     if (type === 'input') { newBlock.name = 'email'; newBlock.text = 'Adres e-mail'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#f9fafb'; }
     if (type === 'textarea') { newBlock.name = 'message'; newBlock.text = 'Twoja wiadomość...'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.height = '120px'; }
     if (type === 'map') { newBlock.src = 'https://maps.google.com/maps?q=Warszawa&t=&z=13&ie=UTF8&iwloc=&output=embed'; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
-    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? 'Tu wklej kod HTML' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; newBlock.styles.backgroundColor = variant==='html' ? '#111' : 'transparent'; newBlock.styles.color = '#0f0'; }
+    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? '<button style="padding:10px; background:red; color:white;">Mój KOD HTML</button>' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; newBlock.styles.backgroundColor = variant==='html' ? '#111' : 'transparent'; newBlock.styles.color = '#0f0'; }
     
-    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0', 'https://images.unsplash.com/photo-1555421689-491a97ff2040']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
-    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover', overflow:'hidden'}}]; }
+    // MENU
+    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME<br><br>O NAS<br><br>KONTAKT';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
     if (type === 'popup') { newBlock.styles.position='fixed'; newBlock.styles.top='50%'; newBlock.styles.left='50%'; newBlock.styles.transform='translate(-50%, -50%)'; newBlock.styles.width='400px'; newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='40px'; newBlock.styles.borderRadius='20px'; newBlock.styles.boxShadow='0 0 0 9999px rgba(0,0,0,0.5)'; newBlock.styles.zIndex='999'; }
 
+    // GALERIE I SIATKI
+    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0', 'https://images.unsplash.com/photo-1555421689-491a97ff2040']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
+    if (type === 'grid' && variant === 'gallery-grid') {
+      newBlock.name = 'SIATKA ZDJĘĆ PRO'; newBlock.styles.width = '100%'; newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px';
+      const makeProImg = (src: string) => ({ id: generateId(), type: 'img', name: 'KAFELEK', src, styles: { width: '100%', height: '250px', objectFit: 'cover', borderRadius: '12px', imgHoverZoom: true, imgGrayscale: true } });
+      newBlock.children = [ makeProImg('https://images.unsplash.com/photo-1551288049-bebda4e38f71'), makeProImg('https://images.unsplash.com/photo-1542744173-8e7e53415bb0'), makeProImg('https://images.unsplash.com/photo-1555421689-491a97ff2040') ];
+    }
+    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover', overflow:'hidden'}}]; }
+    
     setBlocks(prev => {
       const activeBlock = findBlockById(prev, activeId);
       if (activeBlock && activeBlock.children) {
@@ -149,9 +245,10 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V13! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano Mars Base V13.1! Link: /live/${pageSlug}`);
   };
 
+  // --- LOGIKA MENEDŻERA MEDIÓW ---
   const handleAddMedia = () => {
     if (!activeBlock || !activeBlock.images) return;
     const newImages = [...activeBlock.images, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe'];
@@ -252,9 +349,9 @@ export default function Home() {
 
         {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1', b)}
         {b.type === 'p' && renderTextElement('p', b)}
-        {b.type === 'button' && renderTextElement('div', b)}
         {b.type === 'list' && renderTextElement('div', b)}
         {b.type === 'faq' && renderTextElement('div', b)}
+        {b.type === 'button' && renderTextElement('div', b)}
         {b.type === 'menu' && renderTextElement('nav', b)}
         {b.type === 'social' && renderTextElement('div', b)}
         
@@ -264,7 +361,7 @@ export default function Home() {
                <div key={group} style={{ display: 'flex', flexShrink: 0, minWidth: '100%', justifyContent: 'space-around', animation: 'scroll-marquee 15s linear infinite' }}>
                  {b.ribbonItems!.map((item, i) => (
                    <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '0 30px' }}>
-                     {item.type === 'img' ? <img src={item.value} style={{ height: '1.2em', objectFit: 'contain' }} /> : <span style={{fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit'}}>{item.value}</span>}
+                     {item.type === 'img' ? <img src={item.value} style={{ height: '1.2em', objectFit: 'contain' }} /> : <span style={{fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit'}} dangerouslySetInnerHTML={{ __html: item.value }}/>}
                    </div>
                  ))}
                </div>
@@ -273,7 +370,8 @@ export default function Home() {
         )}
 
         {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
-        {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">🌍 {b.src || b.text}</div>}
+        {b.type === 'embed' && b.styles.backgroundColor === '#111' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">⚙️ {b.text}</div>}
+        {b.type === 'embed' && b.styles.backgroundColor !== '#111' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4 z-10 relative">🌍 iFrame URL: {b.src}</div>}
         {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none z-10 relative">🗺️ Mapa Google</div>}
         {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50 z-10 relative">{b.text}</div>}
         
@@ -304,28 +402,6 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
   const isTextType = activeBlock && ['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type);
-
-  const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące okna', icon: '🪟' },
-    { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' }, { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
-  ];
-
-  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
-    tekst: [ { label: 'Tytuł (H1)', type: 'h1', variant: '' }, { label: 'Nagłówek (H2)', type: 'h2', variant: '' }, { label: 'Akapit (P)', type: 'p', variant: '' }, { label: '🌟 Wstęga (Animacja)', type: 'ribbon', variant: '' }, { label: 'Kombinacja Tekstu', type: 'container', variant: 'text-combo' }, { label: 'FAQ Zwijane', type: 'faq', variant: '' } ],
-    obraz: [ { label: 'Zdjęcie', type: 'img', variant: 'photo' }, { label: 'Wycięte (PNG)', type: 'img', variant: 'transparent' } ],
-    przycisk: [ { label: 'Pełny kolor', type: 'button', variant: '' }, { label: 'Tylko Obrys', type: 'button', variant: 'outline' }, { label: 'Gradient', type: 'button', variant: 'gradient' } ],
-    grafika: [ { label: 'Kwadrat', type: 'shape', variant: 'box' }, { label: 'Linia', type: 'shape', variant: 'line' } ],
-    pola: [ { label: 'Sekcja Klasyczna', type: 'section', variant: '' }, { label: '🎬 Wideo Hero', type: 'section', variant: 'video-hero' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane', type: 'container', variant: 'designed' } ],
-    wideo: [ { label: 'YouTube Wideo', type: 'video', variant: '' } ],
-    formularze: [ { label: 'Formularz Kontaktowy', type: 'form', variant: '' }, { label: 'Pole Tekstowe', type: 'input', variant: '' }, { label: 'Wiadomość', type: 'textarea', variant: '' }, { label: 'Mapa Google', type: 'map', variant: '' } ],
-    menu: [ { label: 'Menu Poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu Pionowe', type: 'menu', variant: 'vertical' } ],
-    wyskakujace: [ { label: 'Popup', type: 'popup', variant: '' } ],
-    galeria: [ { label: '✨ Siatka z Zoomem', type: 'grid', variant: 'gallery-grid' }, { label: 'Karuzela (Slider)', type: 'carousel', variant: '' } ],
-    social: [ { label: 'Ikonki Social', type: 'social', variant: '' }, { label: 'Pasek Udostępniania', type: 'button', variant: 'share' }, { label: 'Kanał Insta', type: 'grid', variant: 'insta'} ],
-    osadzona: [ { label: 'iFrame Strony', type: 'embed', variant: 'site' }, { label: 'Własny kod HTML', type: 'embed', variant: 'html' } ]
-  };
 
   return (
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
@@ -374,7 +450,7 @@ export default function Home() {
              <button onClick={() => setShowGrid(!showGrid)} className={`px-3 py-1.5 rounded border text-xs font-bold transition ${showGrid ? 'bg-blue-600 border-blue-500 text-white' : 'bg-black border-neutral-800 text-neutral-400 hover:bg-neutral-800'}`} title="Siatka Architektoniczna">⊞</button>
              <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-black text-white border border-neutral-800 text-xs px-3 py-1.5 rounded outline-none focus:border-blue-500 w-48" placeholder="Adres..." />
           </div>
-          <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition">ZAPISZ PROJEKT</button>
+          <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition">ZAPISZ V13.1</button>
         </header>
 
         {activeBlock && isTextType && (
@@ -409,7 +485,6 @@ export default function Home() {
 
       <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
 
-      {/* MEDIA MANAGER MODAL (V10) */}
       {isMediaManagerOpen && activeBlock && activeBlock.images && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center font-sans">
           <div className="bg-white w-[1000px] h-[650px] rounded-xl shadow-2xl flex flex-col text-neutral-800 overflow-hidden animate-in fade-in zoom-in-95">
