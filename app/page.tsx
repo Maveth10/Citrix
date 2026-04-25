@@ -19,10 +19,8 @@ export default function Home() {
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
 
   const [interaction, setInteraction] = useState<{
-    type: 'drag' | 'resize';
-    startX: number; startY: number;
-    initialLeft: number; initialTop: number;
-    initialWidth: number; initialHeight: number;
+    type: 'drag' | 'resize'; startX: number; startY: number;
+    initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number;
   } | null>(null);
 
   const updateActiveBlock = (updates: any) => {
@@ -30,7 +28,11 @@ export default function Home() {
       const updateRecursive = (arr: Block[]): Block[] => {
         return arr.map(b => {
           if (b.id === activeId) {
-            return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
+            return { 
+              ...b, ...updates, 
+              styles: { ...b.styles, ...(updates.styles || {}) }, 
+              hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } 
+            };
           }
           if (b.children) return { ...b, children: updateRecursive(b.children) };
           return b;
@@ -64,71 +66,13 @@ export default function Home() {
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom]);
 
-  // NOWOŚĆ: Funkcja do skupienia kamery na aktywnym obiekcie (Focus / Zoom to fit)
   const handleFocusActive = () => {
     if (!activeId) return;
-    setCanvasZoom(1.25); // Automatycznie przybliżamy dla lepszej edycji
+    setCanvasZoom(1.25);
     setTimeout(() => {
       const el = document.getElementById(`block-${activeId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-      }
-    }, 50); // Krótkie opóźnienie na wyrenderowanie po zmianie zoomu
-  };
-
-  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
-    tekst: [
-      { label: 'Markowy tytuł', type: 'h1', variant: 'brand' }, { label: 'Tytuł', type: 'h1', variant: '' },
-      { label: 'Markowy nagłówek', type: 'h2', variant: 'brand' }, { label: 'Nagłówek', type: 'h2', variant: '' },
-      { label: 'Markowy akapit', type: 'p', variant: 'brand' }, { label: 'Akapit', type: 'p', variant: '' },
-      { label: 'Kombinacja tekstu', type: 'container', variant: 'text-combo' },
-      { label: 'Tekst przewijany', type: 'marquee', variant: '' }, { label: 'Tekst zwijany', type: 'faq', variant: '' }
-    ],
-    obraz: [
-      { label: 'Obraz strony', type: 'img', variant: 'site' }, { label: 'Zdjęcie', type: 'img', variant: 'photo' },
-      { label: 'Ilustracja', type: 'img', variant: 'illustration' }, { label: 'Element z wyciętym tłem', type: 'img', variant: 'transparent' },
-      { label: 'Galeria', type: 'carousel', variant: '' }
-    ],
-    przycisk: [
-      { label: 'Przycisk', type: 'button', variant: '' }, { label: 'Pasek społecznościowy', type: 'social', variant: '' },
-      { label: 'Przyciski udostępniania', type: 'button', variant: 'share' }
-    ],
-    grafika: [
-      { label: 'Podstawowe kształty', type: 'shape', variant: 'box' }, { label: 'Grafika wektorowa', type: 'img', variant: 'illustration' },
-      { label: 'Naklejki', type: 'img', variant: 'transparent' }, { label: 'Ikony', type: 'img', variant: 'transparent' },
-      { label: 'Logo', type: 'h1', variant: 'logo' }, { label: 'Linie', type: 'shape', variant: 'line' }
-    ],
-    pola: [
-      { label: 'Sekcja szeroka', type: 'section', variant: '' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, 
-      { label: 'Zaprojektowane pole', type: 'container', variant: 'designed' }, { label: 'Pokaz slajdów', type: 'carousel', variant: '' }
-    ],
-    wideo: [
-      { label: 'Wideo', type: 'video', variant: '' }, { label: 'Odtwarzacze wideo (Social)', type: 'video', variant: 'social' }
-    ],
-    formularze: [
-      { label: 'Formularze', type: 'form', variant: '' }, { label: 'FAQ', type: 'faq', variant: '' }, { label: 'Mapy google', type: 'map', variant: '' }
-    ],
-    menu: [
-      { label: 'Menu poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu pionowe', type: 'menu', variant: 'vertical' },
-      { label: 'Menu hamburger', type: 'menu', variant: 'hamburger' }
-    ],
-    wyskakujace: [
-      { label: 'Wyskakujące okna', type: 'popup', variant: '' }
-    ],
-    lista: [
-      { label: 'FAQ', type: 'faq', variant: '' }
-    ],
-    galeria: [
-      { label: 'Galeria', type: 'carousel', variant: '' }, { label: 'Pokaz slajdów', type: 'carousel', variant: '' },
-      { label: 'Kanał instagram', type: 'grid', variant: 'insta' }
-    ],
-    social: [
-      { label: 'Pasek społecznościowy', type: 'social', variant: '' }, { label: 'Odtwarzacz wideo z social mediów', type: 'video', variant: 'social' },
-      { label: 'Przyciski udostępniania', type: 'button', variant: 'share' }, { label: 'Kanał z insta', type: 'grid', variant: 'insta' }
-    ],
-    osadzona: [
-      { label: 'Osadzony kod', type: 'embed', variant: 'html' }, { label: 'Osadź stronę', type: 'embed', variant: 'site' }
-    ]
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }, 50);
   };
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
@@ -138,36 +82,39 @@ export default function Home() {
       id: generateId(), type, name: label.toUpperCase(),
       children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
       hoverStyles: {}, entranceAnim: 'none',
-      styles: { position: 'relative', left: '0px', top: '0px', display: 'block', padding: '10px', margin: '0px', width: '100%', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease' },
+      styles: { position: 'relative', left: '0px', top: '0px', display: 'block', padding: '10px', margin: '0px', width: '300px', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease' },
     };
 
     if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px'; newBlock.styles.width='fit-content';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; if(variant==='brand'){newBlock.styles.borderBottom='3px solid #3b82f6'; newBlock.styles.width='fit-content';} }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu. Możesz go edytować.'; newBlock.styles.fontSize = '16px'; if(variant==='brand'){newBlock.styles.fontStyle='italic'; newBlock.styles.borderLeft='4px solid #3b82f6'; newBlock.styles.paddingLeft='15px';} }
-    if (type === 'marquee') { newBlock.text = 'PRZEWIJANY TEKST • OGŁOSZENIE • '; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = 'bold'; }
-    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ\n\nOdpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; }
+    if (type === 'marquee') { newBlock.text = 'PRZEWIJANY TEKST • OGŁOSZENIE • '; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = 'bold'; newBlock.styles.width = '100%'; }
+    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ\n\nOdpowiedź na to pytanie.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
     
     if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; }
-    if (type === 'container' && variant === 'text-combo') { newBlock.styles.display='flex'; newBlock.styles.flexDirection='column'; newBlock.styles.gap='10px'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}] }
-    if (type === 'container' && variant === 'empty') { newBlock.styles.minHeight = '150px'; newBlock.styles.border = '2px dashed #ccc'; }
-    if (type === 'container' && variant === 'designed') { newBlock.styles.minHeight = '200px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '16px'; newBlock.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; newBlock.styles.padding = '30px'; }
+    if (type === 'container' && variant === 'text-combo') { newBlock.styles.display='flex'; newBlock.styles.flexDirection='column'; newBlock.styles.gap='10px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł Bloku', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}] }
+    if (type === 'container' && variant === 'empty') { newBlock.styles.minHeight = '150px'; newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.width = '100%'; }
+    if (type === 'container' && variant === 'designed') { newBlock.styles.minHeight = '200px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '16px'; newBlock.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; newBlock.styles.padding = '30px'; newBlock.styles.width = '100%'; }
     
-    if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.objectFit = 'cover'; if(variant==='transparent'||variant==='illustration'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain';} if(variant==='photo'){newBlock.styles.border='8px solid #fff'; newBlock.styles.boxShadow='0 4px 6px rgba(0,0,0,0.1)';} }
+    if (type === 'img') { 
+      newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover';
+      newBlock.styles.imageScale = 1; newBlock.styles.objectPositionX = 50; newBlock.styles.objectPositionY = 50;
+      if(variant==='transparent'||variant==='illustration'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain';} 
+      if(variant==='photo'){newBlock.styles.border='8px solid #fff'; newBlock.styles.boxShadow='0 4px 6px rgba(0,0,0,0.1)';} 
+    }
     
     if (type === 'button') { newBlock.text = variant==='share' ? '🔗 Udostępnij' : 'Przycisk'; newBlock.styles.backgroundColor = variant==='share' ? '#f3f4f6' : '#000'; newBlock.styles.color = variant==='share' ? '#000' : '#fff'; newBlock.styles.padding = '12px 24px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; }
-    
-    if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='line'){newBlock.styles.height='2px'; newBlock.styles.backgroundColor='#ccc';} }
+    if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='line'){newBlock.styles.width='100%'; newBlock.styles.height='2px'; newBlock.styles.backgroundColor='#ccc';} }
     if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
-    
-    if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
-    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0']; newBlock.styles.height = '400px'; newBlock.styles.overflow = 'hidden'; }
-    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover'}}]; }
-    
-    if (type === 'form') { newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='30px'; newBlock.styles.borderRadius='12px'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.05)'; }
-    if (type === 'map') { newBlock.src = 'https://maps.google.com/maps?q=Warszawa&t=&z=13&ie=UTF8&iwloc=&output=embed'; newBlock.styles.height='300px'; }
-    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? 'Tu wklej kod HTML' : ''; newBlock.styles.height='300px'; newBlock.styles.backgroundColor = variant==='html' ? '#111' : 'transparent'; newBlock.styles.color = '#0f0'; }
-    
-    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME\nO NAS\nKONTAKT'; newBlock.styles.whiteSpace='pre-wrap';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
+    if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
+    if (type === 'form') { newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='30px'; newBlock.styles.borderRadius='12px'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.05)'; newBlock.styles.width = '100%'; }
+    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; if(variant==='vertical'){newBlock.styles.width='200px'; newBlock.text='HOME\nO NAS\nKONTAKT'; newBlock.styles.whiteSpace='pre-wrap';} if(variant==='hamburger'){newBlock.text='☰'; newBlock.styles.fontSize='32px'; newBlock.styles.width='fit-content';} }
+    if (type === 'input') { newBlock.name = 'email'; newBlock.text = 'Adres e-mail'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#f9fafb'; }
+    if (type === 'textarea') { newBlock.name = 'message'; newBlock.text = 'Twoja wiadomość...'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.height = '120px'; }
+    if (type === 'map') { newBlock.src = 'https://maps.google.com/maps?q=Warszawa&t=&z=13&ie=UTF8&iwloc=&output=embed'; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
+    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? 'Tu wklej kod HTML' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; newBlock.styles.backgroundColor = variant==='html' ? '#111' : 'transparent'; newBlock.styles.color = '#0f0'; }
+    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
+    if (type === 'grid' && variant === 'insta') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap='5px'; newBlock.styles.width='100%'; newBlock.children = [{id:generateId(), type:'img', name:'Post', src:'https://images.unsplash.com/photo-1523275335684-37898b6baf30', styles:{width:'100%', aspectRatio:'1/1', objectFit:'cover'}}]; }
     if (type === 'popup') { newBlock.styles.position='fixed'; newBlock.styles.top='50%'; newBlock.styles.left='50%'; newBlock.styles.transform='translate(-50%, -50%)'; newBlock.styles.width='400px'; newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='40px'; newBlock.styles.borderRadius='20px'; newBlock.styles.boxShadow='0 0 0 9999px rgba(0,0,0,0.5)'; newBlock.styles.zIndex='999'; }
 
     setBlocks(prev => {
@@ -204,7 +151,7 @@ export default function Home() {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">
         <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-600 text-white font-bold' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
-          {b.children ? '📂' : '📄'} {b.name} <span className="text-[8px] text-neutral-600 ml-auto">({b.type})</span>
+          {b.children ? '📂' : '📄'} {b.name}
         </button>
         {b.children && renderLayerTree(b.children, depth + 1)}
       </div>
@@ -217,54 +164,52 @@ export default function Home() {
 
     return (
       <div 
-        id={`block-${b.id}`} // Dodane ID, aby kamera mogła znaleźć blok!
+        id={`block-${b.id}`}
         key={b.id} 
         style={b.styles} 
         onClick={(e) => { e.stopPropagation(); setActiveId(b.id); }} 
-        
         onMouseDown={(e) => {
-          e.stopPropagation();
-          setActiveId(b.id);
-          if (isAbsolute) {
-            setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 });
-          }
+          e.stopPropagation(); setActiveId(b.id);
+          if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 });
         }}
-        
-        // NOWOŚĆ V6.3: Profesjonalny Bounding Box i Obwódka
-        className={`group transition-all duration-200 ${isAbsolute ? 'cursor-move' : ''} ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-1 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
+        className={`group transition-all duration-200 ${isAbsolute ? 'cursor-move' : ''} ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
-        {isActive && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name} {b.styles.width} x {b.styles.height}</div>}
+        {isActive && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
         
-        {/* NOWOŚĆ V6.3: Prawdziwa Ramka Transformacji (Kwadraty na rogach) */}
         {isActive && (
           <>
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            
-            {/* Ten w prawym dolnym rogu jest interaktywny i służy do Resajzu */}
             <div 
               className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] shadow-md hover:bg-blue-500 transition-colors"
               onMouseDown={(e) => {
                 e.stopPropagation();
-                setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: parseInt(b.styles.width) || e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: parseInt(b.styles.height) || e.currentTarget.parentElement?.offsetHeight || 0 });
+                const currentWidth = e.currentTarget.parentElement?.offsetWidth || 0;
+                const currentHeight = e.currentTarget.parentElement?.offsetHeight || 0;
+                setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: currentWidth, initialHeight: currentHeight });
               }}
             />
           </>
         )}
 
-        {/* TREŚĆ KLOCKÓW */}
         {['h1', 'h2', 'marquee'].includes(b.type) && <h1 style={{fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0}}>{b.text}</h1>}
         {b.type === 'p' && <p style={{fontSize:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', fontStyle:b.styles.fontStyle, margin:0}}>{b.text}</p>}
-        {b.type === 'list' && <div style={{fontSize:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', whiteSpace:'pre-wrap'}}>{b.text}</div>}
-        {b.type === 'img' && <img src={b.src} alt="img" className="w-full h-full pointer-events-none" style={{objectFit: b.styles.objectFit, borderRadius: b.styles.borderRadius}}/>}
         {b.type === 'button' && <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent: b.styles.textAlign === 'center' ? 'center' : b.styles.textAlign === 'right' ? 'flex-end' : 'flex-start'}}>{b.text}</div>}
         {b.type === 'shape' && <div style={{width:'100%', height:'100%'}}></div>}
-        {b.type === 'menu' && b.variant !== 'menu-hamburger' ? <nav style={{width:'100%', height:'100%'}}>{b.text}</nav> : b.text}
+        {b.type === 'menu' && b.variant !== 'menu-hamburger' ? <nav style={{width:'100%', height:'100%', whiteSpace: b.styles.whiteSpace}}>{b.text}</nav> : b.text}
         {b.type === 'social' && <div style={{width:'100%', height:'100%'}}>{b.text}</div>}
         {b.type === 'faq' && <div className="font-bold text-sm pointer-events-none">{b.text?.split('\n\n')[0]} ▼</div>}
         {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4">🌍 {b.src || b.text}</div>}
         {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none">🗺️ Mapa Google</div>}
+        {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50">{b.text}</div>}
+
+        {b.type === 'img' && (
+          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative'}}>
+            <img src={b.src} className="w-full h-full pointer-events-none" style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`, transition: interaction ? 'none' : 'transform 0.2s ease, object-position 0.2s ease'}} />
+          </div>
+        )}
+        
         {b.type === 'carousel' && b.images && (
           <div className="w-full h-full relative overflow-hidden bg-neutral-100 pointer-events-none">
             <img src={b.images[0]} className="w-full h-full object-cover" />
@@ -294,20 +239,34 @@ export default function Home() {
     { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
   ];
 
+  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
+    tekst: [ { label: 'Markowy tytuł', type: 'h1', variant: 'brand' }, { label: 'Tytuł', type: 'h1', variant: '' }, { label: 'Markowy nagłówek', type: 'h2', variant: 'brand' }, { label: 'Nagłówek', type: 'h2', variant: '' }, { label: 'Markowy akapit', type: 'p', variant: 'brand' }, { label: 'Akapit', type: 'p', variant: '' }, { label: 'Kombinacja tekstu', type: 'container', variant: 'text-combo' }, { label: 'Tekst przewijany', type: 'marquee', variant: '' }, { label: 'Tekst zwijany', type: 'faq', variant: '' } ],
+    obraz: [ { label: 'Obraz strony', type: 'img', variant: 'site' }, { label: 'Zdjęcie', type: 'img', variant: 'photo' }, { label: 'Ilustracja', type: 'img', variant: 'illustration' }, { label: 'Element z wyciętym tłem', type: 'img', variant: 'transparent' }, { label: 'Galeria', type: 'carousel', variant: '' } ],
+    przycisk: [ { label: 'Przycisk', type: 'button', variant: '' }, { label: 'Pasek społecznościowy', type: 'social', variant: '' }, { label: 'Przyciski udostępniania', type: 'button', variant: 'share' } ],
+    grafika: [ { label: 'Podstawowe kształty', type: 'shape', variant: 'box' }, { label: 'Grafika wektorowa', type: 'img', variant: 'illustration' }, { label: 'Naklejki', type: 'img', variant: 'transparent' }, { label: 'Ikony', type: 'img', variant: 'transparent' }, { label: 'Logo', type: 'h1', variant: 'logo' }, { label: 'Linie', type: 'shape', variant: 'line' } ],
+    pola: [ { label: 'Sekcja szeroka', type: 'section', variant: '' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane pole', type: 'container', variant: 'designed' }, { label: 'Pokaz slajdów', type: 'carousel', variant: '' } ],
+    wideo: [ { label: 'Wideo', type: 'video', variant: '' }, { label: 'Odtwarzacze wideo (Social)', type: 'video', variant: 'social' } ],
+    formularze: [ { label: 'Formularze (Kontener)', type: 'form', variant: '' }, { label: 'Pole tekstowe (Input)', type: 'input', variant: '' }, { label: 'Wiadomość (Textarea)', type: 'textarea', variant: '' }, { label: 'FAQ', type: 'faq', variant: '' }, { label: 'Mapy google', type: 'map', variant: '' } ],
+    menu: [ { label: 'Menu poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu pionowe', type: 'menu', variant: 'vertical' }, { label: 'Menu hamburger', type: 'menu', variant: 'hamburger' } ],
+    wyskakujace: [ { label: 'Wyskakujące okna', type: 'popup', variant: '' } ],
+    lista: [ { label: 'FAQ', type: 'faq', variant: '' } ],
+    galeria: [ { label: 'Galeria', type: 'carousel', variant: '' }, { label: 'Pokaz slajdów', type: 'carousel', variant: '' }, { label: 'Kanał instagram', type: 'grid', variant: 'insta' } ],
+    social: [ { label: 'Pasek społecznościowy', type: 'social', variant: '' }, { label: 'Odtwarzacz wideo z social mediów', type: 'video', variant: 'social' }, { label: 'Przyciski udostępniania', type: 'button', variant: 'share' }, { label: 'Kanał z insta', type: 'grid', variant: 'insta' } ],
+    osadzona: [ { label: 'Osadzony kod', type: 'embed', variant: 'html' }, { label: 'Osadź stronę', type: 'embed', variant: 'site' } ]
+  };
+
   return (
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
       
       <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
-        <button onClick={() => { setLeftTab(leftTab==='add'?null:'add'); if(leftTab!=='add') setAddCategory(null); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
+        <button onClick={() => { setLeftTab(leftTab==='add'?null:'add'); if(leftTab!=='add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab==='layers'?null:'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='layers'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
       </aside>
 
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
           <div className="w-56 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
-            <div className="px-5 py-4 border-b border-neutral-800 flex justify-between items-center">
-              <span className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">DODAJ ELEMENT</span>
-            </div>
+            <div className="px-5 py-4 border-b border-neutral-800"><span className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">DODAJ ELEMENT</span></div>
             <div className="flex-1 overflow-y-auto py-2 scrollbar-hide">
               {categories.map(cat => (
                 <button key={cat.id} onMouseEnter={() => setAddCategory(cat.id)} onClick={() => setAddCategory(cat.id)} className={`w-full text-left px-5 py-3 text-xs font-semibold transition flex items-center gap-3 border-l-2 ${addCategory === cat.id ? 'bg-neutral-800 text-white border-blue-500' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 border-transparent'}`}>
@@ -337,7 +296,7 @@ export default function Home() {
               <button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-              {menuOptions[addCategory].map((opt, i) => (
+              {menuOptions[addCategory]?.map((opt, i) => (
                 <button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition">
                   <span className="text-sm font-bold text-white block">{opt.label}</span>
                 </button>
@@ -361,10 +320,7 @@ export default function Home() {
         </header>
 
         <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => setActiveId(null)}>
-          <div 
-            style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'transform 0.2s ease-out' }}
-            className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative"
-          >
+          <div style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'transform 0.2s ease-out' }} className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative">
              {blocks.map(b => renderCanvasBlock(b))}
           </div>
         </main>
@@ -376,9 +332,8 @@ export default function Home() {
             <div className="p-4 bg-[#111] border-b border-neutral-800 flex justify-between items-center">
               <span className="font-black text-xs text-white truncate max-w-[150px]">{activeBlock.name}</span>
               <div className="flex gap-2">
-                {/* NOWOŚĆ V6.3: Kamera - Skupienie na obiekcie */}
-                <button onClick={handleFocusActive} className="bg-blue-900/30 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] px-2 py-1 rounded transition" title="Przybliż kamerę do obiektu">🔍 SKUP</button>
-                <button onClick={removeActiveBlock} className="bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white text-[10px] px-2 py-1 rounded transition" title="Usuń element">USUŃ</button>
+                <button onClick={handleFocusActive} className="bg-blue-900/30 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] px-2 py-1 rounded transition">🔍 SKUP</button>
+                <button onClick={removeActiveBlock} className="bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white text-[10px] px-2 py-1 rounded transition">USUŃ</button>
               </div>
             </div>
             
@@ -390,6 +345,7 @@ export default function Home() {
             </div>
 
             <div className="p-5 flex flex-col gap-6 pb-20">
+              {/* --- ZAKŁADKA 1: UKŁAD --- */}
               {rightTab === 'layout' && (
                 <>
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800">
@@ -415,7 +371,7 @@ export default function Home() {
                     <select value={activeBlock.styles.position} onChange={e => updateActiveBlock({ styles: { position: e.target.value }})} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none mb-2">
                       <option value="relative">Naturalna (W siatce)</option><option value="absolute">Swobodna (Absolute)</option><option value="fixed">Zablokowana (Fixed)</option>
                     </select>
-                    {activeBlock.styles.position === 'absolute' && <p className="text-[9px] text-blue-400 italic">Złap element na płótnie, aby go przesunąć, lub użyj niebieskiego uchwytu w prawym dolnym rogu ramki do skalowania.</p>}
+                    {activeBlock.styles.position === 'absolute' && <p className="text-[9px] text-blue-400 italic">Złap element na płótnie, aby go przesunąć.</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Szerokość</label><input type="text" value={activeBlock.styles.width} onChange={e => updateActiveBlock({ styles: { width: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
@@ -426,8 +382,18 @@ export default function Home() {
                 </>
               )}
 
+              {/* --- ZAKŁADKA 2: DESIGN --- */}
               {rightTab === 'design' && (
                 <>
+                  {activeBlock.type === 'img' && (
+                    <div className="bg-blue-900/10 p-4 rounded-xl border border-blue-900/30 flex flex-col gap-4">
+                      <label className="text-[10px] font-bold text-blue-400 block tracking-widest">KADROWANIE WNĘTRZA</label>
+                      <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Przybliżenie (Zoom)</span><span className="text-blue-300">{activeBlock.styles.imageScale || 1}x</span></div><input type="range" min="1" max="3" step="0.1" value={activeBlock.styles.imageScale || 1} onChange={e => updateActiveBlock({ styles: { imageScale: parseFloat(e.target.value) }})} className="w-full accent-blue-500" /></div>
+                      <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Pozycja Pozioma (X)</span><span className="text-blue-300">{activeBlock.styles.objectPositionX || 50}%</span></div><input type="range" min="0" max="100" value={activeBlock.styles.objectPositionX || 50} onChange={e => updateActiveBlock({ styles: { objectPositionX: parseInt(e.target.value) }})} className="w-full accent-blue-500" /></div>
+                      <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Pozycja Pionowa (Y)</span><span className="text-blue-300">{activeBlock.styles.objectPositionY || 50}%</span></div><input type="range" min="0" max="100" value={activeBlock.styles.objectPositionY || 50} onChange={e => updateActiveBlock({ styles: { objectPositionY: parseInt(e.target.value) }})} className="w-full accent-blue-500" /></div>
+                    </div>
+                  )}
+
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800 flex flex-col gap-3">
                     <label className="text-[9px] font-bold text-neutral-500 block">KOLORY I TŁO</label>
                     <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Kolor tła</span><input type="color" value={activeBlock.styles.backgroundColor || 'transparent'} onChange={e => updateActiveBlock({ styles: { backgroundColor: e.target.value }})} className="w-8 h-8 rounded border-0 p-0 bg-transparent cursor-pointer" /></div>
@@ -442,6 +408,7 @@ export default function Home() {
                 </>
               )}
 
+              {/* --- ZAKŁADKA 3: EFEKTY --- */}
               {rightTab === 'effects' && (
                 <>
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800 flex flex-col gap-3">
@@ -456,9 +423,17 @@ export default function Home() {
                     <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Kolor tła (Hover)</span><input type="color" value={activeBlock.hoverStyles?.backgroundColor || '#000000'} onChange={e => updateActiveBlock({ hoverStyles: { backgroundColor: e.target.value }})} className="w-8 h-8 rounded border-0 p-0 bg-transparent cursor-pointer" /></div>
                     <div className="flex flex-col gap-1 text-xs"><span className="text-neutral-400">Transform (np. scale(1.1))</span><input type="text" value={activeBlock.hoverStyles?.transform || 'none'} onChange={e => updateActiveBlock({ hoverStyles: { transform: e.target.value }})} className="bg-black text-white p-2 border border-neutral-700 rounded w-full"/></div>
                   </div>
+                  
+                  <div className="bg-purple-900/10 p-3 rounded border border-purple-900/30 flex flex-col gap-3">
+                    <label className="text-[9px] font-bold text-purple-500 block">ANIMACJA WEJŚCIA (START)</label>
+                    <select value={activeBlock.entranceAnim || 'none'} onChange={e => updateActiveBlock({ entranceAnim: e.target.value })} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none">
+                      <option value="none">Brak animacji</option><option value="animate-fade-in">Pojawienie się (Fade In)</option><option value="animate-slide-up">Wjazd z dołu (Slide Up)</option>
+                    </select>
+                  </div>
                 </>
               )}
 
+              {/* --- ZAKŁADKA 4: TREŚĆ --- */}
               {rightTab === 'interactions' && (
                 <div className="flex flex-col gap-3 text-xs">
                   <label className="text-[9px] font-bold text-neutral-500 block uppercase">Dane logiczne i treści</label>
@@ -470,6 +445,13 @@ export default function Home() {
                   {['img', 'embed', 'map'].includes(activeBlock.type) && <><label className="text-neutral-400 mt-2">Link Źródłowy (URL/iFrame src):</label><textarea value={activeBlock.src} onChange={e => updateActiveBlock({ src: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full mt-2" rows={3} /></>}
                   
                   {activeBlock.type === 'video' && <><label className="text-neutral-400 mt-2">ID z YouTube:</label><input type="text" value={activeBlock.videoId} onChange={e => updateActiveBlock({ videoId: e.target.value })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full" /></>}
+                  
+                  {['carousel'].includes(activeBlock.type) && (
+                    <>
+                      <label className="text-neutral-400 mt-2">Obrazy Galerii (Jeden pod drugim URL):</label>
+                      <textarea value={activeBlock.images?.join('\n')} onChange={e => updateActiveBlock({ images: e.target.value.split('\n').filter(s=>s.trim()!=='') })} className="bg-black text-white p-2 border border-neutral-700 rounded w-full" rows={6} />
+                    </>
+                  )}
                 </div>
               )}
             </div>
