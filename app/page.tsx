@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { createBlock } from '../utils/blockFactory';
-import TopHeader from '../components/TopHeader';
-import LeftSidebar from '../components/LeftSidebar';
 import RightPanel from '../components/RightPanel';
-import TextFormatToolbar from '../components/TextFormatToolbar';
 
 interface Block {
   id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
-  images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string }[];
+  images?: string[]; hoverStyles?: any; entranceAnim?: string;
+  ribbonItems?: { type: 'text' | 'img', value: string }[];
   styles: any;
 }
 
@@ -20,21 +17,27 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v14');
-  
+  const [pageSlug, setPageSlug] = useState('titan-v14-zindex');
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
 
-  const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
+  const [interaction, setInteraction] = useState<{
+    type: 'drag' | 'resize'; startX: number; startY: number;
+    initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number;
+  } | null>(null);
 
   const updateActiveBlock = (updates: any) => {
     setBlocks(prevBlocks => {
-      const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
-        if (b.id === activeId) return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
-        if (b.children) return { ...b, children: updateRecursive(b.children) }; return b;
-      });
+      const updateRecursive = (arr: Block[]): Block[] => {
+        return arr.map(b => {
+          if (b.id === activeId) return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
+          if (b.children) return { ...b, children: updateRecursive(b.children) };
+          return b;
+        });
+      };
       return updateRecursive(prevBlocks);
     });
   };
@@ -45,12 +48,16 @@ export default function Home() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
-      const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
+      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return;
+      e.preventDefault();
+      const dx = (e.clientX - interaction.startX) / canvasZoom;
+      const dy = (e.clientY - interaction.startY) / canvasZoom;
+
       if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } });
       else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } });
     };
     const handleMouseUp = () => setInteraction(null);
+
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen]);
@@ -61,8 +68,10 @@ export default function Home() {
       const activeEl = document.getElementById(`block-${activeId}`);
       if (activeEl && activeEl.contains(e.target as Node)) {
         setBlocks(prevBlocks => {
-          const currentBlock = findBlockById(prevBlocks, activeId); if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
-          e.preventDefault(); const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
+          const currentBlock = findBlockById(prevBlocks, activeId);
+          if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
+          e.preventDefault();
+          const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
           const updateRecursive = (arr: Block[]): Block[] => arr.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, imageScale: newScale } } : (b.children ? { ...b, children: updateRecursive(b.children) } : b));
           return updateRecursive(prevBlocks);
         });
@@ -72,8 +81,67 @@ export default function Home() {
     return () => window.removeEventListener('wheel', handleGlobalWheel);
   }, [activeId, isMediaManagerOpen]);
 
+  const categories = [
+    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
+    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
+    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące okna', icon: '🪟' },
+    { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' },
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+  ];
+
+  const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
+    tekst: [ { label: 'Tytuł (H1)', type: 'h1', variant: '' }, { label: 'Nagłówek (H2)', type: 'h2', variant: '' }, { label: 'Akapit (P)', type: 'p', variant: '' }, { label: '🌟 Wstęga', type: 'ribbon', variant: '' }, { label: 'Zwijane FAQ', type: 'faq', variant: '' } ],
+    obraz: [ { label: 'Zdjęcie', type: 'img', variant: 'photo' }, { label: 'Wycięte (PNG)', type: 'img', variant: 'transparent' } ],
+    przycisk: [ { label: 'Pełny kolor', type: 'button', variant: '' }, { label: 'Tylko Obrys', type: 'button', variant: 'outline' }, { label: 'Gradient', type: 'button', variant: 'gradient' } ],
+    grafika: [ { label: 'Kwadrat', type: 'shape', variant: 'box' }, { label: 'Koło', type: 'shape', variant: 'circle' }, { label: 'Linia', type: 'shape', variant: 'line' } ],
+    pola: [ { label: 'Sekcja', type: 'section', variant: '' }, { label: 'Puste pole', type: 'container', variant: 'empty' }, { label: 'Zaprojektowane', type: 'container', variant: 'designed' } ],
+    wideo: [ { label: 'YouTube Wideo', type: 'video', variant: '' } ],
+    formularze: [ { label: 'Formularz Kontaktowy', type: 'form', variant: '' }, { label: 'Pole Tekstowe', type: 'input', variant: '' }, { label: 'Wiadomość', type: 'textarea', variant: '' } ],
+    menu: [ { label: 'Menu Poziome', type: 'menu', variant: 'horizontal' }, { label: 'Menu Hamburger', type: 'menu', variant: 'hamburger'} ],
+    wyskakujace: [ { label: 'Popup', type: 'popup', variant: '' } ],
+    lista: [ { label: 'Lista punktowana', type: 'list', variant: '' } ],
+    galeria: [ { label: '✨ Siatka', type: 'grid', variant: 'gallery-grid' }, { label: 'Karuzela', type: 'carousel', variant: '' } ],
+    social: [ { label: 'Ikonki Social', type: 'social', variant: '' } ],
+    osadzona: [ { label: 'iFrame Strony', type: 'embed', variant: 'site' }, { label: 'Kod HTML', type: 'embed', variant: 'html' } ]
+  };
+
   const handleAddBlock = (type: string, variant: string, label: string) => {
-    const newBlock = createBlock(type, variant, label);
+    const generateId = () => Math.floor(Math.random() * 10000000);
+    let newBlock: Block = {
+      id: generateId(), type, name: label.toUpperCase(), children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined, hoverStyles: {},
+      styles: { 
+        position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', 
+        padding: '10px', margin: '0px', width: '300px', height: 'auto', 
+        backgroundColor: 'transparent', zIndex: 1, overflow: 'hidden', // Z-INDEX domyślny 1, żeby obiekty z 'absolute' na siebie wpadały poprawnie
+        bgType: 'color', filterBlur: 0, filterBrightness: 100, filterContrast: 100, mixBlendMode: 'normal'
+      },
+    };
+
+    if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; }
+    if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
+    if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
+    if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = '900'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
+    if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
+    if (type === 'list') { newBlock.text = '• Pierwszy<br>• Drugi<br>• Trzeci'; newBlock.styles.fontSize = '16px'; newBlock.styles.lineHeight = '2'; }
+    
+    if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '300px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.padding = '40px'; }
+    if (type === 'container' && variant === 'empty') { newBlock.styles.minHeight = '150px'; newBlock.styles.border = '2px dashed #ccc'; newBlock.styles.width = '100%'; }
+    if (type === 'container' && variant === 'designed') { newBlock.styles.minHeight = '200px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '16px'; newBlock.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; newBlock.styles.padding = '30px'; newBlock.styles.width = '100%'; }
+    
+    if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; newBlock.styles.objectPositionX = 50; newBlock.styles.objectPositionY = 50; if(variant==='transparent'){newBlock.src='https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg'; newBlock.styles.objectFit='contain'; newBlock.styles.height='200px'; newBlock.styles.width='200px';} }
+    if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.fontWeight = 'bold'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; }
+    if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
+    
+    if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
+    if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.width='100%'; newBlock.styles.height = '400px'; }
+    if (type === 'form') { newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='30px'; newBlock.styles.borderRadius='12px'; newBlock.styles.boxShadow='0 10px 20px rgba(0,0,0,0.05)'; newBlock.styles.width = '100%'; }
+    if (type === 'input') { newBlock.name = 'email'; newBlock.text = 'Adres e-mail'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#f9fafb'; }
+    if (type === 'textarea') { newBlock.name = 'message'; newBlock.text = 'Wiadomość...'; newBlock.styles.padding = '14px 16px'; newBlock.styles.border = '1px solid #e5e7eb'; newBlock.styles.borderRadius = '8px'; newBlock.styles.height = '120px'; }
+    if (type === 'embed') { newBlock.src = variant==='site' ? 'https://pl.wikipedia.org' : ''; newBlock.text = variant==='html' ? '<button>HTML</button>' : ''; newBlock.styles.height='300px'; newBlock.styles.width='100%'; }
+    if (type === 'menu') { newBlock.text = 'HOME | O NAS | KONTAKT'; newBlock.styles.fontWeight='bold'; newBlock.styles.width = '100%'; }
+    if (type === 'popup') { newBlock.styles.position='fixed'; newBlock.styles.top='50%'; newBlock.styles.left='50%'; newBlock.styles.transform='translate(-50%, -50%)'; newBlock.styles.width='400px'; newBlock.styles.backgroundColor='#fff'; newBlock.styles.padding='40px'; newBlock.styles.borderRadius='20px'; newBlock.styles.zIndex=999; }
+    if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; newBlock.styles.width='100%'; newBlock.styles.overflow = 'hidden'; }
+
     setBlocks(prev => {
       const activeBlock = findBlockById(prev, activeId);
       if (activeBlock && activeBlock.children) { const newArr = [...prev]; const target = findBlockById(newArr, activeId); target!.children!.push(newBlock); return newArr; } 
@@ -92,10 +160,24 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano Architekture Modułową! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V14.5! Link: /live/${pageSlug}`);
   };
 
-  const activeBlock = findBlockById(blocks, activeId);
+  const handleAddMedia = () => { if (!activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe']; updateActiveBlock({ images: newImages }); setSelectedMediaIndex(newImages.length - 1); };
+  const handleUpdateMedia = (url: string) => { if (selectedMediaIndex === null || !activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images]; newImages[selectedMediaIndex] = url; updateActiveBlock({ images: newImages }); };
+  const handleRemoveMedia = (index: number) => { if (!activeBlock || !activeBlock.images) return; const newImages = activeBlock.images.filter((_, i) => i !== index); updateActiveBlock({ images: newImages }); if (selectedMediaIndex === index) setSelectedMediaIndex(null); };
+  const handleMoveMedia = (index: number, dir: 'left' | 'right') => { if (!activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images]; if (dir === 'left' && index > 0) { [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]]; setSelectedMediaIndex(index - 1); } if (dir === 'right' && index < newImages.length - 1) { [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]]; setSelectedMediaIndex(index + 1); } updateActiveBlock({ images: newImages }); };
+
+  const renderLayerTree = (arr: Block[], depth = 0) => {
+    return arr.map(b => (
+      <div key={`tree-${b.id}`} className="flex flex-col w-full">
+        <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-600 text-white font-bold' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
+          {b.children ? '📂' : '📄'} {b.name}
+        </button>
+        {b.children && renderLayerTree(b.children, depth + 1)}
+      </div>
+    ));
+  };
 
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements, b: Block) => {
     const isActive = activeId === b.id;
@@ -111,28 +193,26 @@ export default function Home() {
   const renderCanvasBlock = (b: Block) => {
     const isActive = activeId === b.id;
     const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
-    
-    const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
     const bgStyles = { ...b.styles };
     if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
-    if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
+    if (b.styles.bgType === 'image' || b.styles.bgType === 'video') bgStyles.backgroundColor = 'transparent';
     const containerStyles = { ...bgStyles, filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, mixBlendMode: b.styles.mixBlendMode || 'normal', cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default' };
 
     return (
       <div id={`block-${b.id}`} key={b.id} style={containerStyles} onClick={(e) => { e.stopPropagation(); }} 
         onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
-        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
+        className={`group transition-all duration-200 ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
-        {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
-        {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
+        {b.styles.bgOverlay && (b.styles.bgType === 'image' || b.styles.bgType === 'video') && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
+        {isActive && !isEditing && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200]">{b.name}</div>}
         
         {isActive && !isEditing && (
           <>
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] shadow-md hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none" />
+            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
           </>
         )}
 
@@ -166,7 +246,7 @@ export default function Home() {
         
         {b.type === 'img' && (
           <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: 10}} className="group/img">
-            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500 ${b.styles.imgHoverZoom ? 'group-hover/img:scale-110' : ''} ${b.styles.imgGrayscale ? 'grayscale group-hover/img:grayscale-0' : ''}`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: b.styles.imgHoverZoom ? undefined : `scale(${b.styles.imageScale || 1})`}} />
+            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`}} />
           </div>
         )}
         
@@ -189,21 +269,75 @@ export default function Home() {
     );
   };
 
-  // --- LOGIKA MENEDŻERA MEDIÓW ---
-  const handleAddMedia = () => { if (!activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe']; updateActiveBlock({ images: newImages }); setSelectedMediaIndex(newImages.length - 1); };
-  const handleUpdateMedia = (url: string) => { if (selectedMediaIndex === null || !activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images]; newImages[selectedMediaIndex] = url; updateActiveBlock({ images: newImages }); };
-  const handleRemoveMedia = (index: number) => { if (!activeBlock || !activeBlock.images) return; const newImages = activeBlock.images.filter((_, i) => i !== index); updateActiveBlock({ images: newImages }); if (selectedMediaIndex === index) setSelectedMediaIndex(null); };
-  const handleMoveMedia = (index: number, dir: 'left' | 'right') => { if (!activeBlock || !activeBlock.images) return; const newImages = [...activeBlock.images]; if (dir === 'left' && index > 0) { [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]]; setSelectedMediaIndex(index - 1); } if (dir === 'right' && index < newImages.length - 1) { [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]]; setSelectedMediaIndex(index + 1); } updateActiveBlock({ images: newImages }); };
+  const activeBlock = findBlockById(blocks, activeId);
+  const isTextType = activeBlock && ['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type);
 
   return (
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
-      <LeftSidebar leftTab={leftTab} setLeftTab={setLeftTab} addCategory={addCategory} setAddCategory={setAddCategory} handleAddBlock={handleAddBlock} blocks={blocks} activeId={activeId} setActiveId={setActiveId} setIsEditing={setIsEditing} />
+      <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
+        <button onClick={() => { setLeftTab(leftTab==='add'?null:'add'); if(leftTab!=='add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
+        <button onClick={() => setLeftTab(leftTab==='layers'?null:'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='layers'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
+      </aside>
+
+      <div className="relative z-40 h-full flex">
+        {leftTab === 'add' && (
+          <div className="w-56 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+            <div className="px-5 py-4 border-b border-neutral-800"><span className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">DODAJ ELEMENT</span></div>
+            <div className="flex-1 overflow-y-auto py-2 scrollbar-hide">
+              {categories.map(cat => (
+                <button key={cat.id} onMouseEnter={() => setAddCategory(cat.id)} onClick={() => setAddCategory(cat.id)} className={`w-full text-left px-5 py-3 text-xs font-semibold transition flex items-center gap-3 border-l-2 ${addCategory === cat.id ? 'bg-neutral-800 text-white border-blue-500' : 'text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 border-transparent'}`}><span className="w-4 text-center">{cat.icon}</span> {cat.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        {leftTab === 'layers' && (
+          <div className="w-64 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+            <div className="px-5 py-4 border-b border-neutral-800 flex justify-between items-center"><h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-400">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
+            <div className="flex-1 overflow-y-auto py-2">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
+          </div>
+        )}
+        {leftTab === 'add' && addCategory && (
+          <div className="absolute left-[100%] top-0 w-80 bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.6)] z-30 flex flex-col">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-neutral-800 bg-[#161616]"><h3 className="text-[11px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+              {menuOptions[addCategory]?.map((opt, i) => (<button key={i} onClick={() => handleAddBlock(opt.type, opt.variant, opt.label)} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition border-l-4 hover:border-l-blue-500"><span className="text-sm font-bold text-white block">{opt.label}</span></button>))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="flex-1 flex flex-col relative bg-[#222]">
-        <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} />
-        <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
+        <header className="h-12 bg-[#1A1A1A] border-b border-black flex items-center justify-between px-6 z-30 shadow-md">
+          <div className="flex items-center gap-4">
+             <div className="flex items-center bg-black rounded border border-neutral-800 text-xs">
+               <button onClick={() => setCanvasZoom(Math.max(0.25, canvasZoom - 0.25))} className="px-3 py-1.5 hover:bg-neutral-800 text-neutral-400">−</button>
+               <span className="px-2 font-mono w-12 text-center text-white">{Math.round(canvasZoom * 100)}%</span>
+               <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.25))} className="px-3 py-1.5 hover:bg-neutral-800 text-neutral-400">+</button>
+             </div>
+             <button onClick={() => setShowGrid(!showGrid)} className={`px-3 py-1.5 rounded border text-xs font-bold transition ${showGrid ? 'bg-blue-600 border-blue-500 text-white' : 'bg-black border-neutral-800 text-neutral-400 hover:bg-neutral-800'}`} title="Siatka Architektoniczna">⊞</button>
+             <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-black text-white border border-neutral-800 text-xs px-3 py-1.5 rounded outline-none focus:border-blue-500 w-48" placeholder="Adres..." />
+          </div>
+          <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition">ZAPISZ PROJEKT</button>
+        </header>
+
+        {activeBlock && isTextType && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-white border border-neutral-200 shadow-[0_10px_40px_rgba(0,0,0,0.2)] rounded-lg flex items-center px-2 py-1.5 gap-1 text-black animate-in fade-in slide-in-from-top-4">
+            <select value={activeBlock.type} onChange={e => updateActiveBlock({ type: e.target.value })} className="text-xs bg-transparent outline-none cursor-pointer p-1.5 font-bold border-r border-neutral-200 hover:bg-neutral-50 rounded"><option value="h1">Tytuł (H1)</option><option value="h2">Nagłówek (H2)</option><option value="p">Akapit (P)</option><option value="button">Przycisk</option></select>
+            <div className="flex items-center border-r border-neutral-200 px-2"><input type="text" value={activeBlock.styles.fontSize || '16px'} onChange={e => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="w-12 text-xs text-center outline-none bg-neutral-100 rounded py-1" /></div>
+            <button onMouseDown={e => {e.preventDefault(); document.execCommand('bold');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded font-black text-sm">B</button>
+            <button onMouseDown={e => {e.preventDefault(); document.execCommand('italic');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded italic font-serif text-sm">I</button>
+            <button onMouseDown={e => {e.preventDefault(); document.execCommand('underline');}} className="w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded underline text-sm">U</button>
+            <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
+            <button onClick={() => updateActiveBlock({ styles: { textAlign: 'left', justifyContent: 'flex-start' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'left' ? 'bg-blue-100 text-blue-600' : ''}`}>⇤</button>
+            <button onClick={() => updateActiveBlock({ styles: { textAlign: 'center', justifyContent: 'center' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'center' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥⇤</button>
+            <button onClick={() => updateActiveBlock({ styles: { textAlign: 'right', justifyContent: 'flex-end' }})} className={`w-8 h-8 flex items-center justify-center hover:bg-neutral-200 rounded text-sm ${activeBlock.styles.textAlign === 'right' ? 'bg-blue-100 text-blue-600' : ''}`}>⇥</button>
+            <div className="w-[1px] h-5 bg-neutral-200 mx-1"></div>
+            <div className="relative flex items-center justify-center w-8 h-8 hover:bg-neutral-200 rounded cursor-pointer overflow-hidden" title="Kolor Tekstu"><span className="font-bold text-sm" style={{color: activeBlock.styles.color}}>A</span><div className="absolute bottom-1 w-4 h-1 rounded-sm" style={{backgroundColor: activeBlock.styles.color || '#000'}}></div><input type="color" value={activeBlock.styles.color || '#000000'} onChange={e => { updateActiveBlock({ styles: { color: e.target.value }}); document.execCommand('foreColor', false, e.target.value); }} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" /></div>
+          </div>
+        )}
+
         <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
           <div style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'transform 0.2s ease-out' }} className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative overflow-hidden">
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}

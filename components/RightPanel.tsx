@@ -9,16 +9,9 @@ interface RightPanelProps {
   setIsMediaManagerOpen: (isOpen: boolean) => void;
 }
 
-export default function RightPanel({ 
-  activeBlock, rightTab, setRightTab, updateActiveBlock, removeActiveBlock, setIsMediaManagerOpen 
-}: RightPanelProps) {
-  
+export default function RightPanel({ activeBlock, rightTab, setRightTab, updateActiveBlock, removeActiveBlock, setIsMediaManagerOpen }: RightPanelProps) {
   if (!activeBlock) {
-    return (
-      <aside className="w-[320px] bg-[#161616] border-l border-neutral-800 z-40 flex flex-col shrink-0">
-        <div className="p-10 text-center text-neutral-600 text-xs mt-20">Zaznacz warstwę na płótnie.</div>
-      </aside>
-    );
+    return <aside className="w-[320px] bg-[#161616] border-l border-neutral-800 z-40 flex flex-col shrink-0"><div className="p-10 text-center text-neutral-600 text-xs mt-20">Zaznacz warstwę na płótnie.</div></aside>;
   }
 
   const isTextType = ['h1', 'h2', 'p', 'button', 'marquee', 'faq', 'list', 'menu', 'social'].includes(activeBlock.type);
@@ -38,7 +31,7 @@ export default function RightPanel({
       </div>
 
       <div className="p-5 flex flex-col gap-6 pb-20">
-        {/* --- ZAKŁADKA 1: UKŁAD --- */}
+        {/* --- UKŁAD --- */}
         {rightTab === 'layout' && (
           <>
             <div className="bg-neutral-900 p-3 rounded border border-neutral-800">
@@ -60,14 +53,23 @@ export default function RightPanel({
                 <option value="relative">Naturalna (W siatce)</option><option value="absolute">Swobodna (Absolute)</option><option value="fixed">Zablokowana (Fixed)</option>
               </select>
             </div>
+            
+            {/* NOWOŚĆ: KONTROLA Z-INDEX */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-blue-400 font-bold block mb-1">Warstwa (Z)</label><input type="number" value={activeBlock.styles.zIndex || 0} onChange={e => updateActiveBlock({ styles: { zIndex: parseInt(e.target.value) }})} className="w-full bg-black text-white p-1.5 text-xs border border-blue-500 rounded" /></div>
+              <div className="bg-neutral-900 p-2 rounded border border-neutral-800 col-span-2"><label className="text-[9px] text-neutral-500 block mb-1">Wyżej = na wierzchu</label><p className="text-[9px] text-neutral-400 mt-2">Ustaw wyższą wartość, by przenieść na przód.</p></div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Szerokość</label><input type="text" value={activeBlock.styles.width} onChange={e => updateActiveBlock({ styles: { width: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
               <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Wysokość</label><input type="text" value={activeBlock.styles.height} onChange={e => updateActiveBlock({ styles: { height: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
+              <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Padding wewn.</label><input type="text" value={activeBlock.styles.padding} onChange={e => updateActiveBlock({ styles: { padding: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
+              <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Margin zewn.</label><input type="text" value={activeBlock.styles.margin} onChange={e => updateActiveBlock({ styles: { margin: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
             </div>
           </>
         )}
 
-        {/* --- ZAKŁADKA 2: DESIGN --- */}
+        {/* --- STYL --- */}
         {rightTab === 'design' && (
           <>
             <div className="bg-neutral-900 p-4 rounded-xl border border-neutral-800 flex flex-col gap-4">
@@ -88,12 +90,9 @@ export default function RightPanel({
             
             {isTextType && (
               <div className="bg-neutral-900 p-3 rounded border border-neutral-800 flex flex-col gap-3">
-                <label className="text-[9px] font-bold text-neutral-500 block uppercase">Efekty Tekstu (V12)</label>
+                <label className="text-[9px] font-bold text-neutral-500 block uppercase">Efekty Tekstu</label>
                 <select value={activeBlock.styles.textShadow || 'none'} onChange={e => updateActiveBlock({ styles: { textShadow: e.target.value }})} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none">
-                  <option value="none">Brak Cienia</option>
-                  <option value="2px 2px 4px rgba(0,0,0,0.5)">Miękki Cień</option>
-                  <option value="4px 4px 0px rgba(0,0,0,0.2)">Twardy Cień (Retro)</option>
-                  <option value="0 0 10px rgba(59,130,246,0.8), 0 0 20px rgba(59,130,246,0.8)">Świecący Neon (Niebieski)</option>
+                  <option value="none">Brak Cienia</option><option value="2px 2px 4px rgba(0,0,0,0.5)">Miękki Cień</option><option value="4px 4px 0px rgba(0,0,0,0.2)">Twardy Cień (Retro)</option><option value="0 0 10px rgba(59,130,246,0.8), 0 0 20px rgba(59,130,246,0.8)">Świecący Neon</option>
                 </select>
               </div>
             )}
@@ -109,18 +108,18 @@ export default function RightPanel({
           </>
         )}
 
-        {/* --- ZAKŁADKA 3: EFEKTY --- */}
+        {/* --- EFEKTY --- */}
         {rightTab === 'effects' && (
           <>
             <div className="bg-pink-900/10 p-4 rounded-xl border border-pink-900/30 flex flex-col gap-4">
-              <label className="text-[10px] font-bold text-pink-400 block tracking-widest">FILTRY I MIESZANIE (V12)</label>
+              <label className="text-[10px] font-bold text-pink-400 block tracking-widest">FILTRY I MIESZANIE</label>
               <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Rozmycie (Blur)</span><span className="text-pink-300">{activeBlock.styles.filterBlur || 0}px</span></div><input type="range" min="0" max="20" value={activeBlock.styles.filterBlur || 0} onChange={e => updateActiveBlock({ styles: { filterBlur: parseInt(e.target.value) }})} className="w-full accent-pink-500" /></div>
               <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Jasność</span><span className="text-pink-300">{activeBlock.styles.filterBrightness ?? 100}%</span></div><input type="range" min="0" max="200" value={activeBlock.styles.filterBrightness ?? 100} onChange={e => updateActiveBlock({ styles: { filterBrightness: parseInt(e.target.value) }})} className="w-full accent-pink-500" /></div>
               <div className="flex flex-col gap-1"><div className="flex justify-between text-xs"><span className="text-neutral-400">Kontrast</span><span className="text-pink-300">{activeBlock.styles.filterContrast ?? 100}%</span></div><input type="range" min="0" max="200" value={activeBlock.styles.filterContrast ?? 100} onChange={e => updateActiveBlock({ styles: { filterContrast: parseInt(e.target.value) }})} className="w-full accent-pink-500" /></div>
               <div className="flex flex-col gap-1 mt-2">
-                <span className="text-neutral-400 text-xs">Tryb Mieszania</span>
+                <span className="text-neutral-400 text-xs">Tryb Mieszania (Blend Mode)</span>
                 <select value={activeBlock.styles.mixBlendMode || 'normal'} onChange={e => updateActiveBlock({ styles: { mixBlendMode: e.target.value }})} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none">
-                  <option value="normal">Normal (Brak)</option><option value="multiply">Multiply</option><option value="screen">Screen</option><option value="overlay">Overlay</option>
+                  <option value="normal">Normal (Brak)</option><option value="multiply">Multiply (Mnożenie)</option><option value="screen">Screen</option><option value="overlay">Overlay</option>
                 </select>
               </div>
             </div>
@@ -134,20 +133,13 @@ export default function RightPanel({
             
             <div className="bg-blue-900/10 p-3 rounded border border-blue-900/30 flex flex-col gap-3">
               <label className="text-[9px] font-bold text-blue-500 block">EFEKTY HOVER (Najechanie)</label>
-              <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Tło (Hover)</span><input type="color" value={activeBlock.hoverStyles?.backgroundColor || '#000000'} onChange={e => updateActiveBlock({ hoverStyles: { backgroundColor: e.target.value }})} className="w-8 h-8 rounded border-0 p-0 bg-transparent cursor-pointer" /></div>
-              <div className="flex flex-col gap-1 text-xs"><span className="text-neutral-400">Transform (CSS)</span><input type="text" value={activeBlock.hoverStyles?.transform || 'none'} onChange={e => updateActiveBlock({ hoverStyles: { transform: e.target.value }})} className="bg-black text-white p-2 border border-neutral-700 rounded w-full"/></div>
-            </div>
-            
-            <div className="bg-neutral-900 p-3 rounded border border-neutral-800 flex flex-col gap-3">
-              <label className="text-[9px] font-bold text-neutral-500 block">ANIMACJA WEJŚCIA</label>
-              <select value={activeBlock.entranceAnim || 'none'} onChange={e => updateActiveBlock({ entranceAnim: e.target.value })} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none">
-                <option value="none">Brak animacji</option><option value="animate-fade-in">Fade In</option><option value="animate-slide-up">Slide Up</option>
-              </select>
+              <div className="flex items-center justify-between text-xs"><span className="text-neutral-400">Kolor tła (Hover)</span><input type="color" value={activeBlock.hoverStyles?.backgroundColor || '#000000'} onChange={e => updateActiveBlock({ hoverStyles: { backgroundColor: e.target.value }})} className="w-8 h-8 rounded border-0 p-0 bg-transparent cursor-pointer" /></div>
+              <div className="flex flex-col gap-1 text-xs"><span className="text-neutral-400">Transform (np. scale(1.1))</span><input type="text" value={activeBlock.hoverStyles?.transform || 'none'} onChange={e => updateActiveBlock({ hoverStyles: { transform: e.target.value }})} className="bg-black text-white p-2 border border-neutral-700 rounded w-full"/></div>
             </div>
           </>
         )}
 
-        {/* --- ZAKŁADKA 4: TREŚĆ --- */}
+        {/* --- TREŚĆ --- */}
         {rightTab === 'interactions' && (
           <div className="flex flex-col gap-3 text-xs">
             <label className="text-[9px] font-bold text-neutral-500 block uppercase">Dane logiczne i treści</label>
