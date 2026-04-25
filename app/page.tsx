@@ -16,8 +16,8 @@ export default function Home() {
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
   const [pageSlug, setPageSlug] = useState('titan-v6');
+  const [canvasZoom, setCanvasZoom] = useState<number>(1);
 
-  // --- SILNIK MYSZKI (DRAG & RESIZE) ---
   const [interaction, setInteraction] = useState<{
     type: 'drag' | 'resize';
     startX: number; startY: number;
@@ -25,17 +25,12 @@ export default function Home() {
     initialWidth: number; initialHeight: number;
   } | null>(null);
 
-  // Zoptymalizowana aktualizacja klocka (używa prevState, żeby nie ciąć animacji)
   const updateActiveBlock = (updates: any) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => {
         return arr.map(b => {
           if (b.id === activeId) {
-            return { 
-              ...b, ...updates, 
-              styles: { ...b.styles, ...(updates.styles || {}) },
-              hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } 
-            };
+            return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
           }
           if (b.children) return { ...b, children: updateRecursive(b.children) };
           return b;
@@ -50,23 +45,13 @@ export default function Home() {
       if (!interaction || !activeId) return;
       e.preventDefault();
       
-      const dx = e.clientX - interaction.startX;
-      const dy = e.clientY - interaction.startY;
+      const dx = (e.clientX - interaction.startX) / canvasZoom;
+      const dy = (e.clientY - interaction.startY) / canvasZoom;
 
       if (interaction.type === 'drag') {
-        updateActiveBlock({
-          styles: {
-            left: `${interaction.initialLeft + dx}px`,
-            top: `${interaction.initialTop + dy}px`
-          }
-        });
+        updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } });
       } else if (interaction.type === 'resize') {
-        updateActiveBlock({
-          styles: {
-            width: `${Math.max(20, interaction.initialWidth + dx)}px`,
-            height: `${Math.max(20, interaction.initialHeight + dy)}px`
-          }
-        });
+        updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } });
       }
     };
 
@@ -76,14 +61,21 @@ export default function Home() {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
+    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
+  }, [interaction, activeId, canvasZoom]);
 
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [interaction, activeId]);
+  // NOWOŚĆ: Funkcja do skupienia kamery na aktywnym obiekcie (Focus / Zoom to fit)
+  const handleFocusActive = () => {
+    if (!activeId) return;
+    setCanvasZoom(1.25); // Automatycznie przybliżamy dla lepszej edycji
+    setTimeout(() => {
+      const el = document.getElementById(`block-${activeId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      }
+    }, 50); // Krótkie opóźnienie na wyrenderowanie po zmianie zoomu
+  };
 
-  // --- BAZA KATEGORII ---
   const menuOptions: Record<string, {label: string, type: string, variant: string}[]> = {
     tekst: [
       { label: 'Markowy tytuł', type: 'h1', variant: 'brand' }, { label: 'Tytuł', type: 'h1', variant: '' },
@@ -142,19 +134,14 @@ export default function Home() {
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const generateId = () => Math.floor(Math.random() * 10000000);
     
-    // Ustawiamy domyślnie na 'absolute', żeby od razu można było przesuwać klocki myszką!
-    // (Oprócz głównych kontenerów jak section)
-    const defaultPosition = ['section', 'container', 'grid', 'form'].includes(type) ? 'relative' : 'absolute';
-
     let newBlock: Block = {
       id: generateId(), type, name: label.toUpperCase(),
       children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
       hoverStyles: {}, entranceAnim: 'none',
-      styles: { position: defaultPosition, left: '50px', top: '50px', display: 'block', padding: '10px', margin: '0px', width: '300px', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease' },
+      styles: { position: 'relative', left: '0px', top: '0px', display: 'block', padding: '10px', margin: '0px', width: '100%', height: 'auto', backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease' },
     };
 
-    // --- LOGIKA WARIANTÓW ---
-    if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px';} }
+    if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing='-1px';} if(variant==='logo'){newBlock.text='LOGO™'; newBlock.styles.letterSpacing='2px'; newBlock.styles.width='fit-content';} }
     if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; if(variant==='brand'){newBlock.styles.borderBottom='3px solid #3b82f6'; newBlock.styles.width='fit-content';} }
     if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu. Możesz go edytować.'; newBlock.styles.fontSize = '16px'; if(variant==='brand'){newBlock.styles.fontStyle='italic'; newBlock.styles.borderLeft='4px solid #3b82f6'; newBlock.styles.paddingLeft='15px';} }
     if (type === 'marquee') { newBlock.text = 'PRZEWIJANY TEKST • OGŁOSZENIE • '; newBlock.styles.fontSize = '24px'; newBlock.styles.fontWeight = 'bold'; }
@@ -170,7 +157,7 @@ export default function Home() {
     if (type === 'button') { newBlock.text = variant==='share' ? '🔗 Udostępnij' : 'Przycisk'; newBlock.styles.backgroundColor = variant==='share' ? '#f3f4f6' : '#000'; newBlock.styles.color = variant==='share' ? '#000' : '#fff'; newBlock.styles.padding = '12px 24px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.width = 'fit-content'; newBlock.hoverStyles = { transform: 'scale(1.05)' }; }
     
     if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='line'){newBlock.styles.height='2px'; newBlock.styles.backgroundColor='#ccc';} }
-    if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; }
+    if (type === 'social') { newBlock.text = '📘 📸 🐦'; newBlock.styles.fontSize = '24px'; newBlock.styles.letterSpacing = '10px'; newBlock.styles.width='fit-content'; }
     
     if (type === 'video') { newBlock.videoId = 'dQw4w9WgXcQ'; newBlock.styles.height = '400px'; if(variant==='social'){newBlock.styles.width='300px'; newBlock.styles.height='530px'; newBlock.styles.borderRadius='16px';} }
     if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0']; newBlock.styles.height = '400px'; newBlock.styles.overflow = 'hidden'; }
@@ -224,55 +211,46 @@ export default function Home() {
     ));
   };
 
-  // --- GŁÓWNY RENDERER PŁÓTNA ---
   const renderCanvasBlock = (b: Block) => {
     const isActive = activeId === b.id;
     const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
 
     return (
       <div 
+        id={`block-${b.id}`} // Dodane ID, aby kamera mogła znaleźć blok!
         key={b.id} 
         style={b.styles} 
         onClick={(e) => { e.stopPropagation(); setActiveId(b.id); }} 
         
-        // NOWOŚĆ: INICJACJA DRAG & DROP
         onMouseDown={(e) => {
           e.stopPropagation();
           setActiveId(b.id);
           if (isAbsolute) {
-            setInteraction({
-              type: 'drag',
-              startX: e.clientX,
-              startY: e.clientY,
-              initialLeft: parseInt(b.styles.left) || 0,
-              initialTop: parseInt(b.styles.top) || 0,
-              initialWidth: 0,
-              initialHeight: 0
-            });
+            setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 });
           }
         }}
         
-        className={`group transition-all duration-200 ${isAbsolute ? 'cursor-move' : ''} ${isActive ? 'ring-2 ring-blue-500 z-50 shadow-[0_0_0_4px_rgba(59,130,246,0.2)]' : 'hover:ring-1 hover:ring-blue-300'}`}
+        // NOWOŚĆ V6.3: Profesjonalny Bounding Box i Obwódka
+        className={`group transition-all duration-200 ${isAbsolute ? 'cursor-move' : ''} ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-1 z-50' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
-        {isActive && <div className="absolute -top-5 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name}</div>}
+        {isActive && <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[100]">{b.name} {b.styles.width} x {b.styles.height}</div>}
         
-        {/* NOWOŚĆ: UCHWYT SKALOWANIA */}
-        {isActive && isAbsolute && (
-          <div 
-            className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-600 rounded-full cursor-se-resize z-[100] shadow border-2 border-white hover:scale-125 transition-transform"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setInteraction({
-                type: 'resize',
-                startX: e.clientX,
-                startY: e.clientY,
-                initialLeft: parseInt(b.styles.left) || 0,
-                initialTop: parseInt(b.styles.top) || 0,
-                initialWidth: parseInt(b.styles.width) || e.currentTarget.parentElement?.offsetWidth || 0,
-                initialHeight: parseInt(b.styles.height) || e.currentTarget.parentElement?.offsetHeight || 0
-              });
-            }}
-          />
+        {/* NOWOŚĆ V6.3: Prawdziwa Ramka Transformacji (Kwadraty na rogach) */}
+        {isActive && (
+          <>
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[100] pointer-events-none shadow-sm" />
+            
+            {/* Ten w prawym dolnym rogu jest interaktywny i służy do Resajzu */}
+            <div 
+              className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[100] shadow-md hover:bg-blue-500 transition-colors"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: parseInt(b.styles.width) || e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: parseInt(b.styles.height) || e.currentTarget.parentElement?.offsetHeight || 0 });
+              }}
+            />
+          </>
         )}
 
         {/* TREŚĆ KLOCKÓW */}
@@ -282,10 +260,10 @@ export default function Home() {
         {b.type === 'img' && <img src={b.src} alt="img" className="w-full h-full pointer-events-none" style={{objectFit: b.styles.objectFit, borderRadius: b.styles.borderRadius}}/>}
         {b.type === 'button' && <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent: b.styles.textAlign === 'center' ? 'center' : b.styles.textAlign === 'right' ? 'flex-end' : 'flex-start'}}>{b.text}</div>}
         {b.type === 'shape' && <div style={{width:'100%', height:'100%'}}></div>}
-        {b.type === 'menu' && <nav style={{width:'100%', height:'100%', whiteSpace: b.styles.whiteSpace}}>{b.text}</nav>}
+        {b.type === 'menu' && b.variant !== 'menu-hamburger' ? <nav style={{width:'100%', height:'100%'}}>{b.text}</nav> : b.text}
         {b.type === 'social' && <div style={{width:'100%', height:'100%'}}>{b.text}</div>}
         {b.type === 'faq' && <div className="font-bold text-sm pointer-events-none">{b.text?.split('\n\n')[0]} ▼</div>}
-        {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none">🌍 {b.src || b.text}</div>}
+        {b.type === 'embed' && <div className="w-full h-full flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none text-center p-4">🌍 {b.src || b.text}</div>}
         {b.type === 'map' && <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold border border-neutral-300 pointer-events-none">🗺️ Mapa Google</div>}
         {b.type === 'carousel' && b.images && (
           <div className="w-full h-full relative overflow-hidden bg-neutral-100 pointer-events-none">
@@ -308,7 +286,6 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
 
-  // IKONY KATEGORII WIXA
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
     { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola i Sekcje', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
@@ -320,13 +297,11 @@ export default function Home() {
   return (
     <div className="flex h-screen w-screen bg-[#0E0E0E] text-white font-sans overflow-hidden">
       
-      {/* 1. WĄSKI PASEK NARZĘDZI */}
       <aside className="w-16 bg-[#111] border-r border-neutral-800 flex flex-col items-center py-6 gap-4 z-50 shrink-0">
         <button onClick={() => { setLeftTab(leftTab==='add'?null:'add'); if(leftTab!=='add') setAddCategory(null); }} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='add'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab==='layers'?null:'layers')} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition ${leftTab==='layers'?'bg-blue-600 text-white':'text-neutral-500 hover:text-white hover:bg-neutral-800'}`}>☰</button>
       </aside>
 
-      {/* 2. ROZWIJANY PANEL BOCZNY (KASKADA) */}
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
           <div className="w-56 bg-[#111] border-r border-neutral-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
@@ -355,7 +330,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* KOLUMNA 2: Opcje (Wysuwany panel) */}
         {leftTab === 'add' && addCategory && (
           <div className="absolute left-[100%] top-0 w-80 bg-[#161616] border-r border-neutral-800 h-full shadow-[20px_0_30px_rgba(0,0,0,0.6)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-4 border-b border-neutral-800 bg-[#161616]">
@@ -373,30 +347,39 @@ export default function Home() {
         )}
       </div>
 
-      {/* 3. ŚRODEK (PŁÓTNO) */}
       <div className="flex-1 flex flex-col relative bg-[#222]">
         <header className="h-12 bg-[#1A1A1A] border-b border-black flex items-center justify-between px-6 z-30 shadow-md">
-          <div className="flex items-center gap-3">
-             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Adres:</span>
-             <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-black text-white border border-neutral-800 text-xs px-3 py-1 rounded outline-none focus:border-blue-500 w-48" />
+          <div className="flex items-center gap-4">
+             <div className="flex items-center bg-black rounded border border-neutral-800 text-xs">
+               <button onClick={() => setCanvasZoom(Math.max(0.25, canvasZoom - 0.25))} className="px-3 py-1.5 hover:bg-neutral-800 text-neutral-400">−</button>
+               <span className="px-2 font-mono w-12 text-center text-white">{Math.round(canvasZoom * 100)}%</span>
+               <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.25))} className="px-3 py-1.5 hover:bg-neutral-800 text-neutral-400">+</button>
+             </div>
+             <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-black text-white border border-neutral-800 text-xs px-3 py-1.5 rounded outline-none focus:border-blue-500 w-48" placeholder="Adres strony..." />
           </div>
-          <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition shadow-[0_0_15px_rgba(37,99,235,0.4)]">WDRÓŻ ZMIANY</button>
+          <button onClick={handlePublish} className="bg-blue-600 text-white hover:bg-blue-500 text-[11px] uppercase tracking-wider font-extrabold px-6 py-1.5 rounded transition shadow-[0_0_15px_rgba(37,99,235,0.4)]">ZAPISZ PROJEKT</button>
         </header>
 
-        <main className="flex-1 overflow-auto flex justify-center bg-[#111]" onClick={() => setActiveId(null)}>
-          <div className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative overflow-hidden">
+        <main className="flex-1 overflow-auto flex justify-center bg-[#111] p-10" onClick={() => setActiveId(null)}>
+          <div 
+            style={{ transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'transform 0.2s ease-out' }}
+            className="w-[1200px] min-h-screen bg-white text-black shadow-2xl relative"
+          >
              {blocks.map(b => renderCanvasBlock(b))}
           </div>
         </main>
       </div>
 
-      {/* 4. PRAWY INSPEKTOR (PROPERTIES) */}
       <aside className="w-[320px] bg-[#161616] border-l border-neutral-800 z-40 overflow-y-auto flex flex-col shrink-0">
         {activeBlock ? (
           <>
             <div className="p-4 bg-[#111] border-b border-neutral-800 flex justify-between items-center">
-              <span className="font-black text-xs text-white truncate max-w-[180px]">{activeBlock.name}</span>
-              <button onClick={removeActiveBlock} className="bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white text-[10px] px-2 py-1 rounded transition">USUŃ</button>
+              <span className="font-black text-xs text-white truncate max-w-[150px]">{activeBlock.name}</span>
+              <div className="flex gap-2">
+                {/* NOWOŚĆ V6.3: Kamera - Skupienie na obiekcie */}
+                <button onClick={handleFocusActive} className="bg-blue-900/30 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] px-2 py-1 rounded transition" title="Przybliż kamerę do obiektu">🔍 SKUP</button>
+                <button onClick={removeActiveBlock} className="bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white text-[10px] px-2 py-1 rounded transition" title="Usuń element">USUŃ</button>
+              </div>
             </div>
             
             <div className="flex text-[10px] font-bold tracking-widest bg-[#111] border-b border-neutral-800">
@@ -421,13 +404,18 @@ export default function Home() {
                         <div className="flex justify-between items-center"><span className="text-neutral-400">Odstęp (Gap)</span><input type="text" value={activeBlock.styles.gap || '0px'} onChange={e => updateActiveBlock({ styles: { gap: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded w-16 text-right" /></div>
                       </div>
                     )}
+                    {activeBlock.styles.display === 'grid' && (
+                      <div className="flex flex-col gap-2 mt-3 text-xs">
+                        <div className="flex justify-between items-center"><span className="text-neutral-400">Kolumny (CSS)</span><input type="text" value={activeBlock.styles.gridTemplateColumns || 'repeat(2, 1fr)'} onChange={e => updateActiveBlock({ styles: { gridTemplateColumns: e.target.value }})} className="bg-black text-white p-1 border border-neutral-700 rounded w-32 text-right" /></div>
+                      </div>
+                    )}
                   </div>
                   <div className="bg-neutral-900 p-3 rounded border border-neutral-800">
                     <label className="text-[9px] font-bold text-neutral-500 block mb-2">POZYCJA W DOKUMENCIE</label>
                     <select value={activeBlock.styles.position} onChange={e => updateActiveBlock({ styles: { position: e.target.value }})} className="w-full bg-black text-white p-2 text-xs border border-neutral-700 rounded outline-none mb-2">
-                      <option value="relative">Naturalna (Zgodnie z siatką)</option><option value="absolute">Swobodna (Drag & Drop)</option><option value="fixed">Zablokowana (Popup / Menu)</option>
+                      <option value="relative">Naturalna (W siatce)</option><option value="absolute">Swobodna (Absolute)</option><option value="fixed">Zablokowana (Fixed)</option>
                     </select>
-                    {activeBlock.styles.position === 'absolute' && <p className="text-[9px] text-blue-400 italic">Złap element na płótnie, aby go przesunąć, lub użyj suwaka w rogu, aby zmienić rozmiar.</p>}
+                    {activeBlock.styles.position === 'absolute' && <p className="text-[9px] text-blue-400 italic">Złap element na płótnie, aby go przesunąć, lub użyj niebieskiego uchwytu w prawym dolnym rogu ramki do skalowania.</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-neutral-900 p-2 rounded border border-neutral-800"><label className="text-[9px] text-neutral-500 block mb-1">Szerokość</label><input type="text" value={activeBlock.styles.width} onChange={e => updateActiveBlock({ styles: { width: e.target.value }})} className="w-full bg-black text-white p-1.5 text-xs border border-neutral-700 rounded" /></div>
