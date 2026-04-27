@@ -120,5 +120,22 @@ export const createBlock = (type: string, variant: string, label: string) => {
   if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; }
   if (type === 'grid' && variant === 'gallery-grid') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px'; }
 
+  // --- NOWOŚĆ V18.1: WIDEO I OSADZENIA (EMBEDS) ---
+  if (type === 'video') {
+    // Standardowe wideo z MP4 na start
+    newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4';
+    newBlock.styles.width = '100%';
+    newBlock.styles.height = '315px';
+    newBlock.styles.backgroundColor = '#000';
+    newBlock.styles.borderRadius = '12px';
+  }
+
+  if (type === 'embed') {
+    // Domyślna mapa Google
+    newBlock.text = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2504.66487841855!2d16.92516811563456!3d51.10788527957199!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470fe9c2d4b58abf%3A0xb70956aec205e0f5!2zV3JvY8WCYXc!5e0!3m2!1spl!2spl!4v1625560000000!5m2!1spl!2spl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>';
+    newBlock.styles.width = '100%';
+    newBlock.styles.height = '400px';
+    newBlock.styles.borderRadius = '12px';
+  }
   return newBlock;
 };

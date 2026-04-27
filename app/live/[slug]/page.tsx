@@ -1,57 +1,80 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../../supabase';
+import { notFound } from 'next/navigation';
+import { supabase } from '../../../supabase'; // Upewnij się, że ścieżka do Twojego supabase.ts jest poprawna
 
-export default function LivePage({ params }: { params: { slug: string } }) {
-  const [blocks, setBlocks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [carouselStates, setCarouselStates] = useState<{[key: number]: number}>({});
-  const [formStatus, setFormStatus] = useState<{[key: number]: string}>({});
-
-  useEffect(() => {
-    const fetchPage = async () => {
-      const { data } = await supabase.from('pages').select('content').eq('slug', params.slug).single();
-      if (data) setBlocks(data.content);
-      setLoading(false);
-    };
-    fetchPage();
-  }, [params.slug]);
-
-  const handleFormSubmit = async (e: React.FormEvent, formBlockId: number) => {
-    e.preventDefault();
-    setFormStatus(prev => ({...prev, [formBlockId]: 'Wysyłanie...'}));
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = Object.fromEntries(formData.entries());
-
-    const { error } = await supabase.from('leads').insert([{ page_slug: params.slug, data }]);
-    if (error) setFormStatus(prev => ({...prev, [formBlockId]: 'Błąd: ' + error.message}));
-    else { setFormStatus(prev => ({...prev, [formBlockId]: 'Sukces! Wysłano wiadmość.'})); (e.target as HTMLFormElement).reset(); }
+// Komponent renderujący pojedynczy blok (Czysty, bez edytora)
+const LiveBlock = ({ b }: { b: any }) => {
+  const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
+  const bgStyles = { ...b.styles };
+  
+  if (b.styles.bgType === 'image') {
+    bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
+  }
+  if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
+  
+  const containerStyles: any = { 
+    ...bgStyles, 
+    filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
+    mixBlendMode: b.styles.mixBlendMode || 'normal',
+    zIndex: b.styles.zIndex || 1 
   };
 
-  const nextSlide = (blockId: number, max: number) => setCarouselStates(prev => ({ ...prev, [blockId]: ((prev[blockId] || 0) + 1) % max }));
-  const prevSlide = (blockId: number, max: number) => setCarouselStates(prev => ({ ...prev, [blockId]: ((prev[blockId] || 0) - 1 + max) % max }));
+  if (b.children) {
+    containerStyles.display = 'flex';
+    containerStyles.flexDirection = 'column';
+  }
 
-  const renderBlock = (b: any) => {
-    const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
-    const bgStyles = { ...b.styles };
-    if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
-    if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
-    
-    const animClass = b.entranceAnim && b.entranceAnim !== 'none' ? `animate-in ${b.entranceAnim === 'animate-fade-in' ? 'fade-in duration-1000' : b.entranceAnim === 'animate-slide-up' ? 'slide-in-from-bottom-10 fade-in duration-700' : ''}` : '';
+  // Animacje i Interakcje
+  const hover = b.hoverStyles || {};
+  const hasHover = hover.scale || hover.translateY || hover.backgroundColor;
+  
+  if (b.entranceAnim === 'fade-in') containerStyles.animation = `fadeIn 0.8s ease-out forwards`;
+  if (b.entranceAnim === 'slide-up') containerStyles.animation = `slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
+  if (b.entranceAnim === 'zoom-in') containerStyles.animation = `zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
 
-    const content = (
-      <>
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/').split('&')[0];
+    if (url.includes('youtu.be/')) return url.replace('youtu.be/', 'www.youtube.com/embed/');
+    if (url.includes('vimeo.com/')) return url.replace('vimeo.com/', 'player.vimeo.com/video/');
+    return url;
+  };
+
+  const isTextElement = ['h1', 'h2', 'marquee', 'p', 'list', 'faq', 'button', 'social', 'alert'].includes(b.type);
+  let Tag: keyof JSX.IntrinsicElements = 'div';
+  if (['h1', 'h2', 'marquee'].includes(b.type)) Tag = 'h1';
+  if (b.type === 'p') Tag = 'p';
+  if (b.type === 'menu') Tag = 'nav';
+
+  return (
+    <>
+      {/* Dynamiczne CSS-y generowane na serwerze! */}
+      <style dangerouslySetInnerHTML={{__html: `
+        #live-${b.id} {
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+        }
+        ${hasHover ? `
+          #live-${b.id}:hover {
+            transform: scale(${hover.scale || 1}) translateY(${hover.translateY || 0}px) !important;
+            ${hover.backgroundColor ? `background-color: ${hover.backgroundColor} !important;` : ''}
+            z-index: 50 !important;
+          }
+        ` : ''}
+      `}} />
+
+      <div id={`live-${b.id}`} style={containerStyles} className="relative">
+        
+        {/* Tła multimedialne */}
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
         {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
-
-        {/* V11: ENGINE WSTĘGI (SEAMLESS LOOP) */}
+        
+        {/* Pasek Marquee / Ribbon */}
         {b.type === 'ribbon' && b.ribbonItems && (
           <div style={{ overflow: 'hidden', width: '100%', display: 'flex', whiteSpace: 'nowrap', alignItems: 'center', height: '100%', zIndex: 10, position: 'relative' }}>
              {[1, 2].map(group => (
                <div key={group} style={{ display: 'flex', flexShrink: 0, minWidth: '100%', justifyContent: 'space-around', animation: 'scroll-marquee 15s linear infinite' }}>
                  {b.ribbonItems!.map((item: any, i: number) => (
                    <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '0 30px' }}>
-                     {item.type === 'img' ? <img src={item.value} style={{ height: '1.2em', objectFit: 'contain' }} className="pointer-events-none" /> : <span style={{fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit'}}>{item.value}</span>}
+                     {item.type === 'img' ? <img src={item.value} style={{ height: '1.2em', objectFit: 'contain' }} alt="ribbon-icon" /> : <span style={{fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit'}} dangerouslySetInnerHTML={{ __html: item.value }}/>}
                    </div>
                  ))}
                </div>
@@ -59,59 +82,91 @@ export default function LivePage({ params }: { params: { slug: string } }) {
           </div>
         )}
 
-        {['h1', 'h2', 'marquee'].includes(b.type) && <h1 style={{fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', letterSpacing:b.styles.letterSpacing, textTransform:b.styles.textTransform, margin:0, zIndex:10, position:'relative'}} dangerouslySetInnerHTML={{__html: b.text}} />}
-        {b.type === 'p' && <p style={{fontSize:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', fontStyle:b.styles.fontStyle, margin:0, zIndex:10, position:'relative'}} dangerouslySetInnerHTML={{__html: b.text}} />}
-        
-        {b.type === 'button' && (
-          <button type="submit" 
-            style={{width:'100%', height:'100%', border:'none', backgroundColor: b.styles.backgroundColor, color: b.styles.color, borderRadius: b.styles.borderRadius, fontSize: b.styles.fontSize, fontWeight: b.styles.fontWeight, letterSpacing: b.styles.letterSpacing, cursor:'pointer', transition: 'all 0.3s ease', zIndex:10, position:'relative'}}
-            onMouseEnter={(e) => { if (b.hoverStyles?.backgroundColor) e.currentTarget.style.backgroundColor = b.hoverStyles.backgroundColor; if (b.hoverStyles?.transform) e.currentTarget.style.transform = b.hoverStyles.transform; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = b.styles.backgroundColor; e.currentTarget.style.transform = 'none'; }}
-            dangerouslySetInnerHTML={{__html: b.text}}
+        {/* Teksty */}
+        {isTextElement && (
+          <Tag 
+            style={{ fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', outline: 'none', textShadow: b.styles.textShadow, width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, zIndex: 10, position: 'relative' }}
+            dangerouslySetInnerHTML={{ __html: b.text || '' }}
           />
         )}
         
+        {/* Wideo (Bez szklanej tarczy - można klikać!) */}
+        {b.type === 'video' && (
+          <div className="w-full h-full relative z-10 overflow-hidden" style={{ borderRadius: b.styles.borderRadius }}>
+            {b.src && (b.src.includes('youtube') || b.src.includes('youtu.be') || b.src.includes('vimeo')) ? (
+              <iframe className="w-full h-full" src={getEmbedUrl(b.src)} frameBorder="0" allowFullScreen></iframe>
+            ) : (
+              <video className="w-full h-full object-cover" controls src={b.src} />
+            )}
+          </div>
+        )}
+
+        {/* Embedy (Z włączonymi pointer-events, żeby działały na żywo) */}
+        {b.type === 'embed' && (
+          <div className="w-full h-full relative z-10 flex items-center justify-center overflow-hidden" style={{ borderRadius: b.styles.borderRadius }}>
+             <style dangerouslySetInnerHTML={{__html: `#live-${b.id} iframe { width: 100%; height: 100%; border: none; }`}} />
+             <div dangerouslySetInnerHTML={{ __html: b.text || '' }} className="w-full h-full" />
+          </div>
+        )}
+        
+        {/* Obrazy */}
         {b.type === 'img' && (
-          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex:10}} className="group/img">
-            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500 ${b.styles.imgHoverZoom ? 'group-hover/img:scale-110' : ''} ${b.styles.imgGrayscale ? 'grayscale group-hover/img:grayscale-0' : ''}`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: b.styles.imgHoverZoom ? undefined : `scale(${b.styles.imageScale || 1})`}} />
+          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: 10}}>
+            <img src={b.src} className="w-full h-full transition-all duration-500" style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`}} alt="live-image" />
           </div>
         )}
         
-        {b.type === 'input' && <input type="text" name={b.name || `field_${b.id}`} placeholder={b.text} required style={{width:'100%', height:'100%', border: b.styles.border, backgroundColor: b.styles.backgroundColor, borderRadius: b.styles.borderRadius, padding: b.styles.padding, outline:'none', color:'inherit', fontSize:'inherit', zIndex:10, position:'relative'}} />}
-        {b.type === 'textarea' && <textarea name={b.name || `field_${b.id}`} placeholder={b.text} required style={{width:'100%', height:'100%', border: b.styles.border, backgroundColor: b.styles.backgroundColor, borderRadius: b.styles.borderRadius, padding: b.styles.padding, outline:'none', color:'inherit', fontSize:'inherit', resize:'none', zIndex:10, position:'relative'}} />}
-        
-        {['carousel'].includes(b.type) && b.images && (
-          <div style={{width:'100%', height:'100%', position:'relative', overflow:'hidden', borderRadius: b.styles.borderRadius, zIndex:10}} className="group">
-            <div style={{display:'flex', width:'100%', height:'100%', transition:'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)', transform:`translateX(-${(carouselStates[b.id] || 0) * 100}%)`}}>
-              {b.images.map((img: string, i: number) => <img key={i} src={img} style={{width:'100%', height:'100%', objectFit:'cover', flexShrink:0}} alt={`Slide ${i}`}/>)}
-            </div>
-            <button type="button" onClick={(e) => { e.preventDefault(); prevSlide(b.id, b.images.length); }} style={{position:'absolute', left:'16px', top:'50%', transform:'translateY(-50%)', zIndex:20}} className="bg-white/80 hover:bg-white text-black w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">❮</button>
-            <button type="button" onClick={(e) => { e.preventDefault(); nextSlide(b.id, b.images.length); }} style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', zIndex:20}} className="bg-white/80 hover:bg-white text-black w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">❯</button>
-          </div>
-        )}
-        
+        {/* Rekursywne dzieci */}
         {b.children && (
-          <div style={{ display: 'inherit', flexDirection: 'inherit', gap: 'inherit', gridTemplateColumns: 'inherit', alignItems: 'inherit', justifyItems: 'inherit', justifyContent: 'inherit', width: '100%', height: '100%', zIndex: 10, position: 'relative' }}>
-            {b.children.map((child: any) => renderBlock(child))}
+          <div className="w-full h-full relative flex-1 z-10" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
+             {b.children.map((child: any) => {
+                if (b.styles.display === 'grid') child.styles.width = '100%';
+                return <LiveBlock key={child.id} b={child} />;
+             })}
           </div>
         )}
-        {b.type === 'form' && formStatus[b.id] && <div className={`mt-4 p-3 rounded text-sm font-bold text-center ${formStatus[b.id].includes('Sukces') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`} style={{zIndex:10, position:'relative'}}>{formStatus[b.id]}</div>}
-      </>
-    );
 
-    if (b.type === 'form') return <form key={b.id} style={bgStyles} className={animClass} onSubmit={(e) => handleFormSubmit(e, b.id)}>{content}</form>;
-    return <div key={b.id} style={bgStyles} className={animClass}>{content}</div>;
-  };
-
-  if (loading) return <div className="bg-[#111] h-screen w-full flex items-center justify-center text-white font-mono text-xs tracking-widest">Wczytywanie V11...</div>;
-
-  return (
-    <div className="min-h-screen w-full bg-neutral-100 flex justify-center">
-      {/* V11: Animacja Marquee dla Live Page */}
-      <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
-      <div className="w-[1200px] bg-white min-h-screen relative shadow-2xl overflow-hidden">
-        {blocks.map(b => renderBlock(b))}
       </div>
-    </div>
+    </>
+  );
+};
+
+export const revalidate = 0; // Wyłączamy cache, żeby zawsze pobierało najnowszą wersję strony po publikacji
+
+// Główny Serwerowy Komponent Strony
+export default async function LivePage({ params }: { params: { slug: string } }) {
+  
+  // 1. Pobieramy JSON strony bezpośrednio z Supabase
+  const { data, error } = await supabase
+    .from('pages')
+    .select('content')
+    .eq('slug', params.slug)
+    .single();
+
+  // 2. Jeśli nie ma strony o takim URL, wyrzucamy błąd 404
+  if (error || !data) {
+    return notFound();
+  }
+
+  const blocks = data.content;
+
+  // 3. Renderujemy potężne, czyste drzewo DOM
+  return (
+    <main className="min-h-screen w-full bg-white text-black overflow-x-hidden font-sans">
+      
+      {/* Globalne definicje animacji wejściowych */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      `}} />
+
+      {/* Renderowanie głównych bloków na żywo */}
+      {blocks.map((b: any) => (
+        <LiveBlock key={b.id} b={b} />
+      ))}
+      
+    </main>
   );
 }

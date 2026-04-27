@@ -26,27 +26,50 @@ import BottomBar from '../components/BottomBar';
 import AICopilot from '../components/AICopilot';
 
 interface Block {
-  id: number;
-  type: string;
-  name: string;
-  text?: string;
-  src?: string;
-  videoId?: string;
-  children?: Block[];
-  images?: string[];
-  hoverStyles?: any;
-  entranceAnim?: string;
-  ribbonItems?: { type: 'text' | 'img', value: string }[];
-  styles: any;
+  id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
+  images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string }[]; styles: any;
 }
 
 export default function Home() {
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  // --- NOWOŚĆ V18.0: STAN HISTORII (UNDO/REDO) ---
+  const [internalBlocks, setInternalBlocks] = useState<Block[]>([]);
+  const [past, setPast] = useState<Block[][]>([]);
+  const [future, setFuture] = useState<Block[][]>([]);
+  
+  // Zewnętrznie kod "myśli", że to normalny stan 'blocks'
+  const blocks = internalBlocks;
+
+  // Inteligentny Wrapper: Zapisuje przeszłość PRZED nałożeniem nowej zmiany
+  const setBlocks = (action: React.SetStateAction<Block[]>) => {
+    setInternalBlocks(current => {
+      const next = typeof action === 'function' ? (action as any)(current) : action;
+      setPast(p => [...p, current].slice(-50)); // Pamiętamy do 50 kroków w tył
+      setFuture([]); // Wykonanie nowej akcji zabija "alternatywną przyszłość"
+      return next;
+    });
+  };
+
+  const undo = () => {
+    if (past.length === 0) return;
+    const previous = past[past.length - 1];
+    setPast(p => p.slice(0, -1));
+    setFuture(f => [blocks, ...f]);
+    setInternalBlocks(previous);
+  };
+
+  const redo = () => {
+    if (future.length === 0) return;
+    const next = future[0];
+    setFuture(f => f.slice(1));
+    setPast(p => [...p, blocks]);
+    setInternalBlocks(next);
+  };
+
   const [activeId, setActiveId] = useState<number | null>(null);
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v17-final');
+  const [pageSlug, setPageSlug] = useState('titan-v18-history');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
@@ -59,8 +82,19 @@ export default function Home() {
     type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; 
   } | null>(null);
 
-  const updateActiveBlock = (updates: any) => {
-    setBlocks(prevBlocks => {
+  // Kiedy zaczynamy przeciąganie, musimy ręcznie zapisać "przeszłość" (snapshot).
+  const handleSetInteraction = (val: any) => {
+    if (val !== null) {
+      setPast(p => [...p, blocks].slice(-50));
+      setFuture([]);
+    }
+    setInteraction(val);
+  };
+
+  // 'skipHistory' zapobiega spamowaniu tablicy historii tysiącami pikseli podczas Drag & Drop.
+  const updateActiveBlock = (updates: any, skipHistory = false) => {
+    const setter = skipHistory ? setInternalBlocks : setBlocks;
+    setter(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
         if (b.id === activeId) return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
         if (b.children) return { ...b, children: updateRecursive(b.children) }; return b;
@@ -95,9 +129,7 @@ export default function Home() {
           let newChildren = [...b.children];
           if (layout !== 'flex-col' && newChildren.length < childCount) {
             const missingSlots = childCount - newChildren.length;
-            for (let i = 0; i < missingSlots; i++) {
-              newChildren.push(createBlock('container', 'empty', 'Puste Pole'));
-            }
+            for (let i = 0; i < missingSlots; i++) { newChildren.push(createBlock('container', 'empty', 'Puste Pole')); }
           }
           return { ...b, styles: newStyles, children: newChildren };
         }
@@ -111,9 +143,7 @@ export default function Home() {
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
     newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: '150px' };
-
     let childCount = (layout === 'flex-col') ? 1 : (layout === 'grid-2' || layout === 'grid-2-rows' || layout === 'grid-left' || layout === 'grid-right' ? 2 : (layout === 'grid-3' ? 3 : 4));
-    
     newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Kolumna ${i + 1}`));
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
@@ -121,7 +151,6 @@ export default function Home() {
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const newBlock = createBlock(type, variant, label);
-    
     setBlocks(prevBlocks => {
       if (!activeId) {
         if (type !== 'section') {
@@ -132,32 +161,21 @@ export default function Home() {
         }
         return [...prevBlocks, newBlock];
       }
-
       let inserted = false;
       const insertRecursive = (arr: Block[]): Block[] => {
         let result: Block[] = [];
         for (const b of arr) {
           if (b.id === activeId) {
-            if (b.children) {
-              result.push({ ...b, children: [...b.children, newBlock] });
-              inserted = true;
-            } else {
-              result.push(b); result.push(newBlock);
-              inserted = true;
-            }
-          } else if (b.children) {
-            result.push({ ...b, children: insertRecursive(b.children) });
-          } else {
-            result.push(b);
-          }
+            if (b.children) { result.push({ ...b, children: [...b.children, newBlock] }); inserted = true; } 
+            else { result.push(b); result.push(newBlock); inserted = true; }
+          } else if (b.children) { result.push({ ...b, children: insertRecursive(b.children) }); } 
+          else { result.push(b); }
         }
         return result;
       };
-
       const nextBlocks = insertRecursive(prevBlocks);
       return inserted ? nextBlocks : [...nextBlocks, newBlock];
     });
-    
     setActiveId(newBlock.id);
   };
 
@@ -171,15 +189,36 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V17.8! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.0! Link: /live/${pageSlug}`);
   };
+
+  // KLAWISZE: ESCAPE, CTRL+Z, CTRL+Y
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isMediaManagerOpen) { setIsMediaManagerOpen(false); return; }
+        if (isAiOpen) { setIsAiOpen(false); return; }
+        if (leftTab || addCategory) { setLeftTab(null); setAddCategory(null); return; }
+        if (isEditing) { setIsEditing(false); return; }
+        if (activeId) { setActiveId(null); return; }
+      }
+      
+      if (!isEditing && (e.ctrlKey || e.metaKey)) {
+        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMediaManagerOpen, isAiOpen, leftTab, addCategory, isEditing, activeId, blocks, past, future]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
       const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
-      if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } });
-      else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } });
+      // Ustawiamy flagę 'skipHistory' na true, by zapobiec tworzeniu miliona logów historii z ruchu myszki.
+      if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } }, true);
+      else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } }, true);
     };
     const handleMouseUp = () => setInteraction(null);
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
@@ -193,7 +232,8 @@ export default function Home() {
       if (activeEl && activeEl.contains(e.target as Node)) {
         if (activeEl.classList.contains('group/img')) {
           e.preventDefault(); e.stopPropagation();
-          setBlocks(prevBlocks => {
+          // Scroll to powtarzalna akcja, używamy setInternalBlocks (omijamy historię)
+          setInternalBlocks(prevBlocks => {
             const currentBlock = findBlockById(prevBlocks, activeId); 
             if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
             const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
@@ -291,8 +331,8 @@ export default function Home() {
           viewport={viewport} setViewport={setViewport}
           handleAddSection={handleAddSection} 
           handleChangeLayout={handleChangeLayout}
-          isAiOpen={isAiOpen}
-          setIsAiOpen={setIsAiOpen}
+          isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen}
+          undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0}
         />
 
         {isAiOpen && (
@@ -304,7 +344,6 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         
-        {/* UKRYWANIE PANELI BOCZNYCH PRZY KLIKNIĘCIU W PŁÓTNO */}
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           <div 
             style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
@@ -316,7 +355,8 @@ export default function Home() {
                  key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
                  isEditing={isEditing} setIsEditing={setIsEditing} 
                  isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                 setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                 setInteraction={handleSetInteraction} // Zmiana dla Historii
+                 updateActiveBlock={updateActiveBlock} 
                />
              ))}
           </div>

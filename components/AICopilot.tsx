@@ -15,17 +15,33 @@ export default function AICopilot({ activeBlock, updateActiveBlock, setIsAiOpen,
                   (activeBlock.type === 'img' ? 'image' : 
                   (['h1', 'h2', 'p', 'button', 'alert'].includes(activeBlock.type) ? 'text' : 'section'));
 
-  const handleGenerate = () => {
-    if (!prompt && context === 'section') return;
+  // NAPRAWA: Dodaliśmy opcjonalny parametr 'actionOverride', żeby ominąć opóźnienie React State'a!
+  const handleGenerate = (actionOverride?: string) => {
+    const currentPrompt = actionOverride || prompt;
+    if (!currentPrompt && context === 'section') return;
+    
     setIsGenerating(true);
 
     setTimeout(() => {
-      // 1. ZAAWANSOWANA SYMULACJA TEKSTU
+      // 1. ZAAWANSOWANA SYMULACJA TEKSTU Z RÓŻNYMI WARIANTAMI
       if (context === 'text') {
-        const action = prompt ? `Zastosowano polecenie: "${prompt}"` : `Poprawiono styl i gramatykę`;
-        updateActiveBlock({ text: `✨ <strong>[Wersja AI]</strong>: ${action}. Ten tekst jest teraz znacznie bardziej angażujący i dostosowany do nowoczesnych standardów webowych.` });
+        let aiText = '';
+        
+        if (currentPrompt.includes('Wydłuż')) {
+          aiText = '✨ <strong>[Wersja AI - Wydłużona]</strong>: To jest znacznie dłuższa wersja Twojego tekstu. Rozbudowaliśmy tutaj argumentację, dodaliśmy dodatkowe detale i sprawiliśmy, że całość brzmi jak wyczerpujący, profesjonalny akapit, który zatrzyma użytkownika na dłużej na Twojej stronie internetowej. Świetnie nadaje się do sekcji "O nas" lub jako opis produktu.';
+        } else if (currentPrompt.includes('Skróć')) {
+          aiText = '✨ <strong>[Wersja AI - Skrócona]</strong>: Krótki, zwięzły i trafiający w sam punkt przekaz.';
+        } else if (currentPrompt.includes('profesjonalnie')) {
+          aiText = '✨ <strong>[Wersja AI - Profesjonalna]</strong>: Niniejsza sekcja została zoptymalizowana pod kątem komunikacji B2B, zapewniając najwyższy standard merytoryczny przekazu i wzbudzając zaufanie wśród partnerów biznesowych.';
+        } else if (currentPrompt.includes('błędy')) {
+          aiText = '✨ <strong>[Wersja AI - Korekta]</strong>: Zmodyfikowany tekst pozbawiony błędów ortograficznych, z idealnie postawionymi przecinkami. Czyta się go teraz gładko i bez zająknięcia.';
+        } else {
+          aiText = `✨ <strong>[Wersja AI]</strong>: Wygenerowano na podstawie Twojego polecenia: <em>"${currentPrompt}"</em>. Czeka na finalne API!`;
+        }
+        
+        updateActiveBlock({ text: aiText });
       } 
-      // 2. SYMULACJA GENEROWANIA OBRAZÓW (Losowe piękne stocki)
+      // 2. SYMULACJA GENEROWANIA OBRAZÓW
       else if (context === 'image') {
         const randomImgs = [
           'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce', // Neon
@@ -36,7 +52,7 @@ export default function AICopilot({ activeBlock, updateActiveBlock, setIsAiOpen,
         const randomImg = randomImgs[Math.floor(Math.random() * randomImgs.length)];
         updateActiveBlock({ src: randomImg });
       } 
-      // 3. SYMULACJA GENEROWANIA UKŁADÓW (Losowa struktura)
+      // 3. SYMULACJA GENEROWANIA UKŁADÓW
       else if (context === 'section') {
         const layouts = ['grid-2', 'grid-3', 'grid-left', 'flex-col'];
         const randomLayout = layouts[Math.floor(Math.random() * layouts.length)];
@@ -45,7 +61,7 @@ export default function AICopilot({ activeBlock, updateActiveBlock, setIsAiOpen,
       
       setIsGenerating(false);
       setIsAiOpen(false);
-      setPrompt(''); // Czyścimy okienko po wygenerowaniu
+      setPrompt(''); 
     }, 1500);
   };
 
@@ -77,10 +93,11 @@ export default function AICopilot({ activeBlock, updateActiveBlock, setIsAiOpen,
           <>
             <p className="text-xs text-neutral-400">Wybierz szybką akcję dla zaznaczonego tekstu lub wpisz własne instrukcje poniżej.</p>
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => { setPrompt('Wydłuż ten tekst'); handleGenerate(); }} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Wydłuż tekst</button>
-              <button onClick={() => { setPrompt('Skróć tekst do minimum'); handleGenerate(); }} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Skróć tekst</button>
-              <button onClick={() => { setPrompt('Napisz to profesjonalnie'); handleGenerate(); }} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Ton profesjonalny</button>
-              <button onClick={() => { setPrompt('Popraw błędy ortograficzne'); handleGenerate(); }} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Popraw błędy</button>
+              {/* Przekazujemy string bezpośrednio do funkcji omijając powolny React State */}
+              <button onClick={() => handleGenerate('Wydłuż ten tekst')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Wydłuż tekst</button>
+              <button onClick={() => handleGenerate('Skróć tekst do minimum')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Skróć tekst</button>
+              <button onClick={() => handleGenerate('Napisz to profesjonalnie')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Ton profesjonalny</button>
+              <button onClick={() => handleGenerate('Popraw błędy ortograficzne')} className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg py-2 text-[10px] font-bold text-neutral-300 transition-colors">Popraw błędy</button>
             </div>
             <input type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Inne polecenie..." className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500 shadow-inner mt-2" />
           </>
@@ -94,7 +111,7 @@ export default function AICopilot({ activeBlock, updateActiveBlock, setIsAiOpen,
         )}
 
         <button 
-          onClick={handleGenerate} disabled={isGenerating || (!prompt && context !== 'text')}
+          onClick={() => handleGenerate()} disabled={isGenerating || (!prompt && context !== 'text')}
           className="w-full mt-2 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isGenerating ? <span className="animate-spin text-lg leading-none">⚙️</span> : <span>✨</span>}

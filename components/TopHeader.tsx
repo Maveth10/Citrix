@@ -11,14 +11,19 @@ interface TopHeaderProps {
   setViewport: (v: 'desktop' | 'tablet' | 'mobile') => void;
   handleAddSection: (layout: string) => void;
   handleChangeLayout: (layout: string) => void;
-  isAiOpen: boolean; // NOWOŚĆ V17.7
-  setIsAiOpen: (val: boolean) => void; // NOWOŚĆ V17.7
+  isAiOpen: boolean; 
+  setIsAiOpen: (val: boolean) => void;
+  // NOWOŚĆ V18.0: SILNIK HISTORII
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export default function TopHeader({ 
   canvasZoom, setCanvasZoom, showGrid, setShowGrid, pageSlug, setPageSlug, handlePublish, 
   activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection, handleChangeLayout,
-  isAiOpen, setIsAiOpen
+  isAiOpen, setIsAiOpen, undo, redo, canUndo, canRedo
 }: TopHeaderProps) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
@@ -32,10 +37,22 @@ export default function TopHeader({
   return (
     <header className="h-16 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-[300]">
       
-      <div className="flex items-center bg-white/5 p-1 rounded-full border border-white/5 shadow-inner">
-        <button onClick={() => setViewport('desktop')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'desktop' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>💻 <span className="hidden xl:inline">Desktop</span></button>
-        <button onClick={() => setViewport('tablet')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'tablet' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Tablet</span></button>
-        <button onClick={() => setViewport('mobile')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'mobile' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Mobile</span></button>
+      <div className="flex items-center">
+        <div className="flex items-center bg-white/5 p-1 rounded-full border border-white/5 shadow-inner">
+          <button onClick={() => setViewport('desktop')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'desktop' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>💻 <span className="hidden xl:inline">Desktop</span></button>
+          <button onClick={() => setViewport('tablet')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'tablet' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Tablet</span></button>
+          <button onClick={() => setViewport('mobile')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'mobile' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Mobile</span></button>
+        </div>
+
+        {/* PRZYCISKI UNDO / REDO */}
+        <div className="flex items-center gap-1 ml-4 border-l border-white/10 pl-4">
+          <button onClick={undo} disabled={!canUndo} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${canUndo ? 'text-white hover:bg-white/10 hover:shadow-sm' : 'text-neutral-700 cursor-not-allowed'}`} title="Cofnij (Ctrl+Z)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+          </button>
+          <button onClick={redo} disabled={!canRedo} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${canRedo ? 'text-white hover:bg-white/10 hover:shadow-sm' : 'text-neutral-700 cursor-not-allowed'}`} title="Ponów (Ctrl+Y)">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 flex-1 justify-center relative">
@@ -98,13 +115,8 @@ export default function TopHeader({
       </div>
 
       <div className="flex items-center gap-3">
-         
-         {/* NOWOŚĆ V17.7: CENTRALNY PRZYCISK AI */}
          <div className="pr-4 border-r border-white/10">
-           <button 
-             onClick={() => { setIsAiOpen(!isAiOpen); setShowAddSectionMenu(false); setShowLayoutMenu(false); setShowBgMenu(false); }}
-             className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border shadow-lg transform hover:-translate-y-0.5 ${isAiOpen ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-gradient-to-r from-blue-600 to-purple-600 border-transparent text-white hover:shadow-[0_0_15px_rgba(147,51,234,0.5)]'}`}
-           >
+           <button onClick={() => { setIsAiOpen(!isAiOpen); setShowAddSectionMenu(false); setShowLayoutMenu(false); setShowBgMenu(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border shadow-lg transform hover:-translate-y-0.5 ${isAiOpen ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-gradient-to-r from-blue-600 to-purple-600 border-transparent text-white hover:shadow-[0_0_15px_rgba(147,51,234,0.5)]'}`}>
              ✨ <span className="hidden xl:inline">AI Copilot</span>
            </button>
          </div>
