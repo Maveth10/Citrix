@@ -29,7 +29,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     zIndex: b.styles.zIndex || 1 
   };
 
-  // Jeśli kontener ma dzieci, odbieramy mu grid/flex z głównego diva, by nie psuł zewnętrznego kształtu
+  // Zdejmujemy style Grida/Flexa z GŁÓWNEJ warstwy, by kontener się nie zgniatał!
   if (b.children) {
     containerStyles.display = 'flex';
     containerStyles.flexDirection = 'column';
@@ -73,8 +73,10 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         </div>
       )}
 
-{['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1')}
+      {['h1', 'h2', 'marquee'].includes(b.type) && renderTextElement('h1')}
       {b.type === 'p' && renderTextElement('p')}
+      
+      {/* V17.5 FIX: 'alert' dopisany do tablicy poniżej! */}
       {['list', 'faq', 'button', 'social', 'alert'].includes(b.type) && renderTextElement('div')}
       {b.type === 'menu' && renderTextElement('nav')}
       
@@ -101,7 +103,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
            {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
            
-           {/* Prawidłowe zastosowanie Grida. Jeśli kontener ma ustawiony Grid, usuwamy sztywne szerokości z dzieci! */}
            <div className="pointer-events-auto w-full h-full" style={{ 
              display: b.styles.display === 'grid' ? 'grid' : 'flex', 
              flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), 
@@ -112,7 +113,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
              justifyContent: b.styles.justifyContent 
            }}>
               {b.children.map((child: any) => {
-                 // Sprytny hack: Jeśli rodzic jest gridem, dziecko ma się rozciągać i nie mieć sztywnych 300px!
+                 // Hack: Jeśli rodzic jest gridem, dziecko nie ma sztywnych szerokości
                  if (b.styles.display === 'grid') {
                    child.styles.width = '100%';
                  }

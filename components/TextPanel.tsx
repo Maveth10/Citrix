@@ -38,7 +38,6 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
         <span className="text-xs text-neutral-400 block leading-relaxed">Zwykły, standardowy blok tekstu. Idealny do dłuższych opisów na stronie.</span>
       </button>
 
-      {/* NOWOŚĆ V17.5: WYRÓŻNIENIA I ALERT/CALLOUTS */}
       <div className="mt-4 px-1">
         <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Wyróżnienia (Callouts)</span>
       </div>
@@ -56,6 +55,20 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
         <button onClick={() => handleAddBlock('alert', 'tip', 'Wskazówka')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-blue-500 text-left w-full flex items-center gap-3">
           <span className="text-blue-500 text-lg">💡</span>
           <span className="text-xs font-bold text-white">Wskazówka (Tip)</span>
+        </button>
+
+        {/* NOWOŚĆ V17.6: ALERT SECURITY */}
+        <button 
+          onClick={() => handleAddBlock('container', 'notice-box', 'Złożony Alert')} 
+          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-red-500 text-left w-full flex items-center gap-4 relative mt-2 group"
+        >
+           <div className="w-12 h-8 border border-red-500 bg-red-200 rounded relative shrink-0 group-hover:scale-110 transition-transform">
+             <div className="absolute -top-1.5 left-1 bg-red-500 w-8 h-2.5 rounded-sm"></div>
+           </div>
+           <div>
+             <span className="text-xs font-bold text-white block mb-0.5">Alert z Plakietką</span>
+             <span className="text-[9px] text-neutral-400 block leading-tight">Profesjonalny blok ze znacznikiem na krawędzi.</span>
+           </div>
         </button>
       </div>
 

@@ -10,26 +10,22 @@ interface TopHeaderProps {
   viewport: 'desktop' | 'tablet' | 'mobile';
   setViewport: (v: 'desktop' | 'tablet' | 'mobile') => void;
   handleAddSection: (layout: string) => void;
-  handleChangeLayout: (layout: string) => void; // NOWOŚĆ V17.2
+  handleChangeLayout: (layout: string) => void;
+  isAiOpen: boolean; // NOWOŚĆ V17.7
+  setIsAiOpen: (val: boolean) => void; // NOWOŚĆ V17.7
 }
 
 export default function TopHeader({ 
   canvasZoom, setCanvasZoom, showGrid, setShowGrid, pageSlug, setPageSlug, handlePublish, 
-  activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection, handleChangeLayout 
+  activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection, handleChangeLayout,
+  isAiOpen, setIsAiOpen
 }: TopHeaderProps) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showAddSectionMenu, setShowAddSectionMenu] = useState(false);
 
-  const onApplyLayout = (type: string) => {
-    handleChangeLayout(type);
-    setShowLayoutMenu(false);
-  };
-
-  const onAddSection = (type: string) => {
-    handleAddSection(type);
-    setShowAddSectionMenu(false);
-  };
+  const onApplyLayout = (type: string) => { handleChangeLayout(type); setShowLayoutMenu(false); };
+  const onAddSection = (type: string) => { handleAddSection(type); setShowAddSectionMenu(false); };
 
   const isContainer = activeBlock && ['container', 'section', 'form', 'grid'].includes(activeBlock.type);
 
@@ -43,15 +39,10 @@ export default function TopHeader({
       </div>
 
       <div className="flex items-center gap-3 flex-1 justify-center relative">
-        
         <div className="relative mr-4 border-r border-white/10 pr-4">
-          <button 
-            onClick={() => { setShowAddSectionMenu(!showAddSectionMenu); setShowLayoutMenu(false); setShowBgMenu(false); }}
-            className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] transform hover:-translate-y-0.5"
-          >
+          <button onClick={() => { setShowAddSectionMenu(!showAddSectionMenu); setShowLayoutMenu(false); setShowBgMenu(false); setIsAiOpen(false); }} className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all bg-white/10 text-white hover:bg-white/20 border border-white/5">
             <span className="text-lg leading-none">+</span> Dodaj Sekcję
           </button>
-
           {showAddSectionMenu && (
             <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[260px] animate-in fade-in slide-in-from-top-4">
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz układ</span>
@@ -71,14 +62,7 @@ export default function TopHeader({
         {activeBlock ? (
           <>
             <div className="relative">
-              <button 
-                onClick={() => { setShowLayoutMenu(!showLayoutMenu); setShowBgMenu(false); setShowAddSectionMenu(false); }}
-                disabled={!isContainer}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all border ${showLayoutMenu ? 'bg-white/10 border-white/20 text-white shadow-inner' : 'bg-transparent border-white/10 text-neutral-400 hover:bg-white/5 hover:text-white'} ${!isContainer && 'opacity-50 cursor-not-allowed'}`}
-              >
-                ⊞ Zmień układ wewnątrz
-              </button>
-
+              <button disabled={!isContainer} onClick={() => { setShowLayoutMenu(!showLayoutMenu); setShowBgMenu(false); setShowAddSectionMenu(false); setIsAiOpen(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all border ${showLayoutMenu ? 'bg-white/10 border-white/20 text-white shadow-inner' : 'bg-transparent border-white/10 text-neutral-400 hover:bg-white/5 hover:text-white'} ${!isContainer && 'opacity-50 cursor-not-allowed'}`}>⊞ Zmień układ wewnątrz</button>
               {showLayoutMenu && isContainer && (
                 <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[260px] animate-in fade-in slide-in-from-top-4">
                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz strukturę</span>
@@ -94,23 +78,14 @@ export default function TopHeader({
                 </div>
               )}
             </div>
-
             <div className="relative">
-              <button 
-                onClick={() => { setShowBgMenu(!showBgMenu); setShowLayoutMenu(false); setShowAddSectionMenu(false); }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all border ${showBgMenu ? 'bg-white/10 border-white/20 text-white shadow-inner' : 'bg-transparent border-white/10 text-neutral-400 hover:bg-white/5 hover:text-white'}`}
-              >
+              <button onClick={() => { setShowBgMenu(!showBgMenu); setShowLayoutMenu(false); setShowAddSectionMenu(false); setIsAiOpen(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all border ${showBgMenu ? 'bg-white/10 border-white/20 text-white shadow-inner' : 'bg-transparent border-white/10 text-neutral-400 hover:bg-white/5 hover:text-white'}`}>
                 <div className="w-3 h-3 rounded-full border border-white/20 shadow-sm" style={{backgroundColor: activeBlock.styles.backgroundColor || '#000'}}></div> Zastąp tło
               </button>
-
               {showBgMenu && (
                 <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[260px] animate-in fade-in slide-in-from-top-4">
                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Kolor jednolity</span>
-                  <div className="flex items-center gap-3 bg-black/50 p-2 rounded-xl border border-white/5 mb-5 shadow-inner">
-                    <input type="color" value={activeBlock.styles.backgroundColor?.includes('#') ? activeBlock.styles.backgroundColor : '#000000'} onChange={e => updateActiveBlock({ styles: { backgroundColor: e.target.value, bgType: 'color' }})} className="w-8 h-8 rounded-lg border-0 p-0 bg-transparent cursor-pointer" />
-                    <span className="text-xs font-mono text-white">{activeBlock.styles.backgroundColor || 'Brak'}</span>
-                  </div>
-                  
+                  <div className="flex items-center gap-3 bg-black/50 p-2 rounded-xl border border-white/5 mb-5 shadow-inner"><input type="color" value={activeBlock.styles.backgroundColor?.includes('#') ? activeBlock.styles.backgroundColor : '#000000'} onChange={e => updateActiveBlock({ styles: { backgroundColor: e.target.value, bgType: 'color' }})} className="w-8 h-8 rounded-lg border-0 p-0 bg-transparent cursor-pointer" /><span className="text-xs font-mono text-white">{activeBlock.styles.backgroundColor || 'Brak'}</span></div>
                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-2 text-center">Obraz z URL</span>
                   <input type="text" value={activeBlock.styles.bgImage || ''} onChange={e => updateActiveBlock({ styles: { bgImage: e.target.value, bgType: 'image' }})} placeholder="Wklej link..." className="w-full bg-black/50 border border-white/5 p-3 text-xs rounded-xl text-white outline-none focus:border-blue-500 transition-colors shadow-inner" />
                 </div>
@@ -123,6 +98,17 @@ export default function TopHeader({
       </div>
 
       <div className="flex items-center gap-3">
+         
+         {/* NOWOŚĆ V17.7: CENTRALNY PRZYCISK AI */}
+         <div className="pr-4 border-r border-white/10">
+           <button 
+             onClick={() => { setIsAiOpen(!isAiOpen); setShowAddSectionMenu(false); setShowLayoutMenu(false); setShowBgMenu(false); }}
+             className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border shadow-lg transform hover:-translate-y-0.5 ${isAiOpen ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-gradient-to-r from-blue-600 to-purple-600 border-transparent text-white hover:shadow-[0_0_15px_rgba(147,51,234,0.5)]'}`}
+           >
+             ✨ <span className="hidden xl:inline">AI Copilot</span>
+           </button>
+         </div>
+
          <div className="flex items-center bg-white/5 rounded-full border border-white/5 text-xs shadow-inner">
            <button onClick={() => setCanvasZoom(Math.max(0.25, canvasZoom - 0.25))} className="px-4 py-2 hover:bg-white/5 text-neutral-400 rounded-l-full transition-colors">−</button>
            <span className="px-2 font-mono w-12 text-center text-white">{Math.round(canvasZoom * 100)}%</span>

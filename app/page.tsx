@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { createBlock } from '../utils/blockFactory';
+
+// Importy komponentów UI
 import TopHeader from '../components/TopHeader';
 import RightPanel from '../components/RightPanel';
 import TextFormatToolbar from '../components/TextFormatToolbar';
@@ -22,44 +24,80 @@ import EmbedPanel from '../components/EmbedPanel';
 import MediaManager from '../components/MediaManager';
 import CanvasBlock from '../components/CanvasBlock';
 import BottomBar from '../components/BottomBar';
+import AICopilot from '../components/AICopilot'; // Nowość V17.7
 
 interface Block {
-  id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
-  images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string }[];
+  id: number;
+  type: string;
+  name: string;
+  text?: string;
+  src?: string;
+  videoId?: string;
+  children?: Block[];
+  images?: string[];
+  hoverStyles?: any;
+  entranceAnim?: string;
+  ribbonItems?: { type: 'text' | 'img', value: string }[];
   styles: any;
 }
 
 export default function Home() {
+  // --- STANY SYSTEMOWE ---
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v17');
+  const [pageSlug, setPageSlug] = useState('titan-v17-final');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
+  const [isAiOpen, setIsAiOpen] = useState<boolean>(false); // Stan AI
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
+  const [interaction, setInteraction] = useState<{ 
+    type: 'drag' | 'resize'; 
+    startX: number; 
+    startY: number; 
+    initialLeft: number; 
+    initialTop: number; 
+    initialWidth: number; 
+    initialHeight: number; 
+  } | null>(null);
+
+  // --- LOGIKA DOSTĘPU DO DANYCH ---
+  const findBlockById = (arr: Block[], id: number | null): Block | null => {
+    for (const b of arr) {
+      if (b.id === id) return b;
+      if (b.children) {
+        const found = findBlockById(b.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
 
   const updateActiveBlock = (updates: any) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
-        if (b.id === activeId) return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
-        if (b.children) return { ...b, children: updateRecursive(b.children) }; return b;
+        if (b.id === activeId) {
+          return { 
+            ...b, 
+            ...updates, 
+            styles: { ...b.styles, ...(updates.styles || {}) },
+            hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } 
+          };
+        }
+        if (b.children) return { ...b, children: updateRecursive(b.children) };
+        return b;
       });
       return updateRecursive(prevBlocks);
     });
   };
 
-  const findBlockById = (arr: Block[], id: number | null): Block | null => {
-    for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
-  };
-
-  // --- NAPRAWA V17.3: Inteligentne Dopełnianie Brakujących Kolumn ---
+  // --- LOGIKA INTELIGENTNEGO UKŁADU (V17.3) ---
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
@@ -80,16 +118,12 @@ export default function Home() {
           if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
 
           let newChildren = [...b.children];
-
-          // TU BYŁ BŁĄD! Teraz system zawsze dobija brakujące klocki, 
-          // nawet jeśli w środku jest już jakiś napis czy przycisk.
           if (layout !== 'flex-col' && newChildren.length < childCount) {
             const missingSlots = childCount - newChildren.length;
             for (let i = 0; i < missingSlots; i++) {
               newChildren.push(createBlock('container', 'empty', 'Puste Pole'));
             }
           }
-
           return { ...b, styles: newStyles, children: newChildren };
         }
         if (b.children) return { ...b, children: updateRecursive(b.children) };
@@ -99,63 +133,33 @@ export default function Home() {
     });
   };
 
+  // --- LOGIKA DODAWANIA ELEMENTÓW (SMART INSERTION V17.4) ---
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    newSection.styles.display = layout === 'flex-col' ? 'flex' : 'grid';
-    newSection.styles.gap = '20px';
-    newSection.styles.padding = '40px'; 
-    newSection.styles.minHeight = '150px';
-    newSection.styles.width = '100%';
-    newSection.styles.backgroundColor = '#ffffff';
+    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: '150px' };
 
-    let childCount = 1;
-    if (layout === 'flex-col') {
-      newSection.styles.flexDirection = 'column';
-      childCount = 1;
-    } else {
-      if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
-      if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
-      if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
-      if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
-      if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
-      if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
-      
-      newSection.children = Array.from({ length: childCount }).map((_, i) => 
-        createBlock('container', 'empty', `Kolumna ${i + 1}`)
-      );
-    }
-
+    let childCount = (layout === 'flex-col') ? 1 : (layout === 'grid-2' || layout === 'grid-2-rows' || layout === 'grid-left' || layout === 'grid-right' ? 2 : (layout === 'grid-3' ? 3 : 4));
+    
+    newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Kolumna ${i + 1}`));
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
   };
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const newBlock = createBlock(type, variant, label);
-    
     setBlocks(prevBlocks => {
-      // 1. ZŁOTA ZASADA: Brak zaznaczenia -> Płótno przyjmuje TYLKO i WYŁĄCZNIE Sekcje.
-      // Wszystko inne (nawet kontenery i gridy) dostaje Auto-Wrapper!
+      // Jeśli puste płótno -> Auto Wrapper
       if (!activeId) {
         if (type !== 'section') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-           autoWrapper.styles = { 
-             ...autoWrapper.styles, 
-             display: 'flex', 
-             flexDirection: 'column', 
-             gap: '20px', 
-             padding: '40px', 
-             minHeight: '120px', 
-             width: '100%', 
-             backgroundColor: '#ffffff', 
-             border: '1px solid #e2e8f0' 
-           };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
         return [...prevBlocks, newBlock];
       }
 
-      // 2. Jeśli coś jest zaznaczone -> wrzucamy do środka (jeśli to kontener) lub jako rodzeństwo
+      // Rekurencyjne wstawianie (do środka lub obok)
       let inserted = false;
       const insertRecursive = (arr: Block[]): Block[] => {
         let result: Block[] = [];
@@ -165,32 +169,42 @@ export default function Home() {
               result.push({ ...b, children: [...b.children, newBlock] });
               inserted = true;
             } else {
-              result.push(b);
-              result.push(newBlock);
+              result.push(b); result.push(newBlock);
               inserted = true;
             }
           } else if (b.children) {
-            const newChildren = insertRecursive(b.children);
-            result.push({ ...b, children: newChildren });
+            result.push({ ...b, children: insertRecursive(b.children) });
           } else {
             result.push(b);
           }
         }
         return result;
       };
-
       const nextBlocks = insertRecursive(prevBlocks);
-      if (!inserted) nextBlocks.push(newBlock);
-      return nextBlocks;
+      return inserted ? nextBlocks : [...nextBlocks, newBlock];
     });
-    
     setActiveId(newBlock.id);
   };
 
+  const removeActiveBlock = () => {
+    setBlocks(prev => {
+      const removeRecursive = (arr: Block[]): Block[] => arr.filter(b => b.id !== activeId).map(b => ({ ...b, children: b.children ? removeRecursive(b.children) : undefined }));
+      return removeRecursive(prev);
+    });
+    setActiveId(null); setIsEditing(false); setIsAiOpen(false);
+  };
+
+  const handlePublish = async () => {
+    const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
+    if (error) alert(error.message); else alert(`Opublikowano V17.7! Link: /live/${pageSlug}`);
+  };
+
+  // --- EFEKTY MYSZY (DRAG/RESIZE) ---
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
-      const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
+      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return;
+      const dx = (e.clientX - interaction.startX) / canvasZoom;
+      const dy = (e.clientY - interaction.startY) / canvasZoom;
       if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } });
       else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } });
     };
@@ -199,47 +213,8 @@ export default function Home() {
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen]);
 
-  useEffect(() => {
-    const handleGlobalWheel = (e: WheelEvent) => {
-      if (!activeId || isMediaManagerOpen) return;
-      const activeEl = document.getElementById(`block-${activeId}`);
-      if (activeEl && activeEl.contains(e.target as Node)) {
-        if (activeEl.classList.contains('group/img')) {
-          e.preventDefault(); e.stopPropagation();
-          setBlocks(prevBlocks => {
-            const currentBlock = findBlockById(prevBlocks, activeId); 
-            if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
-            const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
-            const updateRecursive = (arr: Block[]): Block[] => arr.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, imageScale: newScale } } : (b.children ? { ...b, children: updateRecursive(b.children) } : b));
-            return updateRecursive(prevBlocks);
-          });
-        }
-      }
-    };
-    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
-    return () => window.removeEventListener('wheel', handleGlobalWheel);
-  }, [activeId, isMediaManagerOpen]);
-
-  const removeActiveBlock = () => {
-    setBlocks(prev => {
-      const removeRecursive = (arr: Block[]): Block[] => arr.filter(b => b.id !== activeId).map(b => ({ ...b, children: b.children ? removeRecursive(b.children) : undefined }));
-      return removeRecursive(prev);
-    });
-    setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false);
-  };
-
-  const handlePublish = async () => {
-    const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V17.3! Link: /live/${pageSlug}`);
-  };
-
   const activeBlock = findBlockById(blocks, activeId);
-
-  const getCanvasWidth = () => {
-    if (viewport === 'mobile') return '375px';
-    if (viewport === 'tablet') return '768px';
-    return '1200px';
-  };
+  const getCanvasWidth = () => viewport === 'mobile' ? '375px' : (viewport === 'tablet' ? '768px' : '1200px');
 
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
@@ -264,11 +239,13 @@ export default function Home() {
     <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
+      {/* LEWY PASEK NARZĘDZIOWY */}
       <aside className="w-16 bg-[#09090b] border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
         <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'add' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'layers' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>☰</button>
       </aside>
 
+      {/* ROZWIJANE PANELE BOCZNE */}
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
           <div className="w-56 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
@@ -291,7 +268,6 @@ export default function Home() {
         {leftTab === 'add' && addCategory && (
           <div className="absolute left-[100%] top-0 w-[340px] bg-[#0c0c0e]/95 backdrop-blur-xl border-r border-white/5 h-full shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5"><h3 className="text-[10px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
-            
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
@@ -311,7 +287,9 @@ export default function Home() {
         )}
       </div>
 
+      {/* OBSZAR ROBOCZY (PŁÓTNO) */}
       <div className="flex-1 flex flex-col relative bg-[#09090b]">
+        {/* MODER DOT GRID BACKGROUND */}
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <TopHeader 
@@ -322,8 +300,20 @@ export default function Home() {
           activeBlock={activeBlock} updateActiveBlock={updateActiveBlock}
           viewport={viewport} setViewport={setViewport}
           handleAddSection={handleAddSection} 
-          handleChangeLayout={handleChangeLayout} 
+          handleChangeLayout={handleChangeLayout}
+          isAiOpen={isAiOpen}
+          setIsAiOpen={setIsAiOpen}
         />
+
+        {/* PLUGIN AI COPILOT */}
+        {isAiOpen && (
+          <AICopilot 
+            activeBlock={activeBlock} 
+            updateActiveBlock={updateActiveBlock} 
+            setIsAiOpen={setIsAiOpen} 
+            handleAddSection={handleAddSection}
+          />
+        )}
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         
@@ -335,16 +325,10 @@ export default function Home() {
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              {blocks.map(b => (
                <CanvasBlock 
-                 key={b.id} 
-                 b={b} 
-                 activeId={activeId} 
-                 setActiveId={setActiveId} 
-                 isEditing={isEditing} 
-                 setIsEditing={setIsEditing} 
-                 isMediaManagerOpen={isMediaManagerOpen} 
-                 setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                 setInteraction={setInteraction} 
-                 updateActiveBlock={updateActiveBlock} 
+                 key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
+                 isEditing={isEditing} setIsEditing={setIsEditing} 
+                 isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                 setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                />
              ))}
           </div>
@@ -353,8 +337,14 @@ export default function Home() {
         <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
       </div>
 
-      <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
+      {/* PRAWY INSPEKTOR WŁAŚCIWOŚCI */}
+      <RightPanel 
+        activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} 
+        updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} 
+        setIsMediaManagerOpen={setIsMediaManagerOpen} 
+      />
 
+      {/* MODAL MENEDŻERA MEDIÓW */}
       {isMediaManagerOpen && (
          <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
       )}
