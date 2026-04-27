@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { createBlock } from '../utils/blockFactory';
 
-// Importy komponentów UI
 import TopHeader from '../components/TopHeader';
 import RightPanel from '../components/RightPanel';
 import TextFormatToolbar from '../components/TextFormatToolbar';
@@ -24,7 +23,7 @@ import EmbedPanel from '../components/EmbedPanel';
 import MediaManager from '../components/MediaManager';
 import CanvasBlock from '../components/CanvasBlock';
 import BottomBar from '../components/BottomBar';
-import AICopilot from '../components/AICopilot'; // Nowość V17.7
+import AICopilot from '../components/AICopilot';
 
 interface Block {
   id: number;
@@ -42,7 +41,6 @@ interface Block {
 }
 
 export default function Home() {
-  // --- STANY SYSTEMOWE ---
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
@@ -54,50 +52,27 @@ export default function Home() {
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
-  const [isAiOpen, setIsAiOpen] = useState<boolean>(false); // Stan AI
+  const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [interaction, setInteraction] = useState<{ 
-    type: 'drag' | 'resize'; 
-    startX: number; 
-    startY: number; 
-    initialLeft: number; 
-    initialTop: number; 
-    initialWidth: number; 
-    initialHeight: number; 
+    type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; 
   } | null>(null);
-
-  // --- LOGIKA DOSTĘPU DO DANYCH ---
-  const findBlockById = (arr: Block[], id: number | null): Block | null => {
-    for (const b of arr) {
-      if (b.id === id) return b;
-      if (b.children) {
-        const found = findBlockById(b.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
 
   const updateActiveBlock = (updates: any) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
-        if (b.id === activeId) {
-          return { 
-            ...b, 
-            ...updates, 
-            styles: { ...b.styles, ...(updates.styles || {}) },
-            hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } 
-          };
-        }
-        if (b.children) return { ...b, children: updateRecursive(b.children) };
-        return b;
+        if (b.id === activeId) return { ...b, ...updates, styles: { ...b.styles, ...(updates.styles || {}) }, hoverStyles: { ...(b.hoverStyles || {}), ...(updates.hoverStyles || {}) } };
+        if (b.children) return { ...b, children: updateRecursive(b.children) }; return b;
       });
       return updateRecursive(prevBlocks);
     });
   };
 
-  // --- LOGIKA INTELIGENTNEGO UKŁADU (V17.3) ---
+  const findBlockById = (arr: Block[], id: number | null): Block | null => {
+    for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
+  };
+
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
@@ -133,7 +108,6 @@ export default function Home() {
     });
   };
 
-  // --- LOGIKA DODAWANIA ELEMENTÓW (SMART INSERTION V17.4) ---
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
     newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: '150px' };
@@ -147,19 +121,18 @@ export default function Home() {
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
     const newBlock = createBlock(type, variant, label);
+    
     setBlocks(prevBlocks => {
-      // Jeśli puste płótno -> Auto Wrapper
       if (!activeId) {
         if (type !== 'section') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
         return [...prevBlocks, newBlock];
       }
 
-      // Rekurencyjne wstawianie (do środka lub obok)
       let inserted = false;
       const insertRecursive = (arr: Block[]): Block[] => {
         let result: Block[] = [];
@@ -180,9 +153,11 @@ export default function Home() {
         }
         return result;
       };
+
       const nextBlocks = insertRecursive(prevBlocks);
       return inserted ? nextBlocks : [...nextBlocks, newBlock];
     });
+    
     setActiveId(newBlock.id);
   };
 
@@ -191,20 +166,18 @@ export default function Home() {
       const removeRecursive = (arr: Block[]): Block[] => arr.filter(b => b.id !== activeId).map(b => ({ ...b, children: b.children ? removeRecursive(b.children) : undefined }));
       return removeRecursive(prev);
     });
-    setActiveId(null); setIsEditing(false); setIsAiOpen(false);
+    setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V17.7! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V17.8! Link: /live/${pageSlug}`);
   };
 
-  // --- EFEKTY MYSZY (DRAG/RESIZE) ---
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return;
-      const dx = (e.clientX - interaction.startX) / canvasZoom;
-      const dy = (e.clientY - interaction.startY) / canvasZoom;
+      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
+      const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
       if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } });
       else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } });
     };
@@ -212,6 +185,27 @@ export default function Home() {
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen]);
+
+  useEffect(() => {
+    const handleGlobalWheel = (e: WheelEvent) => {
+      if (!activeId || isMediaManagerOpen) return;
+      const activeEl = document.getElementById(`block-${activeId}`);
+      if (activeEl && activeEl.contains(e.target as Node)) {
+        if (activeEl.classList.contains('group/img')) {
+          e.preventDefault(); e.stopPropagation();
+          setBlocks(prevBlocks => {
+            const currentBlock = findBlockById(prevBlocks, activeId); 
+            if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
+            const newScale = Math.max(1, Math.min(10, (currentBlock.styles.imageScale || 1) - e.deltaY * 0.005));
+            const updateRecursive = (arr: Block[]): Block[] => arr.map(b => b.id === activeId ? { ...b, styles: { ...b.styles, imageScale: newScale } } : (b.children ? { ...b, children: updateRecursive(b.children) } : b));
+            return updateRecursive(prevBlocks);
+          });
+        }
+      }
+    };
+    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleGlobalWheel);
+  }, [activeId, isMediaManagerOpen]);
 
   const activeBlock = findBlockById(blocks, activeId);
   const getCanvasWidth = () => viewport === 'mobile' ? '375px' : (viewport === 'tablet' ? '768px' : '1200px');
@@ -239,13 +233,11 @@ export default function Home() {
     <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden">
       <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
 
-      {/* LEWY PASEK NARZĘDZIOWY */}
       <aside className="w-16 bg-[#09090b] border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
         <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'add' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'layers' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>☰</button>
       </aside>
 
-      {/* ROZWIJANE PANELE BOCZNE */}
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
           <div className="w-56 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
@@ -287,9 +279,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* OBSZAR ROBOCZY (PŁÓTNO) */}
       <div className="flex-1 flex flex-col relative bg-[#09090b]">
-        {/* MODER DOT GRID BACKGROUND */}
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <TopHeader 
@@ -305,19 +295,17 @@ export default function Home() {
           setIsAiOpen={setIsAiOpen}
         />
 
-        {/* PLUGIN AI COPILOT */}
         {isAiOpen && (
           <AICopilot 
-            activeBlock={activeBlock} 
-            updateActiveBlock={updateActiveBlock} 
-            setIsAiOpen={setIsAiOpen} 
-            handleAddSection={handleAddSection}
+            activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} 
+            setIsAiOpen={setIsAiOpen} handleAddSection={handleAddSection}
           />
         )}
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         
-        <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); }}>
+        {/* UKRYWANIE PANELI BOCZNYCH PRZY KLIKNIĘCIU W PŁÓTNO */}
+        <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           <div 
             style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
             className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col overflow-x-hidden pb-40"
@@ -337,14 +325,12 @@ export default function Home() {
         <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
       </div>
 
-      {/* PRAWY INSPEKTOR WŁAŚCIWOŚCI */}
       <RightPanel 
         activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} 
         updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} 
         setIsMediaManagerOpen={setIsMediaManagerOpen} 
       />
 
-      {/* MODAL MENEDŻERA MEDIÓW */}
       {isMediaManagerOpen && (
          <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
       )}
