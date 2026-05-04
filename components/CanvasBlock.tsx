@@ -12,11 +12,15 @@ interface CanvasBlockProps {
   updateActiveBlock: (updates: any) => void;
   parentId?: number;
   parentActive?: boolean;
+  interaction?: any; // NOWOŚĆ V18.10: Wiedza o byciu przesuwanym
 }
 
-export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive }: CanvasBlockProps) {
+export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive, interaction }: CanvasBlockProps) {
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
+  
+  // Czy TEN KONKRETNY blok jest aktualnie ciągnięty za fraki?
+  const isBeingDragged = interaction?.type === 'drag' && isActive;
   
   const [shouldAnimate, setShouldAnimate] = useState(false);
   
@@ -36,7 +40,9 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
     mixBlendMode: b.styles.mixBlendMode || 'normal', 
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
-    zIndex: b.styles.zIndex || 1 
+    zIndex: b.styles.zIndex || 1,
+    // KLUCZ V18.10: ZABIJA LAGI! Natychmiast wyłącza CSS transition, gdy element jest przesuwany.
+    transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease')
   };
 
   if (b.children) {
@@ -79,7 +85,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         
         #block-${b.id} {
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+          transition: ${isBeingDragged ? 'none !important' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'};
         }
         ${hasHover ? `
           #block-${b.id}:hover {
@@ -96,19 +102,33 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           e.stopPropagation(); 
           
           if (activeId !== b.id) { 
-            // SMART SELECTION: Zaznacz rodzica (wstawkę), jeśli element ma rodzica i rodzic nie jest zaznaczony
             if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) {
               setActiveId(parentId);
               setIsEditing(false);
               return; 
             }
-
             setActiveId(b.id); 
             setIsEditing(false); 
           } 
 
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
-          if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); 
+
+          if (isAbsolute) {
+            // KLUCZ V18.10: Zamiast głupiego parsowania np. "50%", bierzemy IDEALNĄ wartość w pikselach wyliczoną przez przeglądarkę
+            const el = document.getElementById(`block-${b.id}`);
+            const currentLeft = el ? el.offsetLeft : 0;
+            const currentTop = el ? el.offsetTop : 0;
+
+            setInteraction({ 
+              type: 'drag', 
+              startX: e.clientX, 
+              startY: e.clientY, 
+              initialLeft: currentLeft, 
+              initialTop: currentTop, 
+              initialWidth: el?.offsetWidth || 0, 
+              initialHeight: el?.offsetHeight || 0 
+            });
+          }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
         className={`group ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
@@ -165,7 +185,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             {/* KLUCZ: position 'relative' dodane do kontenera dzieci, by utrzymać absolutną plakietkę w obrysie */}
              <div className="pointer-events-auto w-full h-full relative" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';
@@ -176,6 +195,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                        parentId={b.id} parentActive={isActive}
+                       interaction={interaction} // PODAJEMY DALEJ DO DZIECI
                      />
                    );
                 })}

@@ -31,20 +31,17 @@ interface Block {
 }
 
 export default function Home() {
-  // --- NOWOŚĆ V18.0: STAN HISTORII (UNDO/REDO) ---
   const [internalBlocks, setInternalBlocks] = useState<Block[]>([]);
   const [past, setPast] = useState<Block[][]>([]);
   const [future, setFuture] = useState<Block[][]>([]);
   
-  // Zewnętrznie kod "myśli", że to normalny stan 'blocks'
   const blocks = internalBlocks;
 
-  // Inteligentny Wrapper: Zapisuje przeszłość PRZED nałożeniem nowej zmiany
   const setBlocks = (action: React.SetStateAction<Block[]>) => {
     setInternalBlocks(current => {
       const next = typeof action === 'function' ? (action as any)(current) : action;
-      setPast(p => [...p, current].slice(-50)); // Pamiętamy do 50 kroków w tył
-      setFuture([]); // Wykonanie nowej akcji zabija "alternatywną przyszłość"
+      setPast(p => [...p, current].slice(-50));
+      setFuture([]);
       return next;
     });
   };
@@ -69,7 +66,7 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'add' | 'layers' | null>('add');
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v18-history');
+  const [pageSlug, setPageSlug] = useState('titan-v18-architekt');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
@@ -78,20 +75,13 @@ export default function Home() {
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [interaction, setInteraction] = useState<{ 
-    type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; 
-  } | null>(null);
+  const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
 
-  // Kiedy zaczynamy przeciąganie, musimy ręcznie zapisać "przeszłość" (snapshot).
   const handleSetInteraction = (val: any) => {
-    if (val !== null) {
-      setPast(p => [...p, blocks].slice(-50));
-      setFuture([]);
-    }
+    if (val !== null) { setPast(p => [...p, blocks].slice(-50)); setFuture([]); }
     setInteraction(val);
   };
 
-  // 'skipHistory' zapobiega spamowaniu tablicy historii tysiącami pikseli podczas Drag & Drop.
   const updateActiveBlock = (updates: any, skipHistory = false) => {
     const setter = skipHistory ? setInternalBlocks : setBlocks;
     setter(prevBlocks => {
@@ -117,7 +107,6 @@ export default function Home() {
           newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
           newStyles.gridTemplateColumns = 'unset';
           newStyles.gridTemplateRows = 'unset';
-
           let childCount = 1;
           if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
           if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
@@ -125,7 +114,6 @@ export default function Home() {
           if (layout === 'grid-left') { newStyles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
           if (layout === 'grid-right') { newStyles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
           if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
-
           let newChildren = [...b.children];
           if (layout !== 'flex-col' && newChildren.length < childCount) {
             const missingSlots = childCount - newChildren.length;
@@ -147,6 +135,11 @@ export default function Home() {
     newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Kolumna ${i + 1}`));
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
+  };
+
+  const handleAddComplexSection = (fullBlock: any) => {
+    setBlocks(prev => [...prev, fullBlock]);
+    setActiveId(fullBlock.id); 
   };
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
@@ -189,10 +182,9 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.0! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.10! Link: /live/${pageSlug}`);
   };
 
-  // KLAWISZE: ESCAPE, CTRL+Z, CTRL+Y
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -202,7 +194,6 @@ export default function Home() {
         if (isEditing) { setIsEditing(false); return; }
         if (activeId) { setActiveId(null); return; }
       }
-      
       if (!isEditing && (e.ctrlKey || e.metaKey)) {
         if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
         if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
@@ -216,9 +207,13 @@ export default function Home() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
       const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
-      // Ustawiamy flagę 'skipHistory' na true, by zapobiec tworzeniu miliona logów historii z ruchu myszki.
-      if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px` } }, true);
-      else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } }, true);
+      
+      // KLUCZ V18.10: Gdy przesuwamy element, natychmiast czyścimy mu `right` i `bottom`, aby polegał tylko na pikselach X i Y
+      if (interaction.type === 'drag') {
+        updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
+      } else if (interaction.type === 'resize') {
+        updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } }, true);
+      }
     };
     const handleMouseUp = () => setInteraction(null);
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
@@ -232,7 +227,6 @@ export default function Home() {
       if (activeEl && activeEl.contains(e.target as Node)) {
         if (activeEl.classList.contains('group/img')) {
           e.preventDefault(); e.stopPropagation();
-          // Scroll to powtarzalna akcja, używamy setInternalBlocks (omijamy historię)
           setInternalBlocks(prevBlocks => {
             const currentBlock = findBlockById(prevBlocks, activeId); 
             if (!currentBlock || currentBlock.type !== 'img') return prevBlocks;
@@ -251,11 +245,7 @@ export default function Home() {
   const getCanvasWidth = () => viewport === 'mobile' ? '375px' : (viewport === 'tablet' ? '768px' : '1200px');
 
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' },
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' },
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' },
-    { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' },
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' }, { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' }, { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' }, { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
   ];
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
@@ -289,14 +279,12 @@ export default function Home() {
             </div>
           </div>
         )}
-        
         {leftTab === 'layers' && (
           <div className="w-64 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
             <div className="flex-1 overflow-y-auto py-2">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
-        
         {leftTab === 'add' && addCategory && (
           <div className="absolute left-[100%] top-0 w-[340px] bg-[#0c0c0e]/95 backdrop-blur-xl border-r border-white/5 h-full shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5"><h3 className="text-[10px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
@@ -321,59 +309,34 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col relative bg-[#09090b]">
         <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-        <TopHeader 
-          canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} 
-          showGrid={showGrid} setShowGrid={setShowGrid} 
-          pageSlug={pageSlug} setPageSlug={setPageSlug} 
-          handlePublish={handlePublish} 
-          activeBlock={activeBlock} updateActiveBlock={updateActiveBlock}
-          viewport={viewport} setViewport={setViewport}
-          handleAddSection={handleAddSection} 
-          handleChangeLayout={handleChangeLayout}
-          isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen}
-          undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0}
-        />
-
+        <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} />
+        
         {isAiOpen && (
           <AICopilot 
-            activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} 
-            setIsAiOpen={setIsAiOpen} handleAddSection={handleAddSection}
+            activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsAiOpen={setIsAiOpen} 
+            handleAddSection={handleAddSection} handleAddComplexSection={handleAddComplexSection}
           />
         )}
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
-        
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          <div 
-            style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-            className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col overflow-x-hidden pb-40"
-          >
+          <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col overflow-x-hidden pb-40">
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              {blocks.map(b => (
-               <CanvasBlock 
-                 key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
-                 isEditing={isEditing} setIsEditing={setIsEditing} 
-                 isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                 setInteraction={handleSetInteraction} // Zmiana dla Historii
-                 updateActiveBlock={updateActiveBlock} 
-               />
+                <CanvasBlock 
+                  key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
+                  isEditing={isEditing} setIsEditing={setIsEditing} 
+                  isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                  setInteraction={handleSetInteraction} updateActiveBlock={updateActiveBlock} 
+                  interaction={interaction} // PRZEKAZUJEMY STAN INTERAKCJI DLA ZABICIA LAGÓW
+                />
              ))}
           </div>
         </main>
-        
         <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
       </div>
-
-      <RightPanel 
-        activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} 
-        updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} 
-        setIsMediaManagerOpen={setIsMediaManagerOpen} 
-      />
-
-      {isMediaManagerOpen && (
-         <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
-      )}
+      <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
+      {isMediaManagerOpen && <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
     </div>
   );
 }
