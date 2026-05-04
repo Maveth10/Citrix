@@ -12,22 +12,17 @@ interface CanvasBlockProps {
   updateActiveBlock: (updates: any) => void;
   parentId?: number;
   parentActive?: boolean;
-  interaction?: any; // NOWOŚĆ V18.10: Wiedza o byciu przesuwanym
+  interaction?: any; 
 }
 
 export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive, interaction }: CanvasBlockProps) {
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
-  
-  // Czy TEN KONKRETNY blok jest aktualnie ciągnięty za fraki?
   const isBeingDragged = interaction?.type === 'drag' && isActive;
-  
   const [shouldAnimate, setShouldAnimate] = useState(false);
   
   useEffect(() => {
-    if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) {
-      setShouldAnimate(true);
-    }
+    if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) { setShouldAnimate(true); }
   }, [b.entranceAnim, isActive]);
 
   const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
@@ -41,14 +36,10 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     mixBlendMode: b.styles.mixBlendMode || 'normal', 
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
     zIndex: b.styles.zIndex || 1,
-    // KLUCZ V18.10: ZABIJA LAGI! Natychmiast wyłącza CSS transition, gdy element jest przesuwany.
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease')
   };
 
-  if (b.children) {
-    containerStyles.display = 'flex';
-    containerStyles.flexDirection = 'column';
-  }
+  if (b.children) { containerStyles.display = 'flex'; containerStyles.flexDirection = 'column'; }
 
   const hover = b.hoverStyles || {};
   const hasHover = hover.scale || hover.translateY || hover.backgroundColor;
@@ -69,7 +60,16 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
 
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements) => {
     return (
-      <Tag style={{ fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, overflow:'hidden', wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, zIndex: 10, position: 'relative' }}
+      <Tag style={{ 
+          fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, 
+          // KLUCZ V18.11: Zezwalamy na scrollowanie w osi Y, jeśli jest to zapisane w JSON
+          overflowY: b.styles.overflowY || 'hidden', overflowX: 'hidden', 
+          wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, 
+          width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, 
+          zIndex: 10, position: 'relative',
+          // KLUCZ V18.11: Zezwalamy elementowi tekstowemu na wypełnienie pozostałej przestrzeni (jeśli rodzić ma zadaną wysokość)
+          flex: b.styles.flex || 'auto'
+        }}
         contentEditable={isActive && isEditing} suppressContentEditableWarning={true}
         onDoubleClick={(e: any) => { e.stopPropagation(); setIsEditing(true); }}
         onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }} dangerouslySetInnerHTML={{ __html: b.text || '' }}
@@ -83,51 +83,29 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        #block-${b.id} { transition: ${isBeingDragged ? 'none !important' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'}; }
+        ${hasHover ? `#block-${b.id}:hover { transform: scale(${hover.scale || 1}) translateY(${hover.translateY || 0}px) !important; ${hover.backgroundColor ? `background-color: ${hover.backgroundColor} !important;` : ''} z-index: 50 !important; }` : ''}
         
-        #block-${b.id} {
-          transition: ${isBeingDragged ? 'none !important' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'};
-        }
-        ${hasHover ? `
-          #block-${b.id}:hover {
-            transform: scale(${hover.scale || 1}) translateY(${hover.translateY || 0}px) !important;
-            ${hover.backgroundColor ? `background-color: ${hover.backgroundColor} !important;` : ''}
-            z-index: 50 !important;
-          }
-        ` : ''}
+        /* Opcjonalnie: Upęknienie paska przewijania, żeby wyglądał profesjonalnie (WebKit) */
+        #block-${b.id} ::-webkit-scrollbar { width: 6px; }
+        #block-${b.id} ::-webkit-scrollbar-track { background: transparent; }
+        #block-${b.id} ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        #block-${b.id} ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
       `}} />
 
       <div id={`block-${b.id}`} style={containerStyles} 
         onClick={(e) => { e.stopPropagation(); }} 
         onMouseDown={(e) => { 
           e.stopPropagation(); 
-          
           if (activeId !== b.id) { 
-            if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) {
-              setActiveId(parentId);
-              setIsEditing(false);
-              return; 
-            }
-            setActiveId(b.id); 
-            setIsEditing(false); 
+            if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) { setActiveId(parentId); setIsEditing(false); return; }
+            setActiveId(b.id); setIsEditing(false); 
           } 
-
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
-
           if (isAbsolute) {
-            // KLUCZ V18.10: Zamiast głupiego parsowania np. "50%", bierzemy IDEALNĄ wartość w pikselach wyliczoną przez przeglądarkę
             const el = document.getElementById(`block-${b.id}`);
-            const currentLeft = el ? el.offsetLeft : 0;
-            const currentTop = el ? el.offsetTop : 0;
-
-            setInteraction({ 
-              type: 'drag', 
-              startX: e.clientX, 
-              startY: e.clientY, 
-              initialLeft: currentLeft, 
-              initialTop: currentTop, 
-              initialWidth: el?.offsetWidth || 0, 
-              initialHeight: el?.offsetHeight || 0 
-            });
+            const currentLeft = el ? el.offsetLeft : 0; const currentTop = el ? el.offsetTop : 0;
+            setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
@@ -194,8 +172,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isEditing={isEditing} setIsEditing={setIsEditing} 
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                       parentId={b.id} parentActive={isActive}
-                       interaction={interaction} // PODAJEMY DALEJ DO DZIECI
+                       parentId={b.id} parentActive={isActive} interaction={interaction}
                      />
                    );
                 })}

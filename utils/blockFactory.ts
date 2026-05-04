@@ -43,42 +43,22 @@ export const createBlock = (type: string, variant: string, label: string) => {
       let badgeText = ''; let mainColor = ''; let bgColor = ''; let textColor = '';
       let borderLeftColor = '';
 
-      if (variant === 'alert-success') {
-        badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46';
-        borderLeftColor = mainColor;
-      } 
-      else if (variant === 'alert-warning') {
-        badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e';
-        borderLeftColor = mainColor;
-      } 
-      else if (variant === 'alert-tip') {
-        badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a';
-        borderLeftColor = mainColor;
-      } 
-      else if (variant === 'notice-box') {
-        badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626';
-        newBlock.styles.border = `1px solid ${mainColor}`;
-      }
+      if (variant === 'alert-success') { badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46'; borderLeftColor = mainColor; } 
+      else if (variant === 'alert-warning') { badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e'; borderLeftColor = mainColor; } 
+      else if (variant === 'alert-tip') { badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a'; borderLeftColor = mainColor; } 
+      else if (variant === 'notice-box') { badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626'; newBlock.styles.border = `1px solid ${mainColor}`; }
 
       newBlock.styles.backgroundColor = bgColor;
       
-      if (variant !== 'notice-box') {
-        newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; 
-      }
+      if (variant !== 'notice-box') { newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; }
 
       newBlock.children = [
         {
           id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText,
           styles: { 
-            position: 'absolute', 
-            top: '0px', 
-            // KLUCZOWY FIX: Wyrzuciliśmy warunek na '50%'. Wszystkie są teraz po lewej (30px)
-            left: '30px',
-            transform: 'translateY(-50%)',
-            backgroundColor: mainColor, color: '#ffffff', 
-            padding: '4px 12px', fontSize: '10px', fontWeight: '900', 
-            textTransform: 'uppercase', borderRadius: '6px', zIndex: 50,
-            width: 'max-content', whiteSpace: 'nowrap',
+            position: 'absolute', top: '0px', left: '30px', transform: 'translateY(-50%)',
+            backgroundColor: mainColor, color: '#ffffff', padding: '4px 12px', fontSize: '10px', fontWeight: '900', 
+            textTransform: 'uppercase', borderRadius: '6px', zIndex: 50, width: 'max-content', whiteSpace: 'nowrap',
             boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
           }
         },
@@ -91,7 +71,10 @@ export const createBlock = (type: string, variant: string, label: string) => {
           styles: { 
             color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', 
             margin: 0, width: '100%',
-            padding: '30px 20px 20px 25px', 
+            padding: '30px 20px 20px 25px',
+            // KLUCZ V18.11: Tekst potrafi się kurczyć i zyskuje suwak!
+            overflowY: 'auto', 
+            flex: '1' 
           }
         }
       ];
@@ -109,14 +92,8 @@ export const createBlock = (type: string, variant: string, label: string) => {
   if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
   if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
   
-  if (type === 'img') { 
-    newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
-  }
-
-  if (type === 'button') { 
-    newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; newBlock.styles.width = 'max-content';
-  }
-  
+  if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; }
+  if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; newBlock.styles.width = 'max-content'; }
   if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
   if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
   if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; }
