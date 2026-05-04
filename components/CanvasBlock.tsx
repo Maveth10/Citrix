@@ -36,10 +36,15 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     mixBlendMode: b.styles.mixBlendMode || 'normal', 
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
     zIndex: b.styles.zIndex || 1,
-    transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease')
+    transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
+    // KLUCZ V18.14: ZAKAZ ZGNIATANIA. Sekcja ZAWSZE wypchnie płótno w dół i zachowa swój naturalny rozmiar!
+    flexShrink: 0 
   };
 
-  if (b.children) { containerStyles.display = 'flex'; containerStyles.flexDirection = 'column'; }
+  if (b.children) { 
+    containerStyles.display = 'flex'; 
+    containerStyles.flexDirection = 'column'; 
+  }
 
   const hover = b.hoverStyles || {};
   const hasHover = hover.scale || hover.translateY || hover.backgroundColor;
@@ -62,13 +67,10 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     return (
       <Tag style={{ 
           fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, 
-          // KLUCZ V18.11: Zezwalamy na scrollowanie w osi Y, jeśli jest to zapisane w JSON
           overflowY: b.styles.overflowY || 'hidden', overflowX: 'hidden', 
           wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, 
           width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, 
-          zIndex: 10, position: 'relative',
-          // KLUCZ V18.11: Zezwalamy elementowi tekstowemu na wypełnienie pozostałej przestrzeni (jeśli rodzić ma zadaną wysokość)
-          flex: b.styles.flex || 'auto'
+          zIndex: 10, position: 'relative', flex: b.styles.flex || 'auto'
         }}
         contentEditable={isActive && isEditing} suppressContentEditableWarning={true}
         onDoubleClick={(e: any) => { e.stopPropagation(); setIsEditing(true); }}
@@ -85,8 +87,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         #block-${b.id} { transition: ${isBeingDragged ? 'none !important' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'}; }
         ${hasHover ? `#block-${b.id}:hover { transform: scale(${hover.scale || 1}) translateY(${hover.translateY || 0}px) !important; ${hover.backgroundColor ? `background-color: ${hover.backgroundColor} !important;` : ''} z-index: 50 !important; }` : ''}
-        
-        /* Opcjonalnie: Upęknienie paska przewijania, żeby wyglądał profesjonalnie (WebKit) */
         #block-${b.id} ::-webkit-scrollbar { width: 6px; }
         #block-${b.id} ::-webkit-scrollbar-track { background: transparent; }
         #block-${b.id} ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
@@ -161,9 +161,11 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         )}
         
         {b.children && (
-          <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
+          // KLUCZ V18.14: Usunięto h-full, dodano 'flex flex-col' aby wrapper rósł naturalnie
+          <div className="w-full min-h-[40px] relative pointer-events-none flex flex-col flex-1" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             <div className="pointer-events-auto w-full h-full relative" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
+             {/* KLUCZ V18.14: Usunięto h-full ze środkowego grida */}
+             <div className="pointer-events-auto w-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';
                    return (
