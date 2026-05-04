@@ -26,56 +26,62 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
     if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
     
-    // --- POPRAWKI V18.8: WSTAWKI I PADDINGI ---
+    // --- NOWOŚĆ V18.9: OSTATECZNY FIX KOTWICZENIA, ZAOKRĄGLENIA I BOCZNEGO PASKIEM ---
     if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
       newBlock.styles.position = 'relative';
       newBlock.styles.width = '450px'; 
       newBlock.styles.maxWidth = '100%';
-      newBlock.styles.borderRadius = '6px';
-      newBlock.styles.padding = '25px 20px 20px 20px'; // Padding przeniesiony z powrotem na kontener!
+      newBlock.styles.borderRadius = '12px'; // KLUCZ: Ładne, duże zaokrąglenie domyślne!
+      newBlock.styles.padding = '0px'; // KLUCZ: Brak paddingu w rodzicu! Punkt startowy top:0.
       newBlock.styles.marginTop = '25px'; 
-      newBlock.styles.overflow = 'visible'; 
+      newBlock.styles.overflow = 'visible'; // Pozwala unosić się kotwiczce
       newBlock.styles.display = 'block'; 
+      newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
       
       const badgeId = generateId();
       const textId = generateId();
 
       let badgeText = ''; let mainColor = ''; let bgColor = ''; let textColor = '';
-      let borderStyle = '';
+      let borderLeftColor = '';
 
       if (variant === 'alert-success') {
         badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46';
-        borderStyle = `6px solid ${mainColor}`;
+        borderLeftColor = mainColor;
       } 
       else if (variant === 'alert-warning') {
         badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e';
-        borderStyle = `6px solid ${mainColor}`;
+        borderLeftColor = mainColor;
       } 
       else if (variant === 'alert-tip') {
         badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a';
-        borderStyle = `6px solid ${mainColor}`;
+        borderLeftColor = mainColor;
       } 
       else if (variant === 'notice-box') {
         badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626';
         newBlock.styles.border = `1px solid ${mainColor}`;
-        // USUNIĘTO: newBlock.styles.textAlign = 'center'; - Teraz jest wyrównane do lewej jak reszta!
       }
 
       newBlock.styles.backgroundColor = bgColor;
+      
+      // KLUCZ: Ustawiamy mocny, boczny akcent kolorystyczny na rodzicu!
+      if (variant !== 'notice-box') {
+        newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; // Gruby, 8px pasek!
+      }
 
       newBlock.children = [
         {
           id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText,
           styles: { 
             position: 'absolute', 
-            top: '-12px', 
-            left: variant === 'notice-box' ? '50%' : '20px',
-            transform: variant === 'notice-box' ? 'translateX(-50%)' : 'none',
+            top: '0px', // KOTWICZKA Start: Krawędź ramki
+            left: variant === 'notice-box' ? '50%' : '30px',
+            // KOTWICZKA FINAŁ: translateY(-50%) idealnie przecina krawędź ramki w pionie.
+            transform: variant === 'notice-box' ? 'translateX(-50%) translateY(-50%)' : 'translateY(-50%)',
             backgroundColor: mainColor, color: '#ffffff', 
             padding: '4px 12px', fontSize: '10px', fontWeight: '900', 
-            textTransform: 'uppercase', borderRadius: '3px', zIndex: 50,
+            textTransform: 'uppercase', borderRadius: '6px', zIndex: 50,
             width: 'max-content', whiteSpace: 'nowrap',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
           }
         },
         {
@@ -87,8 +93,9 @@ export const createBlock = (type: string, variant: string, label: string) => {
           styles: { 
             color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', 
             margin: 0, width: '100%',
-            padding: '0px', // Dziecko (tekst) nie ma paddingu, dostosowuje się do rodzica
-            borderLeft: variant !== 'notice-box' ? borderStyle : 'none'
+            // Padding przeniesiony wprost na tekst, ale rodzic nie ma paddingu, więc dodajemy top!
+            padding: '30px 20px 20px 25px', // Górny padding, aby wyczyścić plakietkę
+            // Border zniknął z dziecka, jest na rodzicu
           }
         }
       ];

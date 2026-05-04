@@ -10,7 +10,6 @@ interface CanvasBlockProps {
   setIsMediaManagerOpen: (val: boolean) => void;
   setInteraction: (val: any) => void;
   updateActiveBlock: (updates: any) => void;
-  // NOWOŚĆ V18.8: Wiedza o rodzicu do Smart Selection
   parentId?: number;
   parentActive?: boolean;
 }
@@ -97,16 +96,13 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           e.stopPropagation(); 
           
           if (activeId !== b.id) { 
-            // --- NOWOŚĆ V18.8: SMART SELECTION ---
-            // Jeśli element jest dzieckiem (ma rodzica), a rodzic NIE JEST zaznaczony 
-            // -> zaznacz rodzica (wstawkę), chyba że trzymasz klawisz Ctrl (głębokie zaznaczanie)
+            // SMART SELECTION: Zaznacz rodzica (wstawkę), jeśli element ma rodzica i rodzic nie jest zaznaczony
             if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) {
               setActiveId(parentId);
               setIsEditing(false);
-              return; // Zatrzymujemy się tutaj, zaznaczyliśmy kontener!
+              return; 
             }
 
-            // W przeciwnym razie zachowanie domyślne: zaznacz bezpośrednio ten element
             setActiveId(b.id); 
             setIsEditing(false); 
           } 
@@ -169,6 +165,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
+             {/* KLUCZ: position 'relative' dodane do kontenera dzieci, by utrzymać absolutną plakietkę w obrysie */}
              <div className="pointer-events-auto w-full h-full relative" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';
@@ -178,7 +175,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isEditing={isEditing} setIsEditing={setIsEditing} 
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                       // PRZEKAZYWANIE DANYCH DO SMART SELECTION:
                        parentId={b.id} parentActive={isActive}
                      />
                    );
