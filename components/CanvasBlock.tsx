@@ -16,11 +16,9 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
   
-  // Stan dla odtwarzania animacji wejściowej
   const [shouldAnimate, setShouldAnimate] = useState(false);
   
   useEffect(() => {
-    // Jeśli zdefiniowano animację i klocek nie jest aktualnie edytowany (żeby nie mrugał co kliknięcie)
     if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) {
       setShouldAnimate(true);
     }
@@ -44,11 +42,9 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     containerStyles.flexDirection = 'column';
   }
 
-  // --- NOWOŚĆ V18.2: WSTRZYKIWANIE CSS DLA HOVERA I ANIMACJI ---
   const hover = b.hoverStyles || {};
   const hasHover = hover.scale || hover.translateY || hover.backgroundColor;
   
-  // Mapowanie animacji na style CSS
   if (shouldAnimate) {
     if (b.entranceAnim === 'fade-in') containerStyles.animation = `fadeIn 0.8s ease-out forwards`;
     if (b.entranceAnim === 'slide-up') containerStyles.animation = `slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
@@ -75,7 +71,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
 
   return (
     <>
-      {/* GLOBALNE KEYFRAMES + LOKALNY HOVER (Sprzętowa akceleracja CSS) */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
@@ -147,17 +142,11 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           </div>
         )}
         
-        {b.type === 'carousel' && b.images && (
-          <div className="w-full h-full relative overflow-hidden bg-neutral-100 pointer-events-none z-10">
-            <img src={b.images[0]} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center text-white font-bold tracking-widest"><span className="text-sm bg-black/60 px-4 py-2 rounded-full">🎠 Galeria ({b.images.length})</span></div>
-          </div>
-        )}
-        
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             <div className="pointer-events-auto w-full h-full" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
+             {/* V18.7 KLUCZ: Klasa `relative` dodana poniżej chroni pozycjonowanie absolutnych dzieci (plakietek) */}
+             <div className="pointer-events-auto w-full h-full relative" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';
                    return (
