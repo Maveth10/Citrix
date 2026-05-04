@@ -97,6 +97,7 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
+  // --- NOWOŚĆ V18.12: ZMIANA NA DOWOLNY UKŁAD ---
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
@@ -107,13 +108,23 @@ export default function Home() {
           newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
           newStyles.gridTemplateColumns = 'unset';
           newStyles.gridTemplateRows = 'unset';
+          
           let childCount = 1;
-          if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
-          if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
-          if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
-          if (layout === 'grid-left') { newStyles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
-          if (layout === 'grid-right') { newStyles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
-          if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+
+          if (layout.startsWith('grid-custom-')) {
+            const parts = layout.split('-');
+            const cols = parseInt(parts[2]) || 1;
+            const rows = parseInt(parts[3]) || 1;
+            newStyles.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            newStyles.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            childCount = cols * rows;
+          } else if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
+          else if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
+          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
+          else if (layout === 'grid-left') { newStyles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
+          else if (layout === 'grid-right') { newStyles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
+          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+
           let newChildren = [...b.children];
           if (layout !== 'flex-col' && newChildren.length < childCount) {
             const missingSlots = childCount - newChildren.length;
@@ -128,11 +139,28 @@ export default function Home() {
     });
   };
 
+  // --- NOWOŚĆ V18.12: DODAWANIE DOWOLNEJ SEKCJI ---
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
     newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: '150px' };
-    let childCount = (layout === 'flex-col') ? 1 : (layout === 'grid-2' || layout === 'grid-2-rows' || layout === 'grid-left' || layout === 'grid-right' ? 2 : (layout === 'grid-3' ? 3 : 4));
-    newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Kolumna ${i + 1}`));
+    
+    let childCount = 1;
+
+    if (layout.startsWith('grid-custom-')) {
+      const parts = layout.split('-');
+      const cols = parseInt(parts[2]) || 1;
+      const rows = parseInt(parts[3]) || 1;
+      newSection.styles.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      newSection.styles.gridTemplateRows = `repeat(${rows}, 1fr)`;
+      childCount = cols * rows;
+    } else if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
+    else if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
+    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
+    else if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
+    else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
+    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+
+    newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Pole ${i + 1}`));
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
   };
@@ -182,7 +210,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.10! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.12! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -207,13 +235,8 @@ export default function Home() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
       const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
-      
-      // KLUCZ V18.10: Gdy przesuwamy element, natychmiast czyścimy mu `right` i `bottom`, aby polegał tylko na pikselach X i Y
-      if (interaction.type === 'drag') {
-        updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
-      } else if (interaction.type === 'resize') {
-        updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } }, true);
-      }
+      if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
+      else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } }, true);
     };
     const handleMouseUp = () => setInteraction(null);
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
@@ -328,7 +351,7 @@ export default function Home() {
                   isEditing={isEditing} setIsEditing={setIsEditing} 
                   isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                   setInteraction={handleSetInteraction} updateActiveBlock={updateActiveBlock} 
-                  interaction={interaction} // PRZEKAZUJEMY STAN INTERAKCJI DLA ZABICIA LAGÓW
+                  interaction={interaction}
                 />
              ))}
           </div>

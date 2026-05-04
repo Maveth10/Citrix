@@ -13,7 +13,6 @@ interface TopHeaderProps {
   handleChangeLayout: (layout: string) => void;
   isAiOpen: boolean; 
   setIsAiOpen: (val: boolean) => void;
-  // NOWOŚĆ V18.0: SILNIK HISTORII
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -28,6 +27,10 @@ export default function TopHeader({
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showAddSectionMenu, setShowAddSectionMenu] = useState(false);
+
+  // NOWOŚĆ V18.12: Stan dla własnych siatek
+  const [customCols, setCustomCols] = useState<number>(3);
+  const [customRows, setCustomRows] = useState<number>(2);
 
   const onApplyLayout = (type: string) => { handleChangeLayout(type); setShowLayoutMenu(false); };
   const onAddSection = (type: string) => { handleAddSection(type); setShowAddSectionMenu(false); };
@@ -44,7 +47,6 @@ export default function TopHeader({
           <button onClick={() => setViewport('mobile')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'mobile' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Mobile</span></button>
         </div>
 
-        {/* PRZYCISKI UNDO / REDO */}
         <div className="flex items-center gap-1 ml-4 border-l border-white/10 pl-4">
           <button onClick={undo} disabled={!canUndo} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${canUndo ? 'text-white hover:bg-white/10 hover:shadow-sm' : 'text-neutral-700 cursor-not-allowed'}`} title="Cofnij (Ctrl+Z)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
@@ -61,9 +63,9 @@ export default function TopHeader({
             <span className="text-lg leading-none">+</span> Dodaj Sekcję
           </button>
           {showAddSectionMenu && (
-            <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[260px] animate-in fade-in slide-in-from-top-4">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz układ</span>
-              <div className="grid grid-cols-4 gap-2">
+            <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[300px] animate-in fade-in slide-in-from-top-4">
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz układ bazowy</span>
+              <div className="grid grid-cols-4 gap-2 mb-4">
                 <button onClick={() => onAddSection('flex-col')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 flex items-center justify-center p-1.5 transition-colors"><div className="w-full h-full bg-neutral-400 rounded"></div></button>
                 <button onClick={() => onAddSection('grid-2')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/2 h-full bg-neutral-400 rounded"></div><div className="w-1/2 h-full bg-neutral-400 rounded"></div></button>
                 <button onClick={() => onAddSection('grid-3')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
@@ -71,6 +73,17 @@ export default function TopHeader({
                 <button onClick={() => onAddSection('grid-2x2')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 grid grid-cols-2 gap-1 p-1.5 transition-colors"><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div></button>
                 <button onClick={() => onAddSection('grid-left')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-2/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
                 <button onClick={() => onAddSection('grid-right')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-2/3 h-full bg-neutral-400 rounded"></div></button>
+              </div>
+              
+              {/* NOWOŚĆ V18.12: DOWOLNY PODZIAŁ */}
+              <div className="border-t border-white/10 pt-4 flex flex-col gap-2">
+                 <span className="text-[9px] text-neutral-500 uppercase font-bold text-center">Własny Podział (Kolumny × Wiersze)</span>
+                 <div className="flex items-center justify-center gap-2 mt-1">
+                     <input type="number" min="1" max="12" value={customCols} onChange={e => setCustomCols(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                     <span className="text-neutral-500 text-xs font-mono">×</span>
+                     <input type="number" min="1" max="12" value={customRows} onChange={e => setCustomRows(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                     <button onClick={() => onAddSection(`grid-custom-${customCols}-${customRows}`)} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors ml-2 shadow-lg">OK</button>
+                 </div>
               </div>
             </div>
           )}
@@ -81,9 +94,9 @@ export default function TopHeader({
             <div className="relative">
               <button disabled={!isContainer} onClick={() => { setShowLayoutMenu(!showLayoutMenu); setShowBgMenu(false); setShowAddSectionMenu(false); setIsAiOpen(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all border ${showLayoutMenu ? 'bg-white/10 border-white/20 text-white shadow-inner' : 'bg-transparent border-white/10 text-neutral-400 hover:bg-white/5 hover:text-white'} ${!isContainer && 'opacity-50 cursor-not-allowed'}`}>⊞ Zmień układ wewnątrz</button>
               {showLayoutMenu && isContainer && (
-                <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[260px] animate-in fade-in slide-in-from-top-4">
-                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz strukturę</span>
-                  <div className="grid grid-cols-4 gap-2">
+                <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-[#18181b]/95 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/10 z-50 w-[300px] animate-in fade-in slide-in-from-top-4">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4 text-center">Wybierz układ bazowy</span>
+                  <div className="grid grid-cols-4 gap-2 mb-4">
                     <button onClick={() => onApplyLayout('flex-col')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex items-center justify-center p-1.5 transition-colors"><div className="w-full h-full bg-neutral-400 rounded"></div></button>
                     <button onClick={() => onApplyLayout('grid-2')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/2 h-full bg-neutral-400 rounded"></div><div className="w-1/2 h-full bg-neutral-400 rounded"></div></button>
                     <button onClick={() => onApplyLayout('grid-3')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
@@ -91,6 +104,17 @@ export default function TopHeader({
                     <button onClick={() => onApplyLayout('grid-2x2')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 grid grid-cols-2 gap-1 p-1.5 transition-colors"><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div><div className="bg-neutral-400 rounded"></div></button>
                     <button onClick={() => onApplyLayout('grid-left')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-2/3 h-full bg-neutral-400 rounded"></div><div className="w-1/3 h-full bg-neutral-400 rounded"></div></button>
                     <button onClick={() => onApplyLayout('grid-right')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-2/3 h-full bg-neutral-400 rounded"></div></button>
+                  </div>
+
+                  {/* NOWOŚĆ V18.12: DOWOLNY PODZIAŁ W ZMIANIE UKŁADU */}
+                  <div className="border-t border-white/10 pt-4 flex flex-col gap-2">
+                     <span className="text-[9px] text-neutral-500 uppercase font-bold text-center">Własny Podział (Kolumny × Wiersze)</span>
+                     <div className="flex items-center justify-center gap-2 mt-1">
+                         <input type="number" min="1" max="12" value={customCols} onChange={e => setCustomCols(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                         <span className="text-neutral-500 text-xs font-mono">×</span>
+                         <input type="number" min="1" max="12" value={customRows} onChange={e => setCustomRows(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                         <button onClick={() => onApplyLayout(`grid-custom-${customCols}-${customRows}`)} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors ml-2 shadow-lg">OK</button>
+                     </div>
                   </div>
                 </div>
               )}
