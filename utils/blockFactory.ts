@@ -18,14 +18,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
 
   if (type === 'container') {
     if (variant === 'empty') { 
-      newBlock.styles.border = '2px dashed #cbd5e1'; 
-      newBlock.styles.backgroundColor = '#f8fafc'; 
-      newBlock.styles.minHeight = '120px'; 
-      newBlock.styles.width = '100%';
-      newBlock.styles.borderRadius = '12px';
-      newBlock.styles.display = 'flex';
-      newBlock.styles.flexDirection = 'column';
-      newBlock.styles.gap = '10px';
+      newBlock.styles.border = '2px dashed #cbd5e1'; newBlock.styles.backgroundColor = '#f8fafc'; newBlock.styles.minHeight = '120px'; newBlock.styles.width = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.display = 'flex'; newBlock.styles.flexDirection = 'column'; newBlock.styles.gap = '10px';
     }
     if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
     if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
@@ -33,55 +26,67 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
     if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
     
-    // --- NOWOŚĆ: ZŁOŻONY ALERT Z PLAKIETKĄ ---
-    if (variant === 'notice-box') {
+    // --- NOWOŚĆ V18.6: UNIWERSALNE WSTAWKI Z PLAKIETKAMI ---
+    if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
+      // Baza dla wszystkich wstawek: 450px szerokości, widoczny overflow (dla plakietki)
       newBlock.styles.position = 'relative';
-      newBlock.styles.border = '1px solid #ef4444'; // Czerwona ramka
-      newBlock.styles.backgroundColor = '#fef2f2'; // Bardzo jasne czerwone tło
+      newBlock.styles.width = '450px'; 
+      newBlock.styles.maxWidth = '100%';
       newBlock.styles.borderRadius = '6px';
-      newBlock.styles.padding = '30px 20px 20px 20px'; // Większy padding u góry na nakładkę
-      newBlock.styles.marginTop = '20px'; // Margines na absolutną plakietkę
-      newBlock.styles.overflow = 'visible'; // WAŻNE: pozwala plakietce "wyjść" poza ramkę
+      newBlock.styles.padding = '25px 20px 20px 20px'; // Miejsce na plakietkę
+      newBlock.styles.marginTop = '20px'; // Żeby plakietka nie ucięła się od góry
+      newBlock.styles.overflow = 'visible'; 
       
       const badgeId = generateId();
       const textId = generateId();
 
+      let badgeText = ''; let textContent = ''; let mainColor = ''; let bgColor = ''; let textColor = '';
+
+      if (variant === 'alert-success') {
+        badgeText = 'SUKCES'; textContent = 'Wszystkie systemy działają poprawnie.';
+        mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46';
+        newBlock.styles.borderLeft = `6px solid ${mainColor}`;
+        newBlock.styles.borderTop = newBlock.styles.borderRight = newBlock.styles.borderBottom = `1px solid #d1fae5`;
+      } 
+      else if (variant === 'alert-warning') {
+        badgeText = 'UWAGA'; textContent = 'Ta operacja jest nieodwracalna.';
+        mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e';
+        newBlock.styles.borderLeft = `6px solid ${mainColor}`;
+        newBlock.styles.borderTop = newBlock.styles.borderRight = newBlock.styles.borderBottom = `1px solid #fef3c7`;
+      } 
+      else if (variant === 'alert-tip') {
+        badgeText = 'WSKAZÓWKA'; textContent = 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.';
+        mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a';
+        newBlock.styles.borderLeft = `6px solid ${mainColor}`;
+        newBlock.styles.borderTop = newBlock.styles.borderRight = newBlock.styles.borderBottom = `1px solid #dbeafe`;
+      } 
+      else if (variant === 'notice-box') {
+        badgeText = 'SECURITY & SAFETY NOTICE'; textContent = 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.';
+        mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626';
+        newBlock.styles.border = `1px solid ${mainColor}`; // Security ma czerwoną ramkę dookoła
+        newBlock.styles.textAlign = 'center';
+      }
+
+      newBlock.styles.backgroundColor = bgColor;
+
+      // Dodajemy dzieci: Plakietka (Absolute) i Tekst
       newBlock.children = [
         {
-          id: badgeId, type: 'h2', name: 'PLAKIETKA', text: 'SECURITY & SAFETY NOTICE',
+          id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText,
           styles: { 
             position: 'absolute', top: '-12px', left: '20px', 
-            backgroundColor: '#ef4444', color: '#ffffff', 
-            padding: '4px 12px', fontSize: '11px', fontWeight: '900', 
-            textTransform: 'uppercase', borderRadius: '3px', zIndex: 10 
+            backgroundColor: mainColor, color: '#ffffff', 
+            padding: '4px 12px', fontSize: '10px', fontWeight: '900', 
+            textTransform: 'uppercase', borderRadius: '3px', zIndex: 10,
+            width: 'max-content'
           }
         },
         {
-          id: textId, type: 'p', name: 'TREŚĆ', text: 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.',
-          styles: { color: '#dc2626', fontWeight: '700', fontSize: '14px', textAlign: 'center' }
+          id: textId, type: 'p', name: 'TREŚĆ', text: textContent,
+          styles: { color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.5', margin: 0, width: '100%' }
         }
       ];
     }
-  }
-
-  if (type === 'alert') {
-    newBlock.styles.padding = '20px';
-    newBlock.styles.borderRadius = '8px';
-    newBlock.styles.borderLeft = '6px solid'; 
-    newBlock.styles.display = 'flex';
-    newBlock.styles.alignItems = 'center';
-    newBlock.styles.fontSize = '15px';
-
-    if (variant === 'success') { newBlock.text = '✅ <strong>Sukces!</strong> Wszystkie systemy działają poprawnie.'; newBlock.styles.backgroundColor = '#ecfdf5'; newBlock.styles.borderColor = '#10b981'; newBlock.styles.color = '#065f46'; }
-    if (variant === 'warning') { newBlock.text = '⚠️ <strong>Uwaga:</strong> Ta operacja jest nieodwracalna.'; newBlock.styles.backgroundColor = '#fffbeb'; newBlock.styles.borderColor = '#f59e0b'; newBlock.styles.color = '#92400e'; }
-    if (variant === 'tip') { newBlock.text = '💡 <strong>Wskazówka:</strong> Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.'; newBlock.styles.backgroundColor = '#eff6ff'; newBlock.styles.borderColor = '#3b82f6'; newBlock.styles.color = '#1e3a8a'; }
-  }
-
-  if (type === 'popup') {
-    newBlock.styles.position = 'fixed'; newBlock.styles.zIndex = 999;
-    if (variant === 'modal' || variant === '') { newBlock.styles.top = '50%'; newBlock.styles.left = '50%'; newBlock.styles.transform = 'translate(-50%, -50%)'; newBlock.styles.width = '400px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.padding = '40px'; newBlock.styles.borderRadius = '20px'; newBlock.styles.boxShadow = '0 0 0 9999px rgba(0,0,0,0.6)'; }
-    if (variant === 'toast') { newBlock.styles.bottom = '20px'; newBlock.styles.right = '20px'; newBlock.styles.width = '300px'; newBlock.styles.backgroundColor = '#111'; newBlock.styles.color = '#fff'; newBlock.styles.padding = '20px'; newBlock.styles.borderRadius = '12px'; newBlock.styles.boxShadow = '0 10px 30px rgba(0,0,0,0.5)'; }
-    if (variant === 'banner') { newBlock.styles.bottom = '0px'; newBlock.styles.left = '0px'; newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#3b82f6'; newBlock.styles.color = '#fff'; newBlock.styles.padding = '15px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
   }
 
   if (type === 'list') {
@@ -96,46 +101,19 @@ export const createBlock = (type: string, variant: string, label: string) => {
   if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
   
   if (type === 'img') { 
-    newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; 
-    newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
-
-    if (variant === 'icon-star') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23facc15"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'; newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain'; }
-    if (variant === 'icon-heart') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ec4899"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'; newBlock.styles.width = '64px'; newBlock.styles.height = '64px'; newBlock.styles.objectFit = 'contain'; }
-    if (variant === 'sticker-sale') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23ef4444"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="24" font-family="Arial" font-weight="bold">SALE</text></svg>'; newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain'; }
-    if (variant === 'sticker-new') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="%2310b981"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="20" font-family="Arial" font-weight="bold">NEW!</text></svg>'; newBlock.styles.width = '120px'; newBlock.styles.height = '120px'; newBlock.styles.objectFit = 'contain'; }
-    if (variant === 'vector-chart') { newBlock.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="10" y="50" width="20" height="40" fill="%233b82f6" rx="4"/><rect x="40" y="30" width="20" height="60" fill="%238b5cf6" rx="4"/><rect x="70" y="10" width="20" height="80" fill="%236366f1" rx="4"/></svg>'; newBlock.styles.width = '150px'; newBlock.styles.height = '150px'; newBlock.styles.objectFit = 'contain'; }
+    newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
   }
 
   if (type === 'button') { 
-    newBlock.text = 'Przycisk'; 
-    newBlock.styles.padding = '14px 28px'; 
-    newBlock.styles.borderRadius = '8px'; 
-    newBlock.styles.backgroundColor = '#000'; 
-    newBlock.styles.color = '#fff'; 
-    newBlock.styles.width = 'max-content';
+    newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; newBlock.styles.width = 'max-content';
   }
   
   if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
   if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
   if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; }
   if (type === 'grid' && variant === 'gallery-grid') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px'; }
+  if (type === 'video') { newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4'; newBlock.styles.width = '100%'; newBlock.styles.height = '315px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.borderRadius = '12px'; }
+  if (type === 'embed') { newBlock.text = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2504.66487841855!2d16.92516811563456!3d51.10788527957199!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470fe9c2d4b58abf%3A0xb70956aec205e0f5!2zV3JvY8WCYXc!5e0!3m2!1spl!2spl!4v1625560000000!5m2!1spl!2spl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>'; newBlock.styles.width = '100%'; newBlock.styles.height = '400px'; newBlock.styles.borderRadius = '12px'; }
 
-  // --- NOWOŚĆ V18.1: WIDEO I OSADZENIA (EMBEDS) ---
-  if (type === 'video') {
-    // Standardowe wideo z MP4 na start
-    newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4';
-    newBlock.styles.width = '100%';
-    newBlock.styles.height = '315px';
-    newBlock.styles.backgroundColor = '#000';
-    newBlock.styles.borderRadius = '12px';
-  }
-
-  if (type === 'embed') {
-    // Domyślna mapa Google
-    newBlock.text = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2504.66487841855!2d16.92516811563456!3d51.10788527957199!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470fe9c2d4b58abf%3A0xb70956aec205e0f5!2zV3JvY8WCYXc!5e0!3m2!1spl!2spl!4v1625560000000!5m2!1spl!2spl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>';
-    newBlock.styles.width = '100%';
-    newBlock.styles.height = '400px';
-    newBlock.styles.borderRadius = '12px';
-  }
   return newBlock;
 };
