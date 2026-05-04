@@ -26,15 +26,14 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
     if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
     
-    // --- NOWOŚĆ V18.9: OSTATECZNY FIX KOTWICZENIA, ZAOKRĄGLENIA I BOCZNEGO PASKIEM ---
     if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
       newBlock.styles.position = 'relative';
       newBlock.styles.width = '450px'; 
       newBlock.styles.maxWidth = '100%';
-      newBlock.styles.borderRadius = '12px'; // KLUCZ: Ładne, duże zaokrąglenie domyślne!
-      newBlock.styles.padding = '0px'; // KLUCZ: Brak paddingu w rodzicu! Punkt startowy top:0.
+      newBlock.styles.borderRadius = '12px'; 
+      newBlock.styles.padding = '0px'; 
       newBlock.styles.marginTop = '25px'; 
-      newBlock.styles.overflow = 'visible'; // Pozwala unosić się kotwiczce
+      newBlock.styles.overflow = 'visible'; 
       newBlock.styles.display = 'block'; 
       newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
       
@@ -63,9 +62,8 @@ export const createBlock = (type: string, variant: string, label: string) => {
 
       newBlock.styles.backgroundColor = bgColor;
       
-      // KLUCZ: Ustawiamy mocny, boczny akcent kolorystyczny na rodzicu!
       if (variant !== 'notice-box') {
-        newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; // Gruby, 8px pasek!
+        newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; 
       }
 
       newBlock.children = [
@@ -73,10 +71,10 @@ export const createBlock = (type: string, variant: string, label: string) => {
           id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText,
           styles: { 
             position: 'absolute', 
-            top: '0px', // KOTWICZKA Start: Krawędź ramki
-            left: variant === 'notice-box' ? '50%' : '30px',
-            // KOTWICZKA FINAŁ: translateY(-50%) idealnie przecina krawędź ramki w pionie.
-            transform: variant === 'notice-box' ? 'translateX(-50%) translateY(-50%)' : 'translateY(-50%)',
+            top: '0px', 
+            // KLUCZOWY FIX: Wyrzuciliśmy warunek na '50%'. Wszystkie są teraz po lewej (30px)
+            left: '30px',
+            transform: 'translateY(-50%)',
             backgroundColor: mainColor, color: '#ffffff', 
             padding: '4px 12px', fontSize: '10px', fontWeight: '900', 
             textTransform: 'uppercase', borderRadius: '6px', zIndex: 50,
@@ -93,9 +91,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
           styles: { 
             color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', 
             margin: 0, width: '100%',
-            // Padding przeniesiony wprost na tekst, ale rodzic nie ma paddingu, więc dodajemy top!
-            padding: '30px 20px 20px 25px', // Górny padding, aby wyczyścić plakietkę
-            // Border zniknął z dziecka, jest na rodzicu
+            padding: '30px 20px 20px 25px', 
           }
         }
       ];
