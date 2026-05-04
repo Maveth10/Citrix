@@ -97,7 +97,6 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
-  // --- NOWOŚĆ V18.12: ZMIANA NA DOWOLNY UKŁAD ---
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
@@ -108,22 +107,25 @@ export default function Home() {
           newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
           newStyles.gridTemplateColumns = 'unset';
           newStyles.gridTemplateRows = 'unset';
+          // FIX V18.13: minHeight: auto pozwala sekcji rosnąć elastycznie razem z contentem!
+          newStyles.minHeight = 'auto'; 
           
           let childCount = 1;
 
+          // FIX V18.13: minmax(120px, auto) w rzędach to Święty Graal elastyczności!
           if (layout.startsWith('grid-custom-')) {
             const parts = layout.split('-');
             const cols = parseInt(parts[2]) || 1;
             const rows = parseInt(parts[3]) || 1;
             newStyles.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            newStyles.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            newStyles.gridTemplateRows = `repeat(${rows}, minmax(120px, auto))`;
             childCount = cols * rows;
           } else if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
           else if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
-          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
+          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
           else if (layout === 'grid-left') { newStyles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
           else if (layout === 'grid-right') { newStyles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
-          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; childCount = 4; }
 
           let newChildren = [...b.children];
           if (layout !== 'flex-col' && newChildren.length < childCount) {
@@ -139,26 +141,27 @@ export default function Home() {
     });
   };
 
-  // --- NOWOŚĆ V18.12: DODAWANIE DOWOLNEJ SEKCJI ---
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: '150px' };
+    // FIX V18.13: minHeight zmieniony na auto, by sekcja rosła wraz z wierszami
+    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: 'auto' };
     
     let childCount = 1;
 
+    // FIX V18.13: minmax(120px, auto) ratuje layouty przed ściśnięciem!
     if (layout.startsWith('grid-custom-')) {
       const parts = layout.split('-');
       const cols = parseInt(parts[2]) || 1;
       const rows = parseInt(parts[3]) || 1;
       newSection.styles.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-      newSection.styles.gridTemplateRows = `repeat(${rows}, 1fr)`;
+      newSection.styles.gridTemplateRows = `repeat(${rows}, minmax(120px, auto))`;
       childCount = cols * rows;
     } else if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
     else if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
-    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
+    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
     else if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
     else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
-    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; childCount = 4; }
 
     newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Pole ${i + 1}`));
     setBlocks(prev => [...prev, newSection]);
@@ -210,7 +213,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.12! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.13! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {

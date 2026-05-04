@@ -28,12 +28,21 @@ export default function TopHeader({
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showAddSectionMenu, setShowAddSectionMenu] = useState(false);
 
-  // NOWOŚĆ V18.12: Stan dla własnych siatek
-  const [customCols, setCustomCols] = useState<number>(3);
-  const [customRows, setCustomRows] = useState<number>(2);
+  // FIX V18.13: Używamy string, żeby inputy nie wariowały przy kasowaniu backspace'em
+  const [customCols, setCustomCols] = useState<string>('3');
+  const [customRows, setCustomRows] = useState<string>('2');
 
   const onApplyLayout = (type: string) => { handleChangeLayout(type); setShowLayoutMenu(false); };
   const onAddSection = (type: string) => { handleAddSection(type); setShowAddSectionMenu(false); };
+
+  // Funkcja aplikująca własną siatkę z zabezpieczeniem matematycznym
+  const handleCustomGrid = (action: 'add' | 'change') => {
+    const cols = Math.max(1, parseInt(customCols) || 1);
+    const rows = Math.max(1, parseInt(customRows) || 1);
+    const layoutTag = `grid-custom-${cols}-${rows}`;
+    if (action === 'add') onAddSection(layoutTag);
+    else onApplyLayout(layoutTag);
+  };
 
   const isContainer = activeBlock && ['container', 'section', 'form', 'grid'].includes(activeBlock.type);
 
@@ -75,14 +84,13 @@ export default function TopHeader({
                 <button onClick={() => onAddSection('grid-right')} className="aspect-square rounded-xl border border-white/10 hover:border-blue-500 bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-2/3 h-full bg-neutral-400 rounded"></div></button>
               </div>
               
-              {/* NOWOŚĆ V18.12: DOWOLNY PODZIAŁ */}
               <div className="border-t border-white/10 pt-4 flex flex-col gap-2">
                  <span className="text-[9px] text-neutral-500 uppercase font-bold text-center">Własny Podział (Kolumny × Wiersze)</span>
                  <div className="flex items-center justify-center gap-2 mt-1">
-                     <input type="number" min="1" max="12" value={customCols} onChange={e => setCustomCols(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                     <input type="text" value={customCols} onChange={e => setCustomCols(e.target.value)} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
                      <span className="text-neutral-500 text-xs font-mono">×</span>
-                     <input type="number" min="1" max="12" value={customRows} onChange={e => setCustomRows(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
-                     <button onClick={() => onAddSection(`grid-custom-${customCols}-${customRows}`)} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors ml-2 shadow-lg">OK</button>
+                     <input type="text" value={customRows} onChange={e => setCustomRows(e.target.value)} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                     <button onClick={() => handleCustomGrid('add')} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors ml-2 shadow-lg">OK</button>
                  </div>
               </div>
             </div>
@@ -106,14 +114,13 @@ export default function TopHeader({
                     <button onClick={() => onApplyLayout('grid-right')} className="aspect-square rounded-xl border border-white/10 hover:border-white bg-white/5 flex gap-1 p-1.5 transition-colors"><div className="w-1/3 h-full bg-neutral-400 rounded"></div><div className="w-2/3 h-full bg-neutral-400 rounded"></div></button>
                   </div>
 
-                  {/* NOWOŚĆ V18.12: DOWOLNY PODZIAŁ W ZMIANIE UKŁADU */}
                   <div className="border-t border-white/10 pt-4 flex flex-col gap-2">
                      <span className="text-[9px] text-neutral-500 uppercase font-bold text-center">Własny Podział (Kolumny × Wiersze)</span>
                      <div className="flex items-center justify-center gap-2 mt-1">
-                         <input type="number" min="1" max="12" value={customCols} onChange={e => setCustomCols(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                         <input type="text" value={customCols} onChange={e => setCustomCols(e.target.value)} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
                          <span className="text-neutral-500 text-xs font-mono">×</span>
-                         <input type="number" min="1" max="12" value={customRows} onChange={e => setCustomRows(Math.max(1, parseInt(e.target.value) || 1))} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
-                         <button onClick={() => onApplyLayout(`grid-custom-${customCols}-${customRows}`)} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors ml-2 shadow-lg">OK</button>
+                         <input type="text" value={customRows} onChange={e => setCustomRows(e.target.value)} className="w-12 bg-black/50 border border-white/10 rounded-lg py-1.5 text-xs text-center text-white outline-none focus:border-blue-500 shadow-inner" />
+                         <button onClick={() => handleCustomGrid('change')} className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-1.5 px-3 rounded-lg transition-colors ml-2 shadow-lg">OK</button>
                      </div>
                   </div>
                 </div>
