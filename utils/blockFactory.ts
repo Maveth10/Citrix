@@ -26,16 +26,16 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
     if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px'}}]; }
     
-    // --- NOWOŚĆ V18.7: NAPRAWIONE KOTWICZENIE PLAKIETEK ---
+    // --- POPRAWKI V18.8: WSTAWKI I PADDINGI ---
     if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
       newBlock.styles.position = 'relative';
       newBlock.styles.width = '450px'; 
       newBlock.styles.maxWidth = '100%';
       newBlock.styles.borderRadius = '6px';
-      newBlock.styles.padding = '0px'; // KLUCZ: Brak paddingu w rodzicu!
+      newBlock.styles.padding = '25px 20px 20px 20px'; // Padding przeniesiony z powrotem na kontener!
       newBlock.styles.marginTop = '25px'; 
       newBlock.styles.overflow = 'visible'; 
-      newBlock.styles.display = 'block'; // Zmiana na block
+      newBlock.styles.display = 'block'; 
       
       const badgeId = generateId();
       const textId = generateId();
@@ -58,18 +58,17 @@ export const createBlock = (type: string, variant: string, label: string) => {
       else if (variant === 'notice-box') {
         badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626';
         newBlock.styles.border = `1px solid ${mainColor}`;
-        newBlock.styles.textAlign = 'center';
+        // USUNIĘTO: newBlock.styles.textAlign = 'center'; - Teraz jest wyrównane do lewej jak reszta!
       }
 
       newBlock.styles.backgroundColor = bgColor;
 
-      // Zagnieżdżamy niezależne dzieci (Plakietka i Tekst)
       newBlock.children = [
         {
           id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText,
           styles: { 
             position: 'absolute', 
-            top: '-12px', // KOTWICZKA: Dokładnie na górnej belce, nad ramką
+            top: '-12px', 
             left: variant === 'notice-box' ? '50%' : '20px',
             transform: variant === 'notice-box' ? 'translateX(-50%)' : 'none',
             backgroundColor: mainColor, color: '#ffffff', 
@@ -84,11 +83,11 @@ export const createBlock = (type: string, variant: string, label: string) => {
           text: variant === 'alert-success' ? 'Wszystkie systemy działają poprawnie.' : 
                 variant === 'alert-warning' ? 'Ta operacja jest nieodwracalna.' :
                 variant === 'alert-tip' ? 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.' :
-                'Internal access should only be performed by qualified personnel...',
+                'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.',
           styles: { 
             color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', 
             margin: 0, width: '100%',
-            padding: '25px 20px 20px 20px', // Padding przeniesiony wprost na tekst
+            padding: '0px', // Dziecko (tekst) nie ma paddingu, dostosowuje się do rodzica
             borderLeft: variant !== 'notice-box' ? borderStyle : 'none'
           }
         }

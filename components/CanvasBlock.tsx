@@ -10,9 +10,12 @@ interface CanvasBlockProps {
   setIsMediaManagerOpen: (val: boolean) => void;
   setInteraction: (val: any) => void;
   updateActiveBlock: (updates: any) => void;
+  // NOWOŚĆ V18.8: Wiedza o rodzicu do Smart Selection
+  parentId?: number;
+  parentActive?: boolean;
 }
 
-export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock }: CanvasBlockProps) {
+export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive }: CanvasBlockProps) {
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
   
@@ -88,8 +91,29 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         ` : ''}
       `}} />
 
-      <div id={`block-${b.id}`} style={containerStyles} onClick={(e) => { e.stopPropagation(); }} 
-        onMouseDown={(e) => { e.stopPropagation(); if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } if ((isActive && isEditing) || isMediaManagerOpen) return; if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); }}
+      <div id={`block-${b.id}`} style={containerStyles} 
+        onClick={(e) => { e.stopPropagation(); }} 
+        onMouseDown={(e) => { 
+          e.stopPropagation(); 
+          
+          if (activeId !== b.id) { 
+            // --- NOWOŚĆ V18.8: SMART SELECTION ---
+            // Jeśli element jest dzieckiem (ma rodzica), a rodzic NIE JEST zaznaczony 
+            // -> zaznacz rodzica (wstawkę), chyba że trzymasz klawisz Ctrl (głębokie zaznaczanie)
+            if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) {
+              setActiveId(parentId);
+              setIsEditing(false);
+              return; // Zatrzymujemy się tutaj, zaznaczyliśmy kontener!
+            }
+
+            // W przeciwnym razie zachowanie domyślne: zaznacz bezpośrednio ten element
+            setActiveId(b.id); 
+            setIsEditing(false); 
+          } 
+
+          if ((isActive && isEditing) || isMediaManagerOpen) return; 
+          if (isAbsolute) setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: parseInt(b.styles.left) || 0, initialTop: parseInt(b.styles.top) || 0, initialWidth: 0, initialHeight: 0 }); 
+        }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
         className={`group ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
       >
@@ -145,7 +169,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex-1" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             {/* V18.7 KLUCZ: Klasa `relative` dodana poniżej chroni pozycjonowanie absolutnych dzieci (plakietek) */}
              <div className="pointer-events-auto w-full h-full relative" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';
@@ -155,6 +178,8 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isEditing={isEditing} setIsEditing={setIsEditing} 
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                       // PRZEKAZYWANIE DANYCH DO SMART SELECTION:
+                       parentId={b.id} parentActive={isActive}
                      />
                    );
                 })}
