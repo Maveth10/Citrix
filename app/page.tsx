@@ -224,6 +224,7 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
+  // FIX V18.34: ODBLOKOWANY FLEX PRZY UPUSZCZANIU
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
@@ -247,25 +248,35 @@ export default function Home() {
           if (dropType === 'inline') {
             const newArr = [...arr];
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
+            
+            // Jesli klocek zajmował 100%, zmuszamy go do 40% zeby bezpiecznie usiadł obok. 
+            // Usuwamy narzucony z zewnątrz "flex: 1", pozwalając użytkownikowi znów modyfikować width.
+            let safeWidth = sourceBlock!.styles.width;
+            if (safeWidth === '100%') safeWidth = '40%';
+
             const updatedSource = { 
               ...sourceBlock!, 
-              styles: { ...sourceBlock!.styles, clearRow: true, width: 'auto', flex: '1', marginLeft: '20px' } 
+              styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } 
             };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            return [...arr.slice(0, index), sourceBlock!, ...arr.slice(index)];
+            // Zwykłe upuszczenie. Upewniamy się, że nie został mu ukryty "flex" po poprzednim byciu inline.
+            const updatedSource = { 
+              ...sourceBlock!, 
+              styles: { ...sourceBlock!.styles, flex: 'unset' } 
+            };
+            return [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
           }
         }
         return arr.map(b => ({ ...b, children: b.children ? insertBlock(b.children) : undefined }));
       };
-      
       return insertBlock(intermediate);
     });
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.34! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -291,7 +302,11 @@ export default function Home() {
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
-      const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
+      
+      // FIX V18.34: Używamy pageX/pageY zamiast clientX/Y, żeby scrollowanie 
+      // podczas przeciągania na dole ekranu NIE psuło wyliczeń!
+      const dx = (e.pageX - interaction.startX) / canvasZoom; 
+      const dy = (e.pageY - interaction.startY) / canvasZoom;
       
       if (interaction.type === 'drag') {
         updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
