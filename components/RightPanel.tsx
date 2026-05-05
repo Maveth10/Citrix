@@ -6,168 +6,223 @@ interface RightPanelProps {
   setRightTab: (tab: 'layout' | 'design' | 'effects' | 'interactions') => void;
   updateActiveBlock: (updates: any) => void;
   removeActiveBlock: () => void;
-  setIsMediaManagerOpen: (isOpen: boolean) => void;
+  setIsMediaManagerOpen: (val: boolean) => void;
 }
 
 export default function RightPanel({ activeBlock, rightTab, setRightTab, updateActiveBlock, removeActiveBlock, setIsMediaManagerOpen }: RightPanelProps) {
   if (!activeBlock) {
     return (
-      <aside className="w-72 bg-[#09090b] border-l border-white/5 flex flex-col items-center justify-center text-neutral-500 text-xs p-8 text-center z-50 shrink-0">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl mb-6 shadow-inner">🖱️</div>
-        <p className="leading-relaxed">Zaznacz dowolny element na płótnie, aby uzyskać dostęp do panelu właściwości.</p>
+      <aside className="w-80 bg-[#0c0c0e] border-l border-white/5 p-6 flex flex-col items-center justify-center text-neutral-500 shadow-2xl z-50">
+        <div className="w-16 h-16 mb-4 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+          <span className="text-2xl">🖱️</span>
+        </div>
+        <p className="text-sm font-medium text-center">Wybierz element na płótnie,<br/>aby rozpocząć edycję.</p>
       </aside>
     );
   }
 
-  const handleChange = (key: string, value: string) => {
-    updateActiveBlock({ styles: { [key]: value } });
-  };
-
-  const handleHoverChange = (key: string, value: string | number) => {
-    updateActiveBlock({ hoverStyles: { [key]: value } });
-  };
+  const { styles } = activeBlock;
+  const isFlex = styles.display === 'flex' || !styles.display;
 
   return (
-    <aside className="w-80 bg-[#09090b] border-l border-white/5 flex flex-col z-50 shrink-0 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] h-full">
-      
-      {/* TABS (Teraz mamy cztery!) */}
-      <div className="p-4 border-b border-white/5 shrink-0 bg-[#09090b]">
-        <div className="flex bg-white/5 rounded-xl p-1 shadow-inner border border-white/5">
-          <button onClick={() => setRightTab('layout')} className={`flex-1 py-2 text-[10px] uppercase font-bold rounded-lg transition-all ${rightTab === 'layout' ? 'bg-[#18181b] text-white shadow-sm border border-white/5' : 'text-neutral-500 hover:text-white'}`}>Układ</button>
-          <button onClick={() => setRightTab('design')} className={`flex-1 py-2 text-[10px] uppercase font-bold rounded-lg transition-all ${rightTab === 'design' ? 'bg-[#18181b] text-white shadow-sm border border-white/5' : 'text-neutral-500 hover:text-white'}`}>Wygląd</button>
-          <button onClick={() => setRightTab('effects')} className={`flex-1 py-2 text-[10px] uppercase font-bold rounded-lg transition-all ${rightTab === 'effects' ? 'bg-[#18181b] text-white shadow-sm border border-white/5' : 'text-neutral-500 hover:text-white'}`}>Efekty</button>
-          <button onClick={() => setRightTab('interactions')} className={`flex-1 py-2 text-[10px] uppercase font-bold rounded-lg transition-all ${rightTab === 'interactions' ? 'bg-[#18181b] text-white shadow-sm border border-white/5' : 'text-neutral-500 hover:text-white'}`}>Interakcje</button>
-        </div>
+    <aside className="w-80 bg-[#0c0c0e] border-l border-white/5 flex flex-col h-full z-50 text-white shadow-2xl">
+      <div className="flex px-4 pt-4 pb-2 border-b border-white/5 gap-2 overflow-x-auto scrollbar-hide">
+        <button onClick={() => setRightTab('layout')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${rightTab === 'layout' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-neutral-500 hover:bg-white/5 hover:text-neutral-300'}`}>UKŁAD</button>
+        <button onClick={() => setRightTab('design')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${rightTab === 'design' ? 'bg-blue-600 text-white shadow-md' : 'bg-transparent text-neutral-500 hover:bg-white/5 hover:text-neutral-300'}`}>WYGLĄD</button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 scrollbar-hide flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto p-5 scrollbar-hide">
         
-        {/* MEDIA BUTTON */}
-        {(activeBlock.images || activeBlock.type === 'img') && (
-          <div className="bg-gradient-to-b from-blue-900/20 to-transparent p-5 rounded-2xl border border-blue-500/20 shadow-lg relative overflow-hidden">
-            <span className="text-[10px] font-bold text-blue-400 uppercase block mb-3 tracking-widest relative z-10">Zarządzaj Plikiem</span>
-            <button onClick={() => setIsMediaManagerOpen(true)} className="w-full py-3 bg-white text-black hover:bg-neutral-200 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg relative z-10 transform hover:-translate-y-0.5">🖼️ Menedżer Mediów</button>
-          </div>
-        )}
-
-        {activeBlock.type === 'video' && (
-          <div className="bg-gradient-to-b from-red-900/20 to-transparent p-5 rounded-2xl border border-red-500/20 shadow-lg relative overflow-hidden mb-2">
-             <span className="text-[10px] font-bold text-red-400 uppercase block mb-3 tracking-widest relative z-10">URL Wideo (YouTube / MP4)</span>
-             <input type="text" value={activeBlock.src || ''} onChange={(e) => updateActiveBlock({ src: e.target.value })} className="w-full bg-black/50 border border-white/10 p-3 text-xs rounded-xl text-white outline-none focus:border-red-500 transition-colors shadow-inner relative z-10" placeholder="Wklej link..." />
-          </div>
-        )}
-
-        {activeBlock.type === 'embed' && (
-          <div className="bg-gradient-to-b from-emerald-900/20 to-transparent p-5 rounded-2xl border border-emerald-500/20 shadow-lg relative overflow-hidden mb-2">
-             <span className="text-[10px] font-bold text-emerald-400 uppercase block mb-3 tracking-widest relative z-10">Kod Osadzenia (iFrame)</span>
-             <textarea value={activeBlock.text || ''} onChange={(e) => updateActiveBlock({ text: e.target.value })} className="w-full bg-black/50 border border-white/10 p-3 text-xs rounded-xl text-white outline-none focus:border-emerald-500 transition-colors shadow-inner relative z-10 h-32 resize-none font-mono" placeholder="Wklej kod..." />
-          </div>
-        )}
-
-        {/* UKŁAD */}
+        {/* --- ZAKŁADKA UKŁAD (WŁADCA NURTU) --- */}
         {rightTab === 'layout' && (
-          <div className="flex flex-col gap-5 animate-in fade-in">
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4">Wymiary</span>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3"><label className="text-xs text-neutral-500 w-16">Szerokość</label><input type="text" value={activeBlock.styles.width || ''} onChange={(e) => handleChange('width', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. 100%" /></div>
-                <div className="flex items-center gap-3"><label className="text-xs text-neutral-500 w-16">Wysokość</label><input type="text" value={activeBlock.styles.height || ''} onChange={(e) => handleChange('height', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. auto" /></div>
-              </div>
-            </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4">Odstępy</span>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-[10px] text-neutral-500 block mb-1">Pad (Wewn)</label><input type="text" value={activeBlock.styles.padding || ''} onChange={(e) => handleChange('padding', e.target.value)} className="w-full bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white text-center outline-none focus:border-blue-500" placeholder="20px" /></div>
-                <div><label className="text-[10px] text-neutral-500 block mb-1">Mar (Zewn)</label><input type="text" value={activeBlock.styles.margin || ''} onChange={(e) => handleChange('margin', e.target.value)} className="w-full bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white text-center outline-none focus:border-blue-500" placeholder="0 auto" /></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* WYGLĄD */}
-        {rightTab === 'design' && (
-          <div className="flex flex-col gap-5 animate-in fade-in">
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-3">Kolor Tła</label>
-              <div className="flex gap-3 items-center bg-[#09090b] p-2 rounded-xl border border-white/10"><input type="color" value={activeBlock.styles.backgroundColor?.includes('#') ? activeBlock.styles.backgroundColor : '#000000'} onChange={(e) => handleChange('backgroundColor', e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent" /><input type="text" value={activeBlock.styles.backgroundColor || ''} onChange={(e) => handleChange('backgroundColor', e.target.value)} className="flex-1 bg-transparent border-none text-xs text-white outline-none font-mono" placeholder="#000000" /></div>
-            </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4">Stylizacja granic</span>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3"><label className="text-xs text-neutral-500 w-16">Rogowe</label><input type="text" value={activeBlock.styles.borderRadius || ''} onChange={(e) => handleChange('borderRadius', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white outline-none focus:border-pink-500" placeholder="16px" /></div>
-                <div className="flex items-center gap-3"><label className="text-xs text-neutral-500 w-16">Linia</label><input type="text" value={activeBlock.styles.border || ''} onChange={(e) => handleChange('border', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white outline-none focus:border-pink-500" placeholder="1px solid #fff" /></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* EFEKTY */}
-        {rightTab === 'effects' && (
-          <div className="flex flex-col gap-5 animate-in fade-in">
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <div className="flex justify-between items-center mb-3"><label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Krycie (Opacity)</label><span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">{Math.round((activeBlock.styles.opacity || 1) * 100)}%</span></div>
-              <input type="range" min="0" max="1" step="0.05" value={activeBlock.styles.opacity || 1} onChange={(e) => handleChange('opacity', e.target.value)} className="w-full accent-emerald-500" />
-            </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4">Dodatkowe filtry</span>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3"><label className="text-xs text-neutral-500 w-16">Blur</label><input type="text" value={activeBlock.styles.backdropFilter || ''} onChange={(e) => handleChange('backdropFilter', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white outline-none focus:border-emerald-500" placeholder="blur(10px)" /></div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* NOWOŚĆ V18.2: INTERAKCJE I ANIMACJE */}
-        {rightTab === 'interactions' && (
-          <div className="flex flex-col gap-5 animate-in fade-in">
+          <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
             
-            {/* Animacja Wejściowa */}
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-4">Animacja Przy Pojawieniu (Load)</label>
-              <select 
-                value={activeBlock.entranceAnim || 'none'} 
-                onChange={(e) => updateActiveBlock({ entranceAnim: e.target.value })}
-                className="w-full bg-[#09090b] border border-white/10 p-2.5 text-xs rounded-xl text-white outline-none focus:border-purple-500"
-              >
-                <option value="none">Brak (Pojawia się natychmiast)</option>
-                <option value="fade-in">Mękkie wejście (Fade In)</option>
-                <option value="slide-up">Wjazd od dołu (Slide Up)</option>
-                <option value="zoom-in">Zwiększenie (Zoom In)</option>
-              </select>
-            </div>
-
-            {/* Efekty Hover */}
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-              <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest block mb-4 flex items-center gap-2"><span>🖱️</span> Efekt Najechania (Hover)</span>
-              
-              <div className="flex flex-col gap-4">
-                {/* Skala */}
+            {/* Wymiary */}
+            <div>
+              <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest flex items-center justify-between">Wymiary <span>⤢</span></h4>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="flex justify-between items-center mb-2"><label className="text-[10px] text-neutral-400">Powiększenie (Scale)</label><span className="text-[10px] text-white">x{activeBlock.hoverStyles?.scale || 1}</span></div>
-                  <input type="range" min="0.8" max="1.5" step="0.05" value={activeBlock.hoverStyles?.scale || 1} onChange={(e) => handleHoverChange('scale', parseFloat(e.target.value))} className="w-full accent-purple-500" />
+                  <label className="text-[10px] text-neutral-400 block mb-1">Szerokość (W)</label>
+                  <input type="text" value={styles.width || ''} onChange={(e) => updateActiveBlock({ styles: { width: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. 100%" />
                 </div>
-
-                {/* Przesunięcie Y */}
                 <div>
-                  <div className="flex justify-between items-center mb-2"><label className="text-[10px] text-neutral-400">Unoszenie (Translate Y)</label><span className="text-[10px] text-white">{activeBlock.hoverStyles?.translateY || 0}px</span></div>
-                  <input type="range" min="-30" max="30" step="1" value={activeBlock.hoverStyles?.translateY || 0} onChange={(e) => handleHoverChange('translateY', parseInt(e.target.value))} className="w-full accent-purple-500" />
+                  <label className="text-[10px] text-neutral-400 block mb-1">Wysokość (H)</label>
+                  <input type="text" value={styles.height || ''} onChange={(e) => updateActiveBlock({ styles: { height: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. auto" />
                 </div>
-
-                {/* Zmiana Koloru */}
-                <div className="flex gap-3 items-center bg-[#09090b] p-2 rounded-xl border border-white/10 shadow-inner mt-2">
-                  <input type="color" value={activeBlock.hoverStyles?.backgroundColor || '#000000'} onChange={(e) => handleHoverChange('backgroundColor', e.target.value)} className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0 bg-transparent" />
-                  <span className="text-xs text-neutral-500">Kolor tła na Hover</span>
+                <div>
+                  <label className="text-[10px] text-neutral-400 block mb-1">Min Wysokość</label>
+                  <input type="text" value={styles.minHeight || ''} onChange={(e) => updateActiveBlock({ styles: { minHeight: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. 200px" />
                 </div>
               </div>
             </div>
+
+            <hr className="border-white/5" />
+
+            {/* CENTRUM STEROWANIA NURTEM (FLEXBOX) */}
+            {isFlex && activeBlock.children && (
+              <div className="bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 blur-xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+                
+                <h4 className="text-[10px] font-bold text-blue-400 mb-4 uppercase tracking-widest flex items-center justify-between">
+                  Nurt Kontenera (Flex) <span className="text-base">🌊</span>
+                </h4>
+                
+                {/* Kierunek (Direction) */}
+                <div className="mb-4">
+                  <label className="text-[10px] text-neutral-400 block mb-2">Kierunek rzeki (Direction)</label>
+                  <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
+                    <button onClick={() => updateActiveBlock({ styles: { flexDirection: 'row' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexDirection === 'row' ? 'bg-blue-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Poziomo (→)</button>
+                    <button onClick={() => updateActiveBlock({ styles: { flexDirection: 'column' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexDirection === 'column' || !styles.flexDirection ? 'bg-blue-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Pionowo (↓)</button>
+                  </div>
+                </div>
+
+                {/* Zawijanie (Wrap) */}
+                <div className="mb-4">
+                  <label className="text-[10px] text-neutral-400 block mb-2">Zachowanie na brzegu (Wrap)</label>
+                  <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
+                    <button onClick={() => updateActiveBlock({ styles: { flexWrap: 'nowrap' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexWrap === 'nowrap' || !styles.flexWrap ? 'bg-neutral-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Miażdż (No-wrap)</button>
+                    <button onClick={() => updateActiveBlock({ styles: { flexWrap: 'wrap' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexWrap === 'wrap' ? 'bg-blue-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Zawijaj (Tetris)</button>
+                  </div>
+                </div>
+
+                {/* Wyrównanie wzdłuż nurtu (Justify) */}
+                <div className="mb-4">
+                  <label className="text-[10px] text-neutral-400 block mb-2">Rozkład wzdłuż nurtu (Justify)</label>
+                  <select value={styles.justifyContent || 'flex-start'} onChange={(e) => updateActiveBlock({ styles: { justifyContent: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner appearance-none cursor-pointer">
+                    <option value="flex-start">Początek (Start)</option>
+                    <option value="center">Środek (Center)</option>
+                    <option value="flex-end">Koniec (End)</option>
+                    <option value="space-between">Rozstrzelone (Space Between)</option>
+                    <option value="space-around">Odstępy (Space Around)</option>
+                  </select>
+                </div>
+
+                {/* Wyrównanie w poprzek nurtu (Align) */}
+                <div className="mb-4">
+                  <label className="text-[10px] text-neutral-400 block mb-2">Pozycja w poprzek (Align Items)</label>
+                  <select value={styles.alignItems || 'stretch'} onChange={(e) => updateActiveBlock({ styles: { alignItems: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner appearance-none cursor-pointer">
+                    <option value="stretch">Rozciągnij (Stretch)</option>
+                    <option value="flex-start">Do lewej / Do góry (Start)</option>
+                    <option value="center">Na środku (Center)</option>
+                    <option value="flex-end">Do prawej / Na dół (End)</option>
+                  </select>
+                </div>
+
+                {/* Gap */}
+                <div>
+                  <label className="text-[10px] text-neutral-400 block mb-2">Odległość między klockami (Gap)</label>
+                  <input type="text" value={styles.gap || ''} onChange={(e) => updateActiveBlock({ styles: { gap: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. 20px" />
+                </div>
+              </div>
+            )}
+
+            <hr className="border-white/5" />
+
+            {/* Przestrzeń (Odstępy wewn/zewn) */}
+            <div>
+              <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Odstępy (Box Model)</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                  <label className="text-[9px] text-neutral-400 block mb-2 text-center uppercase tracking-wider">Padding wewn.</label>
+                  <input type="text" value={styles.padding || ''} onChange={(e) => updateActiveBlock({ styles: { padding: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded p-1.5 text-xs text-center text-white outline-none focus:border-blue-500" placeholder="0px" />
+                </div>
+                <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                  <label className="text-[9px] text-neutral-400 block mb-2 text-center uppercase tracking-wider">Margines zewn.</label>
+                  <input type="text" value={styles.margin || ''} onChange={(e) => updateActiveBlock({ styles: { margin: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded p-1.5 text-xs text-center text-white outline-none focus:border-blue-500" placeholder="0px" />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* --- ZAKŁADKA WYGLĄD (DESIGN) --- */}
+        {rightTab === 'design' && (
+          <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
+            
+            {/* Tło */}
+            <div>
+              <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest flex items-center justify-between">Tło Elementu <span className="w-3 h-3 rounded-full border border-white/20" style={{backgroundColor: styles.backgroundColor || 'transparent'}}></span></h4>
+              <div className="flex items-center gap-3 bg-black/50 border border-white/10 p-2 rounded-xl mb-3 shadow-inner">
+                <input type="color" value={styles.backgroundColor?.includes('#') ? styles.backgroundColor : '#000000'} onChange={(e) => updateActiveBlock({ styles: { backgroundColor: e.target.value } })} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent p-0" />
+                <input type="text" value={styles.backgroundColor || ''} onChange={(e) => updateActiveBlock({ styles: { backgroundColor: e.target.value } })} className="flex-1 bg-transparent text-xs text-white outline-none font-mono" placeholder="rgba(0,0,0,0)" />
+              </div>
+              
+              <label className="text-[10px] text-neutral-400 block mb-1 mt-3">Obraz w tle (URL)</label>
+              <input type="text" value={styles.bgImage || ''} onChange={(e) => updateActiveBlock({ styles: { bgImage: e.target.value, bgType: e.target.value ? 'image' : 'color' } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="https://..." />
+            </div>
+
+            <hr className="border-white/5" />
+
+            {/* Ramki i Zaokrąglenia */}
+            <div>
+              <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Obramowanie</h4>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="text-[10px] text-neutral-400 block mb-1">Zaokrąglenie</label>
+                  <input type="text" value={styles.borderRadius || ''} onChange={(e) => updateActiveBlock({ styles: { borderRadius: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="0px" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-neutral-400 block mb-1">Cień (Box Shadow)</label>
+                  <input type="text" value={styles.boxShadow || ''} onChange={(e) => updateActiveBlock({ styles: { boxShadow: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="none" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-neutral-400 block mb-1">Obramowanie (Border)</label>
+                <input type="text" value={styles.border || ''} onChange={(e) => updateActiveBlock({ styles: { border: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="1px solid #000" />
+              </div>
+            </div>
+
+            {/* Typography (Jeśli tekst) */}
+            {['h1', 'h2', 'p', 'button', 'alert', 'list'].includes(activeBlock.type) && (
+              <>
+                <hr className="border-white/5" />
+                <div>
+                  <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest flex items-center justify-between">Typografia <span>T</span></h4>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="flex items-center gap-2 bg-black/50 border border-white/10 p-1.5 rounded-lg shadow-inner">
+                      <input type="color" value={styles.color?.includes('#') ? styles.color : '#ffffff'} onChange={(e) => updateActiveBlock({ styles: { color: e.target.value } })} className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0" />
+                      <span className="text-[10px] text-neutral-400">Kolor</span>
+                    </div>
+                    <div>
+                      <input type="text" value={styles.fontSize || ''} onChange={(e) => updateActiveBlock({ styles: { fontSize: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="Rozmiar (np. 16px)" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={styles.fontWeight || 'normal'} onChange={(e) => updateActiveBlock({ styles: { fontWeight: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner appearance-none">
+                      <option value="normal">Normalny</option>
+                      <option value="bold">Pogrubiony</option>
+                      <option value="900">Black (900)</option>
+                    </select>
+                    <select value={styles.textAlign || 'left'} onChange={(e) => updateActiveBlock({ styles: { textAlign: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner appearance-none">
+                      <option value="left">Do lewej</option>
+                      <option value="center">Środek</option>
+                      <option value="right">Do prawej</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Media (Jeśli obraz/wideo) */}
+            {['img', 'video'].includes(activeBlock.type) && (
+              <>
+                <hr className="border-white/5" />
+                <button onClick={() => setIsMediaManagerOpen(true)} className="w-full py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2">
+                  📷 Menedżer Mediów
+                </button>
+              </>
+            )}
 
           </div>
         )}
 
       </div>
 
-      <div className="p-5 border-t border-white/5 bg-[#09090b]">
-        <button onClick={removeActiveBlock} className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold rounded-xl transition border border-red-500/20">🗑️ Usuń Element</button>
+      <div className="p-4 border-t border-white/5 bg-[#09090b]">
+        <button onClick={removeActiveBlock} className="w-full py-2.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+          🗑️ Usuń element
+        </button>
       </div>
     </aside>
   );
