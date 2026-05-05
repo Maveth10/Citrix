@@ -13,8 +13,6 @@ interface CanvasBlockProps {
   parentId?: number;
   parentActive?: boolean;
   interaction?: any; 
-  
-  // NOWOŚĆ V18.18: NATIVE DRAG & DROP
   draggedId?: number | null;
   setDraggedId?: (id: number | null) => void;
   handleDrop?: (sourceId: number, targetId: number) => void;
@@ -31,7 +29,7 @@ export default function CanvasBlock({
   const isBeingDragged = interaction?.type === 'drag' && isActive;
   
   const [shouldAnimate, setShouldAnimate] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false); // Wizualny wskaźnik upuszczania
+  const [isDragOver, setIsDragOver] = useState(false);
   
   useEffect(() => {
     if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) { setShouldAnimate(true); }
@@ -51,7 +49,6 @@ export default function CanvasBlock({
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
     flexShrink: 0,
     overflow: isActive ? 'visible' : (b.styles.overflow || 'visible'),
-    // Dodajemy wskaźnik miejsca do upuszczenia
     boxShadow: isDragOver ? 'inset 0 4px 0 0 #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3)' : (b.styles.boxShadow || 'none')
   };
 
@@ -109,7 +106,14 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // --- LOGIKA UPUSTU (DROP ZONE) ---
+        // FIX V18.19: CAŁY ELEMENT JEST CHWYTLIWY, gdy jest aktywny!
+        draggable={isActive && !isEditing && !isAbsolute}
+        onDragStart={(e) => { 
+          e.stopPropagation(); 
+          if (setDraggedId) setDraggedId(b.id); 
+        }}
+        onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
+
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={(e) => { 
@@ -208,15 +212,9 @@ export default function CanvasBlock({
         {isActive && !isEditing && (
           <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
             
-            {/* KLUCZ V18.18: Plakietka to teraz UCHWYT DO PRZECIĄGANIA (Draggable) */}
-            <div 
-              draggable 
-              onDragStart={(e) => { e.stopPropagation(); if (setDraggedId) setDraggedId(b.id); }}
-              onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
-              className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-blue-600 transition-colors"
-              title="Chwyć i upuść, aby przenieść"
-            >
-              <span>⠿ {b.name}</span>
+            {/* Plakietka to teraz znów po prostu label, całe tło można łapać! */}
+            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto">
+              <span>{b.name}</span>
             </div>
             
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />

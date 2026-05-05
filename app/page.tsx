@@ -76,8 +76,6 @@ export default function Home() {
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
-
-  // --- NOWOŚĆ V18.18: STAN DLA DRAG & DROP ---
   const [draggedId, setDraggedId] = useState<number | null>(null);
 
   const handleSetInteraction = (val: any) => {
@@ -219,14 +217,10 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  // --- NOWOŚĆ V18.18: SILNIK NATIVE DRAG & DROP DO REORGANIZACJI ---
   const handleDrop = (sourceId: number, targetId: number) => {
-    if (sourceId === targetId) return; // Nie puszczaj na siebie samego
-
+    if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
       let sourceBlock: Block | null = null;
-      
-      // 1. Wytnij element z drzewa
       const removeSource = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === sourceId);
         if (index > -1) {
@@ -235,11 +229,8 @@ export default function Home() {
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
-      
       let intermediate = removeSource(prevBlocks);
       if (!sourceBlock) return prevBlocks;
-
-      // 2. Wklej go PRZED elementem docelowym
       const insertBefore = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === targetId);
         if (index > -1) {
@@ -247,14 +238,13 @@ export default function Home() {
         }
         return arr.map(b => ({ ...b, children: b.children ? insertBefore(b.children) : undefined }));
       };
-
       return insertBefore(intermediate);
     });
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.18! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.19! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -275,17 +265,43 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isMediaManagerOpen, isAiOpen, leftTab, addCategory, isEditing, activeId, blocks, past, future]);
 
+  const getCanvasWidth = () => viewport === 'mobile' ? '375px' : (viewport === 'tablet' ? '768px' : '1200px');
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
       const dx = (e.clientX - interaction.startX) / canvasZoom; const dy = (e.clientY - interaction.startY) / canvasZoom;
-      if (interaction.type === 'drag') updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
-      else if (interaction.type === 'resize') updateActiveBlock({ styles: { width: `${Math.max(20, interaction.initialWidth + dx)}px`, height: `${Math.max(20, interaction.initialHeight + dy)}px` } }, true);
+      
+      if (interaction.type === 'drag') {
+        updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
+      } 
+      // --- FIX V18.19: MAGNETIC RESIZE (Szerokość w Procentach!) ---
+      else if (interaction.type === 'resize') {
+        const el = document.getElementById(`block-${activeId}`);
+        // Szukamy szerokości rodzica (lub całego płótna, jeśli to główna sekcja)
+        const parentWidth = el?.parentElement?.offsetWidth || parseInt(getCanvasWidth());
+        
+        const newWidthPx = Math.max(20, interaction.initialWidth + dx);
+        let percent = (newWidthPx / parentWidth) * 100;
+        
+        // Magnes! Przyklejamy do równych, popularnych wartości w webdesignie
+        const snaps = [25, 33.33, 50, 66.66, 75, 100];
+        for (const snap of snaps) {
+          if (Math.abs(percent - snap) < 4) { // Margines błędu magnesu to 4%
+            percent = snap; break; 
+          }
+        }
+        
+        const newHeightPx = Math.max(20, interaction.initialHeight + dy);
+        
+        // Nadpisujemy WIDTH jako procent, a wysokość jako MIN-HEIGHT, żeby nie ucinało tekstów!
+        updateActiveBlock({ styles: { width: `${percent}%`, minHeight: `${newHeightPx}px` } }, true);
+      }
     };
     const handleMouseUp = () => setInteraction(null);
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen]);
+  }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport]);
 
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
@@ -309,7 +325,6 @@ export default function Home() {
   }, [activeId, isMediaManagerOpen]);
 
   const activeBlock = findBlockById(blocks, activeId);
-  const getCanvasWidth = () => viewport === 'mobile' ? '375px' : (viewport === 'tablet' ? '768px' : '1200px');
 
   const categories = [
     { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' }, { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' }, { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' }, { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
@@ -387,7 +402,6 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          {/* FIX V18.18: Płótno staje się flex-wrap (zawijanie wierszy), pozwalając na układanie sekcji 50% obok siebie! */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
                className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
              
@@ -400,8 +414,6 @@ export default function Home() {
                   isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                   setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                   interaction={interaction} 
-                  
-                  // Przekazujemy funkcje Native Drag & Drop
                   draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                 />
              ))}
