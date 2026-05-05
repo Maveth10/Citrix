@@ -107,12 +107,10 @@ export default function Home() {
           newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
           newStyles.gridTemplateColumns = 'unset';
           newStyles.gridTemplateRows = 'unset';
-          // FIX V18.13: minHeight: auto pozwala sekcji rosnąć elastycznie razem z contentem!
           newStyles.minHeight = 'auto'; 
           
           let childCount = 1;
 
-          // FIX V18.13: minmax(120px, auto) w rzędach to Święty Graal elastyczności!
           if (layout.startsWith('grid-custom-')) {
             const parts = layout.split('-');
             const cols = parseInt(parts[2]) || 1;
@@ -143,12 +141,10 @@ export default function Home() {
 
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    // FIX V18.13: minHeight zmieniony na auto, by sekcja rosła wraz z wierszami
     newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: 'auto' };
     
     let childCount = 1;
 
-    // FIX V18.13: minmax(120px, auto) ratuje layouty przed ściśnięciem!
     if (layout.startsWith('grid-custom-')) {
       const parts = layout.split('-');
       const cols = parseInt(parts[2]) || 1;
@@ -211,9 +207,29 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
+  // --- NOWOŚĆ V18.16: SILNIK ZAMIANY MIEJSC (REORDER) ---
+  const handleMoveBlock = (blockId: number, direction: 'prev' | 'next') => {
+    setBlocks(prevBlocks => {
+      const moveRecursive = (arr: Block[]): Block[] => {
+        const index = arr.findIndex(b => b.id === blockId);
+        if (index > -1) {
+          const newArr = [...arr];
+          if (direction === 'prev' && index > 0) {
+            [newArr[index - 1], newArr[index]] = [newArr[index], newArr[index - 1]];
+          } else if (direction === 'next' && index < newArr.length - 1) {
+            [newArr[index], newArr[index + 1]] = [newArr[index + 1], newArr[index]];
+          }
+          return newArr;
+        }
+        return arr.map(b => ({ ...b, children: b.children ? moveRecursive(b.children) : undefined }));
+      };
+      return moveRecursive(prevBlocks);
+    });
+  };
+
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.13! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.16! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -346,14 +362,16 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-        <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col pb-40">             {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
+          <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col pb-40">
+             {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              {blocks.map(b => (
                 <CanvasBlock 
                   key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
                   isEditing={isEditing} setIsEditing={setIsEditing} 
                   isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                  setInteraction={handleSetInteraction} updateActiveBlock={updateActiveBlock} 
-                  interaction={interaction}
+                  setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                  interaction={interaction} 
+                  moveBlock={handleMoveBlock} // PRZEKAZUJEMY FUNKCJĘ ŻONGLOWANIA
                 />
              ))}
           </div>

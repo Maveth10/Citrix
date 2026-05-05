@@ -13,9 +13,10 @@ interface CanvasBlockProps {
   parentId?: number;
   parentActive?: boolean;
   interaction?: any; 
+  moveBlock?: (id: number, dir: 'prev' | 'next') => void; // NOWOŚĆ V18.16
 }
 
-export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive, interaction }: CanvasBlockProps) {
+export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive, interaction, moveBlock }: CanvasBlockProps) {
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
   const isBeingDragged = interaction?.type === 'drag' && isActive;
@@ -38,7 +39,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     zIndex: b.styles.zIndex || 1,
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
     flexShrink: 0,
-    // FIX V18.15: Zabezpieczenie starych klocków. Zaznaczony = Zawsze Visible!
     overflow: isActive ? 'visible' : (b.styles.overflow || 'visible')
   };
 
@@ -162,9 +162,10 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         )}
         
         {b.children && (
-          <div className="w-full min-h-[40px] relative pointer-events-none flex flex-col flex-1" style={{zIndex: 10}}>
+          // KLUCZ V18.16: Dodajemy overflow-hidden i borderRadius:'inherit' dla wewnętrznej maski!
+          <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-hidden" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             <div className="pointer-events-auto w-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
+             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';
                    return (
@@ -174,6 +175,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                        parentId={b.id} parentActive={isActive} interaction={interaction}
+                       moveBlock={moveBlock} // PRZEKAZUJEMY REKURENCYJNIE W DÓŁ
                      />
                    );
                 })}
@@ -183,7 +185,17 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
 
         {isActive && !isEditing && (
           <>
-            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200]">{b.name}</div>
+            {/* KLUCZ V18.16: STRZAŁKI DO ZAMIANY MIEJSC W SIATCE */}
+            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2">
+              <span>{b.name}</span>
+              {parentId && moveBlock && (
+                <div className="flex gap-1 border-l border-white/30 pl-2 ml-1" onMouseDown={e => e.stopPropagation()}>
+                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'prev'); }} className="hover:text-blue-200 transition-colors" title="Przesuń w dół/lewo">◀</button>
+                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'next'); }} className="hover:text-blue-200 transition-colors" title="Przesuń w górę/prawo">▶</button>
+                </div>
+              )}
+            </div>
+            
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
