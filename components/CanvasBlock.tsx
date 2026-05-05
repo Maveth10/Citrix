@@ -106,8 +106,9 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // FIX V18.19: CAŁY ELEMENT JEST CHWYTLIWY, gdy jest aktywny!
-        draggable={isActive && !isEditing && !isAbsolute}
+        // FIX V18.20: Cały element jest ZAWSZE chwytliwy (o ile nie edytujesz w nim tekstu)
+        // Pozwala to na "Grab and Go" bez wcześniejszego klikania.
+        draggable={!isEditing && !isAbsolute}
         onDragStart={(e) => { 
           e.stopPropagation(); 
           if (setDraggedId) setDraggedId(b.id); 
@@ -211,8 +212,6 @@ export default function CanvasBlock({
 
         {isActive && !isEditing && (
           <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
-            
-            {/* Plakietka to teraz znów po prostu label, całe tło można łapać! */}
             <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto">
               <span>{b.name}</span>
             </div>
@@ -220,7 +219,17 @@ export default function CanvasBlock({
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
+            
+            {/* FIX V18.20: IDEALNA IZOLACJA ZDARZEŃ */}
+            <div 
+              className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" 
+              onMouseDown={(e) => { 
+                e.stopPropagation(); 
+                // KLUCZ!!! Zabijamy domyślną akcję, żeby przeglądarka nie myślała że robimy Drag&Drop!
+                e.preventDefault(); 
+                setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); 
+              }} 
+            />
           </div>
         )}
       </div>
