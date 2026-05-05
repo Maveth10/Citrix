@@ -77,6 +77,9 @@ export default function Home() {
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
 
+  // --- NOWOŚĆ V18.18: STAN DLA DRAG & DROP ---
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+
   const handleSetInteraction = (val: any) => {
     if (val !== null) { setPast(p => [...p, blocks].slice(-50)); setFuture([]); }
     setInteraction(val);
@@ -197,13 +200,11 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
-  // FIX V18.17: INTELIGENTNE USUWANIE Z ZACHOWANIEM SIATKI
   const removeActiveBlock = () => {
     setBlocks(prev => {
       const removeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
         const index = arr.findIndex(b => b.id === activeId);
         if (index > -1) {
-          // Jeśli rodzic jest Gridem, zrób Dziurę, a nie tnij DOM!
           if (parentIsGrid) {
             const newArr = [...arr];
             newArr[index] = createBlock('container', 'empty', 'Puste Pole');
@@ -218,28 +219,42 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  const handleMoveBlock = (blockId: number, direction: 'prev' | 'next') => {
+  // --- NOWOŚĆ V18.18: SILNIK NATIVE DRAG & DROP DO REORGANIZACJI ---
+  const handleDrop = (sourceId: number, targetId: number) => {
+    if (sourceId === targetId) return; // Nie puszczaj na siebie samego
+
     setBlocks(prevBlocks => {
-      const moveRecursive = (arr: Block[]): Block[] => {
-        const index = arr.findIndex(b => b.id === blockId);
+      let sourceBlock: Block | null = null;
+      
+      // 1. Wytnij element z drzewa
+      const removeSource = (arr: Block[]): Block[] => {
+        const index = arr.findIndex(b => b.id === sourceId);
         if (index > -1) {
-          const newArr = [...arr];
-          if (direction === 'prev' && index > 0) {
-            [newArr[index - 1], newArr[index]] = [newArr[index], newArr[index - 1]];
-          } else if (direction === 'next' && index < newArr.length - 1) {
-            [newArr[index], newArr[index + 1]] = [newArr[index + 1], newArr[index]];
-          }
-          return newArr;
+          sourceBlock = arr[index];
+          return [...arr.slice(0, index), ...arr.slice(index + 1)];
         }
-        return arr.map(b => ({ ...b, children: b.children ? moveRecursive(b.children) : undefined }));
+        return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
-      return moveRecursive(prevBlocks);
+      
+      let intermediate = removeSource(prevBlocks);
+      if (!sourceBlock) return prevBlocks;
+
+      // 2. Wklej go PRZED elementem docelowym
+      const insertBefore = (arr: Block[]): Block[] => {
+        const index = arr.findIndex(b => b.id === targetId);
+        if (index > -1) {
+          return [...arr.slice(0, index), sourceBlock!, ...arr.slice(index)];
+        }
+        return arr.map(b => ({ ...b, children: b.children ? insertBefore(b.children) : undefined }));
+      };
+
+      return insertBefore(intermediate);
     });
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.17! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.18! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -372,15 +387,22 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col pb-40">
+          {/* FIX V18.18: Płótno staje się flex-wrap (zawijanie wierszy), pozwalając na układanie sekcji 50% obok siebie! */}
+          <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
+               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
+             
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
+             
              {blocks.map(b => (
                 <CanvasBlock 
                   key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
                   isEditing={isEditing} setIsEditing={setIsEditing} 
                   isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                   setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                  interaction={interaction} moveBlock={handleMoveBlock}
+                  interaction={interaction} 
+                  
+                  // Przekazujemy funkcje Native Drag & Drop
+                  draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                 />
              ))}
           </div>

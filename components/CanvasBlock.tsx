@@ -13,14 +13,25 @@ interface CanvasBlockProps {
   parentId?: number;
   parentActive?: boolean;
   interaction?: any; 
-  moveBlock?: (id: number, dir: 'prev' | 'next') => void;
+  
+  // NOWOŚĆ V18.18: NATIVE DRAG & DROP
+  draggedId?: number | null;
+  setDraggedId?: (id: number | null) => void;
+  handleDrop?: (sourceId: number, targetId: number) => void;
 }
 
-export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive, interaction, moveBlock }: CanvasBlockProps) {
+export default function CanvasBlock({ 
+  b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, 
+  setInteraction, updateActiveBlock, parentId, parentActive, interaction,
+  draggedId, setDraggedId, handleDrop
+}: CanvasBlockProps) {
+  
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
   const isBeingDragged = interaction?.type === 'drag' && isActive;
+  
   const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false); // Wizualny wskaźnik upuszczania
   
   useEffect(() => {
     if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) { setShouldAnimate(true); }
@@ -36,11 +47,12 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
     mixBlendMode: b.styles.mixBlendMode || 'normal', 
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
-    // FIX V18.17: Aktywny element wypychamy ekstremalnie na wierzch (9999) by nie wchodził pod inne sekcje!
     zIndex: isActive ? 9999 : (b.styles.zIndex || 1),
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
     flexShrink: 0,
-    overflow: isActive ? 'visible' : (b.styles.overflow || 'visible')
+    overflow: isActive ? 'visible' : (b.styles.overflow || 'visible'),
+    // Dodajemy wskaźnik miejsca do upuszczenia
+    boxShadow: isDragOver ? 'inset 0 4px 0 0 #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3)' : (b.styles.boxShadow || 'none')
   };
 
   if (b.children) { 
@@ -96,6 +108,16 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
       `}} />
 
       <div id={`block-${b.id}`} style={containerStyles} 
+        
+        // --- LOGIKA UPUSTU (DROP ZONE) ---
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => { 
+          e.preventDefault(); e.stopPropagation(); setIsDragOver(false); 
+          if (draggedId && handleDrop) { handleDrop(draggedId, b.id); }
+          if (setDraggedId) setDraggedId(null);
+        }}
+
         onClick={(e) => { e.stopPropagation(); }} 
         onMouseDown={(e) => { 
           e.stopPropagation(); 
@@ -111,8 +133,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
-        // FIX V18.17: Usunęliśmy nieprzewidywalne outline'y. Aktywny obrys jest generowany w divie na samym dole komponentu.
-        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed' : ''}`}
+        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed' : ''} ${draggedId === b.id ? 'opacity-50' : ''}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
         {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
@@ -176,7 +197,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                        parentId={b.id} parentActive={isActive} interaction={interaction}
-                       moveBlock={moveBlock}
+                       draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                      />
                    );
                 })}
@@ -184,21 +205,20 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           </div>
         )}
 
-        {/* FIX V18.17: NOWY SYSTEM ZAZNACZENIA Z INSET-0 (IDEALNY OBRYS) */}
         {isActive && !isEditing && (
           <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
             
-            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto">
-              <span>{b.name}</span>
-              {moveBlock && (
-                <div className="flex gap-1 border-l border-white/30 pl-2 ml-1" onMouseDown={e => e.stopPropagation()}>
-                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'prev'); }} className="hover:text-blue-200 transition-colors" title="Wcześniejszy">{!parentId ? '▲' : '◀'}</button>
-                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'next'); }} className="hover:text-blue-200 transition-colors" title="Następny">{!parentId ? '▼' : '▶'}</button>
-                </div>
-              )}
+            {/* KLUCZ V18.18: Plakietka to teraz UCHWYT DO PRZECIĄGANIA (Draggable) */}
+            <div 
+              draggable 
+              onDragStart={(e) => { e.stopPropagation(); if (setDraggedId) setDraggedId(b.id); }}
+              onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
+              className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-blue-600 transition-colors"
+              title="Chwyć i upuść, aby przenieść"
+            >
+              <span>⠿ {b.name}</span>
             </div>
             
-            {/* Węzły idealnie na rogach borderu! */}
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
