@@ -75,7 +75,15 @@ export default function Home() {
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-  const [interaction, setInteraction] = useState<{ type: 'drag' | 'resize'; startX: number; startY: number; initialLeft: number; initialTop: number; initialWidth: number; initialHeight: number; } | null>(null);
+  
+  // FIX V18.21: Interakcja zna teraz KIERUNEK (dir) rozciągania!
+  const [interaction, setInteraction] = useState<{ 
+    type: 'drag' | 'resize'; dir?: string; 
+    startX: number; startY: number; 
+    initialLeft: number; initialTop: number; 
+    initialWidth: number; initialHeight: number; 
+  } | null>(null);
+  
   const [draggedId, setDraggedId] = useState<number | null>(null);
 
   const handleSetInteraction = (val: any) => {
@@ -244,7 +252,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.19! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.21! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -275,27 +283,37 @@ export default function Home() {
       if (interaction.type === 'drag') {
         updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
       } 
-      // --- FIX V18.19: MAGNETIC RESIZE (Szerokość w Procentach!) ---
-      else if (interaction.type === 'resize') {
+      // --- FIX V18.21: OMNI-RESIZE (8 KIERUNKÓW!) ---
+      else if (interaction.type === 'resize' && interaction.dir) {
         const el = document.getElementById(`block-${activeId}`);
-        // Szukamy szerokości rodzica (lub całego płótna, jeśli to główna sekcja)
         const parentWidth = el?.parentElement?.offsetWidth || parseInt(getCanvasWidth());
         
-        const newWidthPx = Math.max(20, interaction.initialWidth + dx);
-        let percent = (newWidthPx / parentWidth) * 100;
+        let newWidthPx = interaction.initialWidth;
+        let newHeightPx = interaction.initialHeight;
         
-        // Magnes! Przyklejamy do równych, popularnych wartości w webdesignie
+        // Matematyka osi X
+        if (interaction.dir.includes('e')) newWidthPx += dx;
+        if (interaction.dir.includes('w')) newWidthPx -= dx; 
+        
+        // Matematyka osi Y
+        if (interaction.dir.includes('s')) newHeightPx += dy;
+        if (interaction.dir.includes('n')) newHeightPx -= dy;
+
+        newWidthPx = Math.max(20, newWidthPx);
+        newHeightPx = Math.max(20, newHeightPx);
+
+        let percent = (newWidthPx / parentWidth) * 100;
         const snaps = [25, 33.33, 50, 66.66, 75, 100];
         for (const snap of snaps) {
-          if (Math.abs(percent - snap) < 4) { // Margines błędu magnesu to 4%
-            percent = snap; break; 
-          }
+          if (Math.abs(percent - snap) < 4) { percent = snap; break; }
         }
         
-        const newHeightPx = Math.max(20, interaction.initialHeight + dy);
-        
-        // Nadpisujemy WIDTH jako procent, a wysokość jako MIN-HEIGHT, żeby nie ucinało tekstów!
-        updateActiveBlock({ styles: { width: `${percent}%`, minHeight: `${newHeightPx}px` } }, true);
+        const updates: any = {};
+        // Aktualizujemy tylko te wartości, za które ciągniemy
+        if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percent}%`;
+        if (interaction.dir.includes('s') || interaction.dir.includes('n')) updates.minHeight = `${newHeightPx}px`;
+
+        updateActiveBlock({ styles: updates }, true);
       }
     };
     const handleMouseUp = () => setInteraction(null);
@@ -402,8 +420,9 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
+          {/* FIX V18.21: Powrót do twardej kaskady flex-col (żadnego automatycznego skakania obok siebie) */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
+               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              
@@ -413,8 +432,7 @@ export default function Home() {
                   isEditing={isEditing} setIsEditing={setIsEditing} 
                   isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                   setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                  interaction={interaction} 
-                  draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                  interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                 />
              ))}
           </div>
