@@ -77,7 +77,7 @@ export default function CanvasBlock({
 
   const handleResizeStart = (e: React.MouseEvent, dir: string) => {
     e.stopPropagation();
-    e.preventDefault();
+    e.preventDefault(); // TARCZA: Blokuje Drag & Drop podczas zmiany rozmiaru!
     const el = document.getElementById(`block-${b.id}`);
     const compStyle = el ? window.getComputedStyle(el) : null;
     setInteraction({ 
@@ -122,8 +122,23 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
+        // FIX V18.33: ZŁAP ZA TŁO! Zwracamy władzę. 
         draggable={!isEditing && !isAbsolute}
-        onDragStart={(e) => { e.stopPropagation(); if (setDraggedId) setDraggedId(b.id); }}
+        onDragStart={(e) => { 
+          e.stopPropagation(); 
+          if (setDraggedId) setDraggedId(b.id); 
+          
+          // MAGIA UX: Zastępujemy lagującego wielkiego ducha malutką, lekką naklejką
+          const dragGhost = document.createElement('div');
+          dragGhost.id = 'drag-ghost';
+          dragGhost.textContent = `⠿ Przenosisz: ${b.name}`;
+          dragGhost.style.cssText = 'background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; position: absolute; top: -1000px; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-family: sans-serif; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);';
+          document.body.appendChild(dragGhost);
+          e.dataTransfer.setDragImage(dragGhost, 15, 15);
+          
+          // Sprzątamy po wygenerowaniu zrzutu
+          setTimeout(() => { if (document.body.contains(dragGhost)) document.body.removeChild(dragGhost); }, 0);
+        }}
         onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
@@ -148,7 +163,7 @@ export default function CanvasBlock({
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
-        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed' : ''} ${draggedId === b.id ? 'opacity-50' : ''}`}
+        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed cursor-grab active:cursor-grabbing' : ''} ${draggedId === b.id ? 'opacity-50' : ''}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
         {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
@@ -202,10 +217,12 @@ export default function CanvasBlock({
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-hidden" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             
-             {/* Pętla mapująca dzieci wewnętrznych kontenerów (np. sekcji, siatek) */}
              <div className="pointer-events-auto w-full h-full relative flex-1 flex flex-row flex-wrap content-start" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
+                   const widthVal = parseFloat(child.styles.width || '100');
+                   const isBreak = child.styles.clearRow !== false;
+                   const showGhost = draggedId && draggedId !== child.id && isBreak && widthVal < 98 && b.styles.display !== 'grid';
+
                    return (
                      <React.Fragment key={child.id}>
                        <CanvasBlock 
@@ -217,19 +234,17 @@ export default function CanvasBlock({
                          draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                        />
                        
-                       {/* FIX V18.28: GHOST DROP ZONE DLA DZIECI WEWNĘTRZNYCH (W STREFACH FLEX) */}
-                       {b.styles.display !== 'grid' && child.styles.clearRow && draggedId && draggedId !== child.id && (
-                          <div 
-                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (handleDrop) { handleDrop(draggedId, child.id, 'inline'); } if (setDraggedId) setDraggedId(null); }}
-                            className="flex-1 min-h-[40px] border-2 border-dashed border-blue-400/50 bg-blue-500/10 rounded-xl m-2 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer shadow-inner"
-                          >
-                            <span className="text-blue-400 font-bold text-[9px] uppercase tracking-widest">+ WSTAW OBOK</span>
-                          </div>
+                       {showGhost && (
+                         <div 
+                           onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                           onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (handleDrop) { handleDrop(draggedId, child.id, 'inline'); } if(setDraggedId) setDraggedId(null); }}
+                           className="flex-1 min-h-[40px] border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:scale-[1.02] transition-all cursor-pointer shadow-inner"
+                         >
+                           <span className="text-blue-500 font-bold text-[9px] uppercase tracking-widest">+ Wstaw Obok</span>
+                         </div>
                        )}
 
-                       {/* BARIERA WIERSZA */}
-                       {b.styles.display !== 'grid' && child.styles.clearRow && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
+                       {isBreak && b.styles.display !== 'grid' && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
                      </React.Fragment>
                    );
                 })}
@@ -239,8 +254,10 @@ export default function CanvasBlock({
 
         {isActive && !isEditing && (
           <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
-            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-blue-600 transition-colors">
-              <span>⠿ {b.name}</span>
+            
+            {/* Zwykła, informacyjna etykietka - BEZ DRAGGABLE */}
+            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-default">
+              <span>{b.name}</span>
             </div>
             
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />

@@ -54,7 +54,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                 </div>
               </div>
 
-              {/* FIX V18.27: WYŁĄCZNIK TETRISA (CLEAR ROW) */}
               <div className="mt-4 bg-blue-900/20 p-3 rounded-xl border border-blue-500/30 flex items-center justify-between">
                 <div>
                   <label className="text-[10px] text-blue-400 font-bold uppercase tracking-wider cursor-pointer">Blokuj miejsce obok</label>
@@ -62,12 +61,11 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                 </div>
                 <input 
                   type="checkbox" 
-                  checked={styles.clearRow || false} 
+                  checked={styles.clearRow !== false} 
                   onChange={(e) => updateActiveBlock({ styles: { clearRow: e.target.checked } })} 
                   className="w-5 h-5 rounded bg-black border border-blue-500/50 accent-blue-500 cursor-pointer shadow-inner" 
                 />
               </div>
-
             </div>
 
             <hr className="border-white/5" />
@@ -79,7 +77,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                   Nurt Kontenera (Flex)
                 </h4>
                 
-                {/* Kierunek (Direction) */}
                 <div className="mb-4">
                   <label className="text-[10px] text-neutral-400 block mb-2">Kierunek rzeki (Direction)</label>
                   <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
@@ -88,7 +85,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                   </div>
                 </div>
 
-                {/* Zawijanie (Wrap) */}
                 <div className="mb-4">
                   <label className="text-[10px] text-neutral-400 block mb-2">Zachowanie na brzegu (Wrap)</label>
                   <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
@@ -97,7 +93,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                   </div>
                 </div>
 
-                {/* Wyrównanie wzdłuż nurtu (Justify) */}
                 <div className="mb-4">
                   <label className="text-[10px] text-neutral-400 block mb-2">Rozkład wzdłuż nurtu (Justify)</label>
                   <select value={styles.justifyContent || 'flex-start'} onChange={(e) => updateActiveBlock({ styles: { justifyContent: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner appearance-none cursor-pointer">
@@ -109,7 +104,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                   </select>
                 </div>
 
-                {/* Wyrównanie w poprzek nurtu (Align) */}
                 <div className="mb-4">
                   <label className="text-[10px] text-neutral-400 block mb-2">Pozycja w poprzek (Align Items)</label>
                   <select value={styles.alignItems || 'stretch'} onChange={(e) => updateActiveBlock({ styles: { alignItems: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner appearance-none cursor-pointer">
@@ -120,7 +114,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                   </select>
                 </div>
 
-                {/* Gap */}
                 <div>
                   <label className="text-[10px] text-neutral-400 block mb-2">Odległość między klockami (Gap)</label>
                   <input type="text" value={styles.gap || ''} onChange={(e) => updateActiveBlock({ styles: { gap: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="np. 20px" />
@@ -150,7 +143,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
 
         {rightTab === 'design' && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
-            {/* Sekcja tła i obramowania pominięta dla czytelności (zostaje bez zmian) */}
             <div><h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Tło Elementu</h4><div className="flex items-center gap-3 bg-black/50 border border-white/10 p-2 rounded-xl mb-3 shadow-inner"><input type="color" value={styles.backgroundColor?.includes('#') ? styles.backgroundColor : '#000000'} onChange={(e) => updateActiveBlock({ styles: { backgroundColor: e.target.value } })} className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent p-0" /><input type="text" value={styles.backgroundColor || ''} onChange={(e) => updateActiveBlock({ styles: { backgroundColor: e.target.value } })} className="flex-1 bg-transparent text-xs text-white outline-none font-mono" placeholder="rgba(0,0,0,0)" /></div><label className="text-[10px] text-neutral-400 block mb-1 mt-3">Obraz w tle (URL)</label><input type="text" value={styles.bgImage || ''} onChange={(e) => updateActiveBlock({ styles: { bgImage: e.target.value, bgType: e.target.value ? 'image' : 'color' } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 transition-colors shadow-inner" placeholder="https://..." /></div><hr className="border-white/5" /><div><h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Obramowanie</h4><div className="grid grid-cols-2 gap-3 mb-3"><div><label className="text-[10px] text-neutral-400 block mb-1">Zaokrąglenie</label><input type="text" value={styles.borderRadius || ''} onChange={(e) => updateActiveBlock({ styles: { borderRadius: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="0px" /></div><div><label className="text-[10px] text-neutral-400 block mb-1">Cień (Box Shadow)</label><input type="text" value={styles.boxShadow || ''} onChange={(e) => updateActiveBlock({ styles: { boxShadow: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="none" /></div></div><div><label className="text-[10px] text-neutral-400 block mb-1">Obramowanie (Border)</label><input type="text" value={styles.border || ''} onChange={(e) => updateActiveBlock({ styles: { border: e.target.value } })} className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 shadow-inner" placeholder="1px solid #000" /></div></div>
           </div>
         )}

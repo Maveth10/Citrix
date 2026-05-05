@@ -148,7 +148,7 @@ export default function Home() {
 
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: 'auto' };
+    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: 'auto', clearRow: true };
     let childCount = 1;
 
     if (layout.startsWith('grid-custom-')) {
@@ -181,7 +181,7 @@ export default function Home() {
       if (!activeId) {
         if (type !== 'section') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
@@ -224,7 +224,6 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  // FIX V18.28: INTELIGENTNY DRAG & DROP (Z PAMIĘCIĄ WIDMA)
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
@@ -245,20 +244,15 @@ export default function Home() {
       const insertBlock = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === targetId);
         if (index > -1) {
-          
           if (dropType === 'inline') {
-            // MAGIA: Użytkownik wrzucił klocek do strefy widmo (obok)!
             const newArr = [...arr];
-            // 1. Lewy klocek traci barierę wiersza
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
-            // 2. Nowy klocek dostaje barierę wiersza i elastycznie wypełnia całą pustą przestrzeń obok!
             const updatedSource = { 
               ...sourceBlock!, 
               styles: { ...sourceBlock!.styles, clearRow: true, width: 'auto', flex: '1', marginLeft: '20px' } 
             };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            // Zwykły upust PRZED klockiem
             return [...arr.slice(0, index), sourceBlock!, ...arr.slice(index)];
           }
         }
@@ -271,7 +265,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.28! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -319,9 +313,9 @@ export default function Home() {
         newHeightPx = Math.max(20, newHeightPx);
 
         let percentWidth = (newWidthPx / parentWidth) * 100;
-        const snaps = [25, 33.33, 50, 66.66, 75, 100];
+        const snaps = [10, 15, 20, 25, 30, 33.33, 40, 50, 60, 66.66, 70, 75, 80, 85, 90, 100];
         for (const snap of snaps) {
-          if (Math.abs(percentWidth - snap) < 4) { percentWidth = snap; break; }
+          if (Math.abs(percentWidth - snap) < 3) { percentWidth = snap; break; }
         }
         
         const updates: any = {};
@@ -444,30 +438,35 @@ export default function Home() {
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              
-             {blocks.map(b => (
-                <React.Fragment key={b.id}>
-                  <CanvasBlock 
-                    b={b} activeId={activeId} setActiveId={setActiveId} 
-                    isEditing={isEditing} setIsEditing={setIsEditing} 
-                    isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                    setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                    interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                  />
-                  
-                  {/* FIX V18.28: GHOST DROP ZONE (STREFA WIDMO)! */}
-                  {b.styles.clearRow && draggedId && draggedId !== b.id && (
-                    <div 
-                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if (setDraggedId) setDraggedId(null); }}
-                      className="flex-1 min-h-[40px] border-2 border-dashed border-blue-400/50 bg-blue-500/10 rounded-xl m-2 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer shadow-inner"
-                    >
-                      <span className="text-blue-400 font-bold text-xs uppercase tracking-widest">+ WSTAW OBOK</span>
-                    </div>
-                  )}
+             {blocks.map(b => {
+                const widthVal = parseFloat(b.styles.width || '100');
+                const isBreak = b.styles.clearRow !== false;
+                const showGhost = draggedId && draggedId !== b.id && isBreak && widthVal < 98;
 
-                  {b.styles.clearRow && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
-                </React.Fragment>
-             ))}
+                return (
+                  <React.Fragment key={b.id}>
+                    <CanvasBlock 
+                      b={b} activeId={activeId} setActiveId={setActiveId} 
+                      isEditing={isEditing} setIsEditing={setIsEditing} 
+                      isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                      setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                      interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                    />
+                    
+                    {showGhost && (
+                      <div 
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if(setDraggedId) setDraggedId(null); }}
+                        className="flex-1 min-h-[100px] border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-blue-500/20 hover:scale-[1.02] transition-all cursor-pointer shadow-inner"
+                      >
+                        <span className="text-blue-500 font-bold text-[10px] uppercase tracking-widest">+ Wstaw Obok</span>
+                      </div>
+                    )}
+
+                    {isBreak && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
+                  </React.Fragment>
+                );
+             })}
           </div>
         </main>
         <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
