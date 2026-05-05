@@ -76,13 +76,11 @@ export default function Home() {
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
-  // FIX V18.22: Dodajemy pamięć początkowych Marginesów do interakcji!
   const [interaction, setInteraction] = useState<{ 
     type: 'drag' | 'resize'; dir?: string; 
     startX: number; startY: number; 
     initialLeft: number; initialTop: number; 
     initialWidth: number; initialHeight: number; 
-    initialMarginLeft?: number; initialMarginTop?: number;
   } | null>(null);
   
   const [draggedId, setDraggedId] = useState<number | null>(null);
@@ -253,7 +251,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.22! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.23! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -290,23 +288,16 @@ export default function Home() {
         
         let newWidthPx = interaction.initialWidth;
         let newHeightPx = interaction.initialHeight;
-        let newMarginLeftPx = interaction.initialMarginLeft || 0;
-        let newMarginTopPx = interaction.initialMarginTop || 0;
         
-        // FIX V18.22: MARGIN COMPENSATION (Kotwiczenie!)
+        // FIX V18.23: Czysta matematyka wymiarów (BEZ MARGINESÓW!)
         if (interaction.dir.includes('e')) newWidthPx += dx;
-        if (interaction.dir.includes('w')) {
-           newWidthPx -= dx;
-           newMarginLeftPx += dx; // Magia: Odpychamy klocek od lewej równo z ucinaniem!
-        }
+        if (interaction.dir.includes('w')) newWidthPx -= dx; 
         
         if (interaction.dir.includes('s')) newHeightPx += dy;
-        if (interaction.dir.includes('n')) {
-           newHeightPx -= dy;
-           newMarginTopPx += dy;
-        }
+        if (interaction.dir.includes('n')) newHeightPx -= dy;
 
-        newWidthPx = Math.max(20, newWidthPx);
+        // FIX V18.23: Ograniczamy szerokość do 100% rodzica, żeby nic nie wylało się poza Płótno
+        newWidthPx = Math.max(20, Math.min(newWidthPx, parentWidth));
         newHeightPx = Math.max(20, newHeightPx);
 
         let percentWidth = (newWidthPx / parentWidth) * 100;
@@ -317,12 +308,13 @@ export default function Home() {
         
         const updates: any = {};
         
+        // Aktualizujemy tylko te wartości, za które ciągniemy
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) updates.minHeight = `${newHeightPx}px`;
 
-        // Wpychamy marginesy do JSON-a
-        if (interaction.dir.includes('w')) updates.marginLeft = `${(newMarginLeftPx / parentWidth) * 100}%`;
-        if (interaction.dir.includes('n')) updates.marginTop = `${newMarginTopPx}px`;
+        // Twardy reset niebezpiecznych marginesów z poprzedniej łatki (czyścimy brudy z DOM)
+        updates.marginLeft = '0px';
+        updates.marginTop = '0px';
 
         updateActiveBlock({ styles: updates }, true);
       }
@@ -431,8 +423,6 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          
-          {/* FIX V18.22: Przywracamy Flex-Wrap (Tetris Mode) do Płótna! */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
                className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
              
