@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { createBlock } from '../utils/blockFactory';
 
@@ -224,10 +224,12 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  const handleDrop = (sourceId: number, targetId: number) => {
+  // FIX V18.28: INTELIGENTNY DRAG & DROP (Z PAMIĘCIĄ WIDMA)
+  const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
       let sourceBlock: Block | null = null;
+      
       const removeSource = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === sourceId);
         if (index > -1) {
@@ -236,22 +238,40 @@ export default function Home() {
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
+      
       let intermediate = removeSource(prevBlocks);
       if (!sourceBlock) return prevBlocks;
-      const insertBefore = (arr: Block[]): Block[] => {
+
+      const insertBlock = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === targetId);
         if (index > -1) {
-          return [...arr.slice(0, index), sourceBlock!, ...arr.slice(index)];
+          
+          if (dropType === 'inline') {
+            // MAGIA: Użytkownik wrzucił klocek do strefy widmo (obok)!
+            const newArr = [...arr];
+            // 1. Lewy klocek traci barierę wiersza
+            newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
+            // 2. Nowy klocek dostaje barierę wiersza i elastycznie wypełnia całą pustą przestrzeń obok!
+            const updatedSource = { 
+              ...sourceBlock!, 
+              styles: { ...sourceBlock!.styles, clearRow: true, width: 'auto', flex: '1', marginLeft: '20px' } 
+            };
+            return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
+          } else {
+            // Zwykły upust PRZED klockiem
+            return [...arr.slice(0, index), sourceBlock!, ...arr.slice(index)];
+          }
         }
-        return arr.map(b => ({ ...b, children: b.children ? insertBefore(b.children) : undefined }));
+        return arr.map(b => ({ ...b, children: b.children ? insertBlock(b.children) : undefined }));
       };
-      return insertBefore(intermediate);
+      
+      return insertBlock(intermediate);
     });
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.25! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.28! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -419,20 +439,34 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          {/* FIX V18.25: Powrót do Flex-Wrap (Zawijania wierszy)! */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
                className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              
              {blocks.map(b => (
-                <CanvasBlock 
-                  key={b.id} b={b} activeId={activeId} setActiveId={setActiveId} 
-                  isEditing={isEditing} setIsEditing={setIsEditing} 
-                  isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                  setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                  interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                />
+                <React.Fragment key={b.id}>
+                  <CanvasBlock 
+                    b={b} activeId={activeId} setActiveId={setActiveId} 
+                    isEditing={isEditing} setIsEditing={setIsEditing} 
+                    isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                    setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                    interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                  />
+                  
+                  {/* FIX V18.28: GHOST DROP ZONE (STREFA WIDMO)! */}
+                  {b.styles.clearRow && draggedId && draggedId !== b.id && (
+                    <div 
+                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if (setDraggedId) setDraggedId(null); }}
+                      className="flex-1 min-h-[40px] border-2 border-dashed border-blue-400/50 bg-blue-500/10 rounded-xl m-2 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer shadow-inner"
+                    >
+                      <span className="text-blue-400 font-bold text-xs uppercase tracking-widest">+ WSTAW OBOK</span>
+                    </div>
+                  )}
+
+                  {b.styles.clearRow && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
+                </React.Fragment>
              ))}
           </div>
         </main>

@@ -15,7 +15,7 @@ interface CanvasBlockProps {
   interaction?: any; 
   draggedId?: number | null;
   setDraggedId?: (id: number | null) => void;
-  handleDrop?: (sourceId: number, targetId: number) => void;
+  handleDrop?: (sourceId: number, targetId: number, type?: 'before'|'inline') => void;
 }
 
 export default function CanvasBlock({ 
@@ -48,6 +48,7 @@ export default function CanvasBlock({
     zIndex: isActive ? 9999 : (b.styles.zIndex || 1),
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
     flexShrink: 0,
+    minWidth: 0, minHeight: 0,
     overflow: isActive ? 'visible' : (b.styles.overflow || 'visible'),
     boxShadow: isDragOver ? 'inset 0 4px 0 0 #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3)' : (b.styles.boxShadow || 'none')
   };
@@ -201,17 +202,35 @@ export default function CanvasBlock({
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-hidden" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
+             
+             {/* Pętla mapująca dzieci wewnętrznych kontenerów (np. sekcji, siatek) */}
+             <div className="pointer-events-auto w-full h-full relative flex-1 flex flex-row flex-wrap content-start" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    return (
-                     <CanvasBlock 
-                       key={child.id} b={child} activeId={activeId} setActiveId={setActiveId} 
-                       isEditing={isEditing} setIsEditing={setIsEditing} 
-                       isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                       setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                       parentId={b.id} parentActive={isActive} interaction={interaction}
-                       draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                     />
+                     <React.Fragment key={child.id}>
+                       <CanvasBlock 
+                         b={child} activeId={activeId} setActiveId={setActiveId} 
+                         isEditing={isEditing} setIsEditing={setIsEditing} 
+                         isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                         setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                         parentId={b.id} parentActive={isActive} interaction={interaction}
+                         draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                       />
+                       
+                       {/* FIX V18.28: GHOST DROP ZONE DLA DZIECI WEWNĘTRZNYCH (W STREFACH FLEX) */}
+                       {b.styles.display !== 'grid' && child.styles.clearRow && draggedId && draggedId !== child.id && (
+                          <div 
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (handleDrop) { handleDrop(draggedId, child.id, 'inline'); } if (setDraggedId) setDraggedId(null); }}
+                            className="flex-1 min-h-[40px] border-2 border-dashed border-blue-400/50 bg-blue-500/10 rounded-xl m-2 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer shadow-inner"
+                          >
+                            <span className="text-blue-400 font-bold text-[9px] uppercase tracking-widest">+ WSTAW OBOK</span>
+                          </div>
+                       )}
+
+                       {/* BARIERA WIERSZA */}
+                       {b.styles.display !== 'grid' && child.styles.clearRow && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
+                     </React.Fragment>
                    );
                 })}
              </div>
@@ -224,11 +243,11 @@ export default function CanvasBlock({
               <span>⠿ {b.name}</span>
             </div>
             
-            {/* FIX V18.25: Przywracamy pełne 8 węzłów chwytania (dla absolutnie wszystkich klocków)! */}
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
             <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
+            
             <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
             <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
