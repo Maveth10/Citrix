@@ -272,7 +272,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.36! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -331,8 +331,8 @@ export default function Home() {
         
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
         
-        // FIX V18.36: Stosujemy TYLKO minHeight, by sekcja mogła bezpiecznie rosnąć i nie ucinać zawartości!
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
+          updates.height = `${newHeightPx}px`;
           updates.minHeight = `${newHeightPx}px`;
         }
 
@@ -446,8 +446,9 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
+          
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              
