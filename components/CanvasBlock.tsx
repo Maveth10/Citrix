@@ -13,7 +13,7 @@ interface CanvasBlockProps {
   parentId?: number;
   parentActive?: boolean;
   interaction?: any; 
-  moveBlock?: (id: number, dir: 'prev' | 'next') => void; // NOWOŚĆ V18.16
+  moveBlock?: (id: number, dir: 'prev' | 'next') => void;
 }
 
 export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, setInteraction, updateActiveBlock, parentId, parentActive, interaction, moveBlock }: CanvasBlockProps) {
@@ -36,7 +36,8 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
     mixBlendMode: b.styles.mixBlendMode || 'normal', 
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
-    zIndex: b.styles.zIndex || 1,
+    // FIX V18.17: Aktywny element wypychamy ekstremalnie na wierzch (9999) by nie wchodził pod inne sekcje!
+    zIndex: isActive ? 9999 : (b.styles.zIndex || 1),
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
     flexShrink: 0,
     overflow: isActive ? 'visible' : (b.styles.overflow || 'visible')
@@ -110,7 +111,8 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
-        className={`group ${isActive ? 'outline outline-2 outline-blue-500 outline-offset-0 z-[100]' : 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed'}`}
+        // FIX V18.17: Usunęliśmy nieprzewidywalne outline'y. Aktywny obrys jest generowany w divie na samym dole komponentu.
+        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed' : ''}`}
       >
         {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
         {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
@@ -162,7 +164,6 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         )}
         
         {b.children && (
-          // KLUCZ V18.16: Dodajemy overflow-hidden i borderRadius:'inherit' dla wewnętrznej maski!
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-hidden" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
              <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
@@ -175,7 +176,7 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
                        isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                        parentId={b.id} parentActive={isActive} interaction={interaction}
-                       moveBlock={moveBlock} // PRZEKAZUJEMY REKURENCYJNIE W DÓŁ
+                       moveBlock={moveBlock}
                      />
                    );
                 })}
@@ -183,24 +184,26 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
           </div>
         )}
 
+        {/* FIX V18.17: NOWY SYSTEM ZAZNACZENIA Z INSET-0 (IDEALNY OBRYS) */}
         {isActive && !isEditing && (
-          <>
-            {/* KLUCZ V18.16: STRZAŁKI DO ZAMIANY MIEJSC W SIATCE */}
-            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2">
+          <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
+            
+            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto">
               <span>{b.name}</span>
-              {parentId && moveBlock && (
+              {moveBlock && (
                 <div className="flex gap-1 border-l border-white/30 pl-2 ml-1" onMouseDown={e => e.stopPropagation()}>
-                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'prev'); }} className="hover:text-blue-200 transition-colors" title="Przesuń w dół/lewo">◀</button>
-                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'next'); }} className="hover:text-blue-200 transition-colors" title="Przesuń w górę/prawo">▶</button>
+                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'prev'); }} className="hover:text-blue-200 transition-colors" title="Wcześniejszy">{!parentId ? '▲' : '◀'}</button>
+                  <button onClick={(e) => { e.preventDefault(); moveBlock(b.id, 'next'); }} className="hover:text-blue-200 transition-colors" title="Następny">{!parentId ? '▼' : '▶'}</button>
                 </div>
               )}
             </div>
             
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm z-[200] pointer-events-none" />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize z-[200] hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
-          </>
+            {/* Węzły idealnie na rogach borderu! */}
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm pointer-events-none" />
+            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => { e.stopPropagation(); setInteraction({ type: 'resize', startX: e.clientX, startY: e.clientY, initialLeft: 0, initialTop: 0, initialWidth: e.currentTarget.parentElement?.offsetWidth || 0, initialHeight: e.currentTarget.parentElement?.offsetHeight || 0 }); }} />
+          </div>
         )}
       </div>
     </>

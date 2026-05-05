@@ -108,7 +108,6 @@ export default function Home() {
           newStyles.gridTemplateColumns = 'unset';
           newStyles.gridTemplateRows = 'unset';
           newStyles.minHeight = 'auto'; 
-          
           let childCount = 1;
 
           if (layout.startsWith('grid-custom-')) {
@@ -142,7 +141,6 @@ export default function Home() {
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
     newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: 'auto' };
-    
     let childCount = 1;
 
     if (layout.startsWith('grid-custom-')) {
@@ -199,15 +197,27 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
+  // FIX V18.17: INTELIGENTNE USUWANIE Z ZACHOWANIEM SIATKI
   const removeActiveBlock = () => {
     setBlocks(prev => {
-      const removeRecursive = (arr: Block[]): Block[] => arr.filter(b => b.id !== activeId).map(b => ({ ...b, children: b.children ? removeRecursive(b.children) : undefined }));
+      const removeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
+        const index = arr.findIndex(b => b.id === activeId);
+        if (index > -1) {
+          // Jeśli rodzic jest Gridem, zrób Dziurę, a nie tnij DOM!
+          if (parentIsGrid) {
+            const newArr = [...arr];
+            newArr[index] = createBlock('container', 'empty', 'Puste Pole');
+            return newArr;
+          }
+          return arr.filter(b => b.id !== activeId);
+        }
+        return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
+      };
       return removeRecursive(prev);
     });
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  // --- NOWOŚĆ V18.16: SILNIK ZAMIANY MIEJSC (REORDER) ---
   const handleMoveBlock = (blockId: number, direction: 'prev' | 'next') => {
     setBlocks(prevBlocks => {
       const moveRecursive = (arr: Block[]): Block[] => {
@@ -229,7 +239,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.16! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.17! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -370,8 +380,7 @@ export default function Home() {
                   isEditing={isEditing} setIsEditing={setIsEditing} 
                   isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                   setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                  interaction={interaction} 
-                  moveBlock={handleMoveBlock} // PRZEKAZUJEMY FUNKCJĘ ŻONGLOWANIA
+                  interaction={interaction} moveBlock={handleMoveBlock}
                 />
              ))}
           </div>

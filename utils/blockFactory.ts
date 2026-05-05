@@ -6,13 +6,14 @@ export const createBlock = (type: string, variant: string, label: string) => {
     children: ['section', 'container', 'grid', 'form', 'popup'].includes(type) ? [] : undefined,
     hoverStyles: {}, entranceAnim: 'none',
     styles: { 
+      // FIX V18.17: Bezpieczne granice elementu!
+      boxSizing: 'border-box', maxWidth: '100%',
       position: 'relative', left: '0px', top: '0px', display: 'flex', flexDirection: 'column', 
       padding: '20px', margin: '0px', 
       width: '100%', 
       height: 'auto', 
       backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
       opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', 
-      // FIX V18.15: Zmiana z hidden na visible, by kontrolki mogły oddychać
       overflow: 'visible', 
       bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1
     },
@@ -51,7 +52,6 @@ export const createBlock = (type: string, variant: string, label: string) => {
       else if (variant === 'notice-box') { badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626'; newBlock.styles.border = `1px solid ${mainColor}`; }
 
       newBlock.styles.backgroundColor = bgColor;
-      
       if (variant !== 'notice-box') { newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; }
 
       newBlock.children = [
@@ -71,8 +71,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
                 variant === 'alert-tip' ? 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.' :
                 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.',
           styles: { 
-            color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', 
-            margin: 0, width: '100%',
+            color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', margin: 0, width: '100%',
             padding: '30px 20px 20px 25px', overflowY: 'auto', flex: '1' 
           }
         }
