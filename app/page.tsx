@@ -251,7 +251,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.23! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.24! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -289,14 +289,11 @@ export default function Home() {
         let newWidthPx = interaction.initialWidth;
         let newHeightPx = interaction.initialHeight;
         
-        // FIX V18.23: Czysta matematyka wymiarów (BEZ MARGINESÓW!)
         if (interaction.dir.includes('e')) newWidthPx += dx;
         if (interaction.dir.includes('w')) newWidthPx -= dx; 
-        
         if (interaction.dir.includes('s')) newHeightPx += dy;
         if (interaction.dir.includes('n')) newHeightPx -= dy;
 
-        // FIX V18.23: Ograniczamy szerokość do 100% rodzica, żeby nic nie wylało się poza Płótno
         newWidthPx = Math.max(20, Math.min(newWidthPx, parentWidth));
         newHeightPx = Math.max(20, newHeightPx);
 
@@ -307,12 +304,9 @@ export default function Home() {
         }
         
         const updates: any = {};
-        
-        // Aktualizujemy tylko te wartości, za które ciągniemy
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) updates.minHeight = `${newHeightPx}px`;
 
-        // Twardy reset niebezpiecznych marginesów z poprzedniej łatki (czyścimy brudy z DOM)
         updates.marginLeft = '0px';
         updates.marginTop = '0px';
 
@@ -423,8 +417,10 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
+          
+          {/* FIX V18.24: Koniec Auto-Tetrisa. Zwracamy czyste flex-col (Kaskada). Elementy spadają w dół! */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
+               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              

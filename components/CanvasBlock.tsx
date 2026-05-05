@@ -31,6 +31,9 @@ export default function CanvasBlock({
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   
+  // FIX V18.24: Rozróżniamy bloki strukturalne od luźnych!
+  const isStructural = ['section', 'container', 'grid', 'form', 'list', 'menu'].includes(b.type);
+  
   useEffect(() => {
     if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) { setShouldAnimate(true); }
   }, [b.entranceAnim, isActive]);
@@ -78,11 +81,14 @@ export default function CanvasBlock({
     e.stopPropagation();
     e.preventDefault();
     const el = document.getElementById(`block-${b.id}`);
+    const compStyle = el ? window.getComputedStyle(el) : null;
     setInteraction({ 
       type: 'resize', dir, 
       startX: e.clientX, startY: e.clientY, 
       initialLeft: el?.offsetLeft || 0, initialTop: el?.offsetTop || 0, 
-      initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0
+      initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0,
+      initialMarginLeft: compStyle ? parseFloat(compStyle.marginLeft) || 0 : 0,
+      initialMarginTop: compStyle ? parseFloat(compStyle.marginTop) || 0 : 0
     });
   };
 
@@ -200,7 +206,7 @@ export default function CanvasBlock({
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
              <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
-                   if (b.styles.display === 'grid') child.styles.width = '100%';
+                   // FIX V18.24: Usunięto destrukcyjne wymuszanie child.styles.width = '100%'!
                    return (
                      <CanvasBlock 
                        key={child.id} b={child} activeId={activeId} setActiveId={setActiveId} 
@@ -218,19 +224,25 @@ export default function CanvasBlock({
 
         {isActive && !isEditing && (
           <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
-            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-blue-600 transition-colors">
+            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto">
               <span>⠿ {b.name}</span>
             </div>
             
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
-            
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
+            {/* FIX V18.24: Ochrona przed zepsuciem layoutu. Sekcje mają tylko 1 uchwyt (wysokość)! */}
+            {!isStructural && (
+              <>
+                <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
+                <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
+                <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+                <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
+                <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
+                <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-e-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'e')} />
+              </>
+            )}
+
+            {/* Dolny uchwyt dostępny dla wszystkich (do rozciągania w dół) */}
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
-            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
-            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-e-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'e')} />
           </div>
         )}
       </div>
