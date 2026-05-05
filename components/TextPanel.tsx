@@ -6,100 +6,59 @@ interface TextPanelProps {
 
 export default function TextPanel({ handleAddBlock }: TextPanelProps) {
   return (
-    <div className="flex flex-col gap-4 pb-10">
+    <div className="flex flex-col gap-6">
       
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Tytuły główne (H1)</span>
+      {/* SEKCJA: MARKOWE NAGŁÓWKI */}
+      <div>
+        <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Markowe Nagłówki</h4>
+        <div className="flex flex-col gap-2">
+          
+          <button onClick={() => handleAddBlock('p', 'eyebrow', 'Etykieta')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-[10px] font-bold text-blue-400 tracking-widest uppercase">Zacznij Tutaj (Eyebrow)</span>
+          </button>
+          
+          <button onClick={() => handleAddBlock('h1', 'classic', 'Hero H1')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-xl font-black text-white leading-none tracking-tight">Potężny Hero H1</span>
+          </button>
+
+          <button onClick={() => handleAddBlock('h1', 'gradient', 'Gradient H1')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-xl font-black leading-none bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 tracking-tight">Magiczny Gradient</span>
+          </button>
+
+          <button onClick={() => handleAddBlock('h1', 'outline', 'Outline H1')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-xl font-black leading-none text-transparent tracking-tight" style={{ WebkitTextStroke: '1px white' }}>Pusty w Środku (Outline)</span>
+          </button>
+
+          <button onClick={() => handleAddBlock('h1', 'highlight', 'H1 Wyróżnik')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-xl font-black leading-none text-white tracking-tight">Kluczowy <span style={{ background: 'linear-gradient(120deg, rgba(253,224,71,0.8) 0%, rgba(253,224,71,0.8) 100%) no-repeat', backgroundSize: '100% 35%', backgroundPosition: '0 90%' }}>Wyróżnik</span></span>
+          </button>
+          
+          <button onClick={() => handleAddBlock('h2', 'classic', 'Podtytuł H2')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm mt-2">
+            <span className="text-lg font-bold text-neutral-200 leading-none tracking-tight">Mocny Podtytuł H2</span>
+          </button>
+        </div>
       </div>
-      <button onClick={() => handleAddBlock('h1', 'brand', 'Markowy Tytuł')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full">
-        <span className="text-xl font-black text-blue-500 block mb-1 uppercase tracking-tighter">Markowy Tytuł</span>
-      </button>
-      <button onClick={() => handleAddBlock('h1', '', 'Zwykły Tytuł')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full">
-        <span className="text-xl font-bold text-white block mb-1 tracking-tight">Zwykły Tytuł</span>
-      </button>
 
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Podtytuły i Sekcje (H2)</span>
-      </div>
-      <button onClick={() => handleAddBlock('h2', 'brand', 'Markowy Nagłówek')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full">
-        <span className="text-lg font-bold text-white block border-b-2 border-blue-500 inline-block pb-1">Markowy Nagłówek</span>
-      </button>
-      <button onClick={() => handleAddBlock('h2', '', 'Zwykły Nagłówek')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full">
-        <span className="text-lg font-bold text-white block">Zwykły Nagłówek</span>
-      </button>
+      <hr className="border-white/5" />
 
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Długie Teksty (P)</span>
-      </div>
-      <button onClick={() => handleAddBlock('p', 'lead', 'Akapit Wiodący')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full">
-        <span className="text-sm text-neutral-300 block italic border-l-2 border-blue-500 pl-3">To jest elegancki, markowy akapit tekstu...</span>
-      </button>
-      <button onClick={() => handleAddBlock('p', '', 'Zwykły Akapit')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] border border-neutral-800 rounded-lg text-left transition w-full">
-        <span className="text-xs text-neutral-400 block leading-relaxed">Zwykły, standardowy blok tekstu. Idealny do dłuższych opisów na stronie.</span>
-      </button>
+      {/* SEKCJA: AKAPITY I TREŚĆ */}
+      <div>
+        <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Akapity i Treść</h4>
+        <div className="flex flex-col gap-2">
+          
+          <button onClick={() => handleAddBlock('p', 'lead', 'Akapit Lead')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-sm text-neutral-400 leading-snug block">Większy akapit wprowadzający (Lead), idealny pod główny nagłówek.</span>
+          </button>
+          
+          <button onClick={() => handleAddBlock('p', 'classic', 'Zwykły Tekst')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-xs text-neutral-500 leading-snug block">Standardowy akapit tekstu, mniejszy rozmiar, wyższa czytelność do długich bloków.</span>
+          </button>
 
-      {/* NOWOŚĆ V18.6: KOMPONENTY WSTAWEK (INSERTS) */}
-      <div className="mt-4 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Złożone Wstawki (Inserts)</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        
-        {/* SUKCES */}
-        <button 
-          onClick={() => handleAddBlock('container', 'alert-success', 'Wstawka: Sukces')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-emerald-500 text-left w-full flex items-center gap-4 relative group"
-        >
-           <div className="w-10 h-8 border-l-4 border-emerald-500 bg-emerald-500/20 rounded-r relative shrink-0">
-             <div className="absolute -top-1 left-1 bg-emerald-500 w-4 h-1.5 rounded-sm"></div>
-           </div>
-           <div>
-             <span className="text-xs font-bold text-white block">Panel Sukcesu</span>
-             <span className="text-[9px] text-neutral-400 block">Zielony pasek i plakietka.</span>
-           </div>
-        </button>
-
-        {/* UWAGA */}
-        <button 
-          onClick={() => handleAddBlock('container', 'alert-warning', 'Wstawka: Uwaga')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-amber-500 text-left w-full flex items-center gap-4 relative group"
-        >
-           <div className="w-10 h-8 border-l-4 border-amber-500 bg-amber-500/20 rounded-r relative shrink-0">
-             <div className="absolute -top-1 left-1 bg-amber-500 w-4 h-1.5 rounded-sm"></div>
-           </div>
-           <div>
-             <span className="text-xs font-bold text-white block">Panel Ostrzeżenia</span>
-             <span className="text-[9px] text-neutral-400 block">Musztardowy pasek i plakietka.</span>
-           </div>
-        </button>
-
-        {/* WSKAZÓWKA */}
-        <button 
-          onClick={() => handleAddBlock('container', 'alert-tip', 'Wstawka: Wskazówka')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-blue-500 text-left w-full flex items-center gap-4 relative group"
-        >
-           <div className="w-10 h-8 border-l-4 border-blue-500 bg-blue-500/20 rounded-r relative shrink-0">
-             <div className="absolute -top-1 left-1 bg-blue-500 w-4 h-1.5 rounded-sm"></div>
-           </div>
-           <div>
-             <span className="text-xs font-bold text-white block">Panel Informacyjny</span>
-             <span className="text-[9px] text-neutral-400 block">Niebieski pasek i plakietka.</span>
-           </div>
-        </button>
-
-        {/* SECURITY */}
-        <button 
-          onClick={() => handleAddBlock('container', 'notice-box', 'Złożony Alert')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-red-500 text-left w-full flex items-center gap-4 relative mt-2 group"
-        >
-           <div className="w-10 h-8 border border-red-500 bg-red-500/20 rounded relative shrink-0">
-             <div className="absolute -top-1.5 left-1 bg-red-500 w-6 h-2 rounded-sm"></div>
-           </div>
-           <div>
-             <span className="text-xs font-bold text-white block mb-0.5">Alert z Ramką</span>
-             <span className="text-[9px] text-neutral-400 block leading-tight">Pełna ramka i wyśrodkowany tekst.</span>
-           </div>
-        </button>
-
+          <button onClick={() => handleAddBlock('p', 'quote', 'Cytat')} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-blue-500/50 transition-all text-left shadow-sm">
+            <span className="text-xs italic text-neutral-400 border-l-2 border-blue-500 pl-3 block">"Wybitny design to taki, z którego nie można już nic zabrać."</span>
+          </button>
+          
+        </div>
       </div>
 
     </div>

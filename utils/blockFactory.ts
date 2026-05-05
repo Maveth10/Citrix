@@ -12,11 +12,87 @@ export const createBlock = (type: string, variant: string, label: string) => {
       width: '100%', height: 'auto', 
       backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
       opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'visible', 
-      bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1,
-      clearRow: true 
+      bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1
     },
   };
 
+  // ==========================================
+  // FIX V18.39: BRAND TYPOGRAPHY ENGINE
+  // ==========================================
+  if (['h1', 'h2', 'p'].includes(type)) {
+    newBlock.styles.width = '100%';
+    newBlock.styles.margin = '0 0 15px 0'; // Standardowy odstęp dolny
+    
+    if (type === 'h1') {
+      newBlock.text = 'Wielki Nagłówek H1';
+      newBlock.styles.fontSize = '56px';
+      newBlock.styles.fontWeight = '900';
+      newBlock.styles.lineHeight = '1.1';
+      newBlock.styles.letterSpacing = '-0.03em'; // Ciasny tracking = premium look
+      newBlock.styles.color = '#0f172a';
+      
+      if (variant === 'gradient') {
+        newBlock.text = 'Magiczny Gradient';
+        // Hack CSS: Background-clip Text
+        newBlock.styles.backgroundImage = 'linear-gradient(90deg, #0ea5e9 0%, #8b5cf6 100%)';
+        newBlock.styles.WebkitBackgroundClip = 'text';
+        newBlock.styles.WebkitTextFillColor = 'transparent';
+        newBlock.styles.color = 'transparent'; // Fallback
+      } 
+      else if (variant === 'outline') {
+        newBlock.text = 'Pusty w Środku';
+        newBlock.styles.color = 'transparent';
+        newBlock.styles.WebkitTextStroke = '2px #0f172a';
+      } 
+      else if (variant === 'highlight') {
+        newBlock.text = 'Kluczowy <span style="background: linear-gradient(120deg, rgba(253, 224, 71, 0.8) 0%, rgba(253, 224, 71, 0.8) 100%) no-repeat; background-size: 100% 35%; background-position: 0 90%;">Wyróżnik</span>';
+      }
+    }
+    
+    if (type === 'h2') {
+      newBlock.text = 'Mocny Podtytuł H2';
+      newBlock.styles.fontSize = '36px';
+      newBlock.styles.fontWeight = '800';
+      newBlock.styles.lineHeight = '1.2';
+      newBlock.styles.letterSpacing = '-0.02em';
+      newBlock.styles.color = '#1e293b';
+    }
+
+    if (type === 'p') {
+      newBlock.text = 'Zwykły akapit tekstu, który przekazuje najważniejsze informacje o Twoim produkcie i zachęca do czytania dalej.';
+      newBlock.styles.fontSize = '16px';
+      newBlock.styles.lineHeight = '1.6';
+      newBlock.styles.color = '#334155';
+      
+      if (variant === 'eyebrow') {
+        newBlock.text = 'ZACZNIJ TUTAJ';
+        newBlock.styles.color = '#3b82f6';
+        newBlock.styles.fontWeight = '800';
+        newBlock.styles.fontSize = '14px';
+        newBlock.styles.letterSpacing = '0.15em'; // Mocno rozstrzelone = premium
+        newBlock.styles.textTransform = 'uppercase';
+        newBlock.styles.margin = '0 0 10px 0';
+      } 
+      else if (variant === 'lead') {
+        newBlock.text = 'To jest akapit wiodący (Lead). Zbudowany większym fontem, w delikatniejszym kolorze. Idealny pod nagłówek H1, aby rozwinąć myśl i zachęcić do kliknięcia przycisku.';
+        newBlock.styles.fontSize = '20px';
+        newBlock.styles.lineHeight = '1.7';
+        newBlock.styles.color = '#64748b';
+      } 
+      else if (variant === 'quote') {
+        newBlock.text = '"Wybitny design to nie taki, do którego nie można już nic dodać, ale taki, z którego nie można już nic zabrać."';
+        newBlock.styles.fontSize = '18px';
+        newBlock.styles.fontStyle = 'italic';
+        newBlock.styles.borderLeft = '4px solid #3b82f6';
+        newBlock.styles.paddingLeft = '20px';
+        newBlock.styles.color = '#475569';
+      }
+    }
+  }
+
+  // ==========================================
+  // POZOSTAŁE KLOCKI (Kontenery, Alerty itp.)
+  // ==========================================
   if (type === 'container') {
     if (variant === 'empty') { 
       newBlock.styles.border = '2px dashed #cbd5e1'; newBlock.styles.backgroundColor = '#f8fafc'; newBlock.styles.minHeight = '120px'; newBlock.styles.width = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.display = 'flex'; newBlock.styles.flexDirection = 'column'; newBlock.styles.gap = '10px';
@@ -25,7 +101,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
     if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
     if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
-    if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold', clearRow: true}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px', clearRow: true}}]; }
+    if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'p', name:'ETYKIETA', text:'NOWOŚĆ', styles:{fontSize:'14px', fontWeight:'bold', color:'#3b82f6', letterSpacing:'0.1em', textTransform:'uppercase', margin:'0 0 10px 0'}}, {id:generateId(), type:'h2', name:'TYTUŁ', text:'Czysta Architektura', styles:{fontSize:'36px', fontWeight:'900', letterSpacing:'-0.02em', lineHeight:'1.1', color:'#0f172a', margin:'0 0 15px 0'}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Odkryj nowy wymiar projektowania stron internetowych.', styles:{fontSize:'18px', color:'#64748b', lineHeight:'1.6'}}]; }
     
     if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
       newBlock.styles.position = 'relative';
@@ -59,7 +135,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
             position: 'absolute', top: '0px', left: '30px', transform: 'translateY(-50%)',
             backgroundColor: mainColor, color: '#ffffff', padding: '4px 12px', fontSize: '10px', fontWeight: '900', 
             textTransform: 'uppercase', borderRadius: '6px', zIndex: 50, width: 'max-content', whiteSpace: 'nowrap',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', clearRow: false
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
           }
         },
         {
@@ -70,7 +146,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
                 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.',
           styles: { 
             color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', margin: 0, width: '100%',
-            padding: '30px 20px 20px 25px', overflowY: 'auto', flex: '1', clearRow: true
+            padding: '30px 20px 20px 25px', overflowY: 'auto', flex: '1'
           }
         }
       ];
@@ -83,17 +159,11 @@ export const createBlock = (type: string, variant: string, label: string) => {
   }
 
   if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
-  if (type === 'h1') { newBlock.text = 'Nagłówek H1'; newBlock.styles.fontSize = '48px'; newBlock.styles.fontWeight = '900'; if(variant==='brand'){newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase';} }
-  if (type === 'h2') { newBlock.text = 'Podtytuł H2'; newBlock.styles.fontSize = '32px'; newBlock.styles.fontWeight = '700'; }
-  if (type === 'p') { newBlock.text = 'Zwykły akapit tekstu.'; newBlock.styles.fontSize = '16px'; }
   if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
-  
   if (type === 'img') { newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085'; newBlock.styles.height = '300px'; newBlock.styles.width = '100%'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; }
   if (type === 'button') { newBlock.text = 'Przycisk'; newBlock.styles.padding = '14px 28px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.color = '#fff'; newBlock.styles.width = 'max-content'; }
   if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
-  
-  if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.clearRow = true; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
-  
+  if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
   if (type === 'carousel') { newBlock.images = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71']; newBlock.styles.height = '400px'; }
   if (type === 'grid' && variant === 'gallery-grid') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px'; }
   if (type === 'video') { newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4'; newBlock.styles.width = '100%'; newBlock.styles.height = '315px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.borderRadius = '12px'; }
