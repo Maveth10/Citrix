@@ -74,16 +74,19 @@ export default function CanvasBlock({
     return url;
   };
 
-  // FIX V18.21: Globalna funkcja do uruchamiania zmiany rozmiaru z wstrzykniętym KIERUNKIEM
+  // FIX V18.22: Skanujemy i podajemy do Mózgu Układów aktualne Marginesy klocka
   const handleResizeStart = (e: React.MouseEvent, dir: string) => {
     e.stopPropagation();
     e.preventDefault();
     const el = document.getElementById(`block-${b.id}`);
+    const compStyle = el ? window.getComputedStyle(el) : null;
     setInteraction({ 
       type: 'resize', dir, 
       startX: e.clientX, startY: e.clientY, 
       initialLeft: el?.offsetLeft || 0, initialTop: el?.offsetTop || 0, 
-      initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 
+      initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0,
+      initialMarginLeft: compStyle ? parseFloat(compStyle.marginLeft) || 0 : 0,
+      initialMarginTop: compStyle ? parseFloat(compStyle.marginTop) || 0 : 0
     });
   };
 
@@ -217,20 +220,17 @@ export default function CanvasBlock({
           </div>
         )}
 
-        {/* FIX V18.21: 8 OMNI-RESIZE HANDLES */}
         {isActive && !isEditing && (
           <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
             <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto">
               <span>{b.name}</span>
             </div>
             
-            {/* 4 NAROŻNIKI */}
             <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
             <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
             
-            {/* 4 KRAWĘDZIE (BOCZNE) */}
             <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
             <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />

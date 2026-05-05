@@ -76,12 +76,13 @@ export default function Home() {
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
-  // FIX V18.21: Interakcja zna teraz KIERUNEK (dir) rozciągania!
+  // FIX V18.22: Dodajemy pamięć początkowych Marginesów do interakcji!
   const [interaction, setInteraction] = useState<{ 
     type: 'drag' | 'resize'; dir?: string; 
     startX: number; startY: number; 
     initialLeft: number; initialTop: number; 
     initialWidth: number; initialHeight: number; 
+    initialMarginLeft?: number; initialMarginTop?: number;
   } | null>(null);
   
   const [draggedId, setDraggedId] = useState<number | null>(null);
@@ -252,7 +253,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.21! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.22! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -283,35 +284,45 @@ export default function Home() {
       if (interaction.type === 'drag') {
         updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
       } 
-      // --- FIX V18.21: OMNI-RESIZE (8 KIERUNKÓW!) ---
       else if (interaction.type === 'resize' && interaction.dir) {
         const el = document.getElementById(`block-${activeId}`);
         const parentWidth = el?.parentElement?.offsetWidth || parseInt(getCanvasWidth());
         
         let newWidthPx = interaction.initialWidth;
         let newHeightPx = interaction.initialHeight;
+        let newMarginLeftPx = interaction.initialMarginLeft || 0;
+        let newMarginTopPx = interaction.initialMarginTop || 0;
         
-        // Matematyka osi X
+        // FIX V18.22: MARGIN COMPENSATION (Kotwiczenie!)
         if (interaction.dir.includes('e')) newWidthPx += dx;
-        if (interaction.dir.includes('w')) newWidthPx -= dx; 
+        if (interaction.dir.includes('w')) {
+           newWidthPx -= dx;
+           newMarginLeftPx += dx; // Magia: Odpychamy klocek od lewej równo z ucinaniem!
+        }
         
-        // Matematyka osi Y
         if (interaction.dir.includes('s')) newHeightPx += dy;
-        if (interaction.dir.includes('n')) newHeightPx -= dy;
+        if (interaction.dir.includes('n')) {
+           newHeightPx -= dy;
+           newMarginTopPx += dy;
+        }
 
         newWidthPx = Math.max(20, newWidthPx);
         newHeightPx = Math.max(20, newHeightPx);
 
-        let percent = (newWidthPx / parentWidth) * 100;
+        let percentWidth = (newWidthPx / parentWidth) * 100;
         const snaps = [25, 33.33, 50, 66.66, 75, 100];
         for (const snap of snaps) {
-          if (Math.abs(percent - snap) < 4) { percent = snap; break; }
+          if (Math.abs(percentWidth - snap) < 4) { percentWidth = snap; break; }
         }
         
         const updates: any = {};
-        // Aktualizujemy tylko te wartości, za które ciągniemy
-        if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percent}%`;
+        
+        if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) updates.minHeight = `${newHeightPx}px`;
+
+        // Wpychamy marginesy do JSON-a
+        if (interaction.dir.includes('w')) updates.marginLeft = `${(newMarginLeftPx / parentWidth) * 100}%`;
+        if (interaction.dir.includes('n')) updates.marginTop = `${newMarginTopPx}px`;
 
         updateActiveBlock({ styles: updates }, true);
       }
@@ -420,9 +431,10 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          {/* FIX V18.21: Powrót do twardej kaskady flex-col (żadnego automatycznego skakania obok siebie) */}
+          
+          {/* FIX V18.22: Przywracamy Flex-Wrap (Tetris Mode) do Płótna! */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-col pb-40">
+               className="min-h-screen bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              
