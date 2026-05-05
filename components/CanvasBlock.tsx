@@ -75,7 +75,6 @@ export default function CanvasBlock({
     return url;
   };
 
-  // FIX V18.34: Używamy e.pageX / e.pageY w suwakach rozmiaru!
   const handleResizeStart = (e: React.MouseEvent, dir: string) => {
     e.stopPropagation();
     e.preventDefault(); 
@@ -83,7 +82,7 @@ export default function CanvasBlock({
     const compStyle = el ? window.getComputedStyle(el) : null;
     setInteraction({ 
       type: 'resize', dir, 
-      startX: e.pageX, startY: e.pageY, 
+      startX: e.clientX, startY: e.clientY, 
       initialLeft: el?.offsetLeft || 0, initialTop: el?.offsetTop || 0, 
       initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0,
       initialMarginLeft: compStyle ? parseFloat(compStyle.marginLeft) || 0 : 0,
@@ -123,16 +122,19 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
+        // FIX V18.35: ODBLOKOWUJEMY TŁO! Złap za środek zaznaczonej kobyły i leć!
         draggable={isActive && !isEditing && !isAbsolute}
         onDragStart={(e) => { 
           e.stopPropagation(); 
           if (setDraggedId) setDraggedId(b.id); 
+          
           const dragGhost = document.createElement('div');
           dragGhost.id = 'drag-ghost';
           dragGhost.textContent = `⠿ Przenosisz: ${b.name}`;
           dragGhost.style.cssText = 'background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; position: absolute; top: -1000px; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-family: sans-serif; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);';
           document.body.appendChild(dragGhost);
           e.dataTransfer.setDragImage(dragGhost, 15, 15);
+          
           setTimeout(() => { if (document.body.contains(dragGhost)) document.body.removeChild(dragGhost); }, 0);
         }}
         onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
@@ -155,8 +157,7 @@ export default function CanvasBlock({
           if (isAbsolute) {
             const el = document.getElementById(`block-${b.id}`);
             const currentLeft = el ? el.offsetLeft : 0; const currentTop = el ? el.offsetTop : 0;
-            // FIX V18.34: Używamy e.pageX i e.pageY
-            setInteraction({ type: 'drag', startX: e.pageX, startY: e.pageY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
+            setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}

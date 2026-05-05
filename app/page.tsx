@@ -224,7 +224,6 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  // FIX V18.34: ODBLOKOWANY FLEX PRZY UPUSZCZANIU
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
@@ -249,8 +248,6 @@ export default function Home() {
             const newArr = [...arr];
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
             
-            // Jesli klocek zajmował 100%, zmuszamy go do 40% zeby bezpiecznie usiadł obok. 
-            // Usuwamy narzucony z zewnątrz "flex: 1", pozwalając użytkownikowi znów modyfikować width.
             let safeWidth = sourceBlock!.styles.width;
             if (safeWidth === '100%') safeWidth = '40%';
 
@@ -260,7 +257,6 @@ export default function Home() {
             };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            // Zwykłe upuszczenie. Upewniamy się, że nie został mu ukryty "flex" po poprzednim byciu inline.
             const updatedSource = { 
               ...sourceBlock!, 
               styles: { ...sourceBlock!.styles, flex: 'unset' } 
@@ -276,7 +272,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.34! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.35! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -303,8 +299,6 @@ export default function Home() {
     const handleMouseMove = (e: MouseEvent) => {
       if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
       
-      // FIX V18.34: Używamy pageX/pageY zamiast clientX/Y, żeby scrollowanie 
-      // podczas przeciągania na dole ekranu NIE psuło wyliczeń!
       const dx = (e.pageX - interaction.startX) / canvasZoom; 
       const dy = (e.pageY - interaction.startY) / canvasZoom;
       
@@ -336,7 +330,12 @@ export default function Home() {
         const updates: any = {};
         
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
-        if (interaction.dir.includes('s') || interaction.dir.includes('n')) updates.minHeight = `${newHeightPx}px`;
+        
+        // FIX V18.35: TWARDA WYSKOKOŚĆ (Pełna władza nad rozmiarem Y)
+        if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
+          updates.height = `${newHeightPx}px`;
+          updates.minHeight = `${newHeightPx}px`;
+        }
 
         updates.marginLeft = '0px';
         updates.marginTop = '0px';
