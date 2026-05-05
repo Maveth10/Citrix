@@ -36,7 +36,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
         {rightTab === 'layout' && (
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4">
             
-            {/* Wymiary */}
             <div>
               <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest flex items-center justify-between">Wymiary <span>⤢</span></h4>
               <div className="grid grid-cols-2 gap-3">
@@ -70,7 +69,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
 
             <hr className="border-white/5" />
 
-            {/* CENTRUM STEROWANIA NURTEM (FLEXBOX) */}
             {isFlex && activeBlock.children && (
               <div className="bg-white/5 border border-white/10 p-4 rounded-xl relative overflow-hidden">
                 <h4 className="text-[10px] font-bold text-neutral-400 mb-4 uppercase tracking-widest flex items-center justify-between">
@@ -88,8 +86,9 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
                 <div className="mb-4">
                   <label className="text-[10px] text-neutral-400 block mb-2">Zachowanie na brzegu (Wrap)</label>
                   <div className="flex bg-black/50 border border-white/10 rounded-lg p-1">
-                    <button onClick={() => updateActiveBlock({ styles: { flexWrap: 'nowrap' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexWrap === 'nowrap' || !styles.flexWrap ? 'bg-neutral-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Miażdż (No-wrap)</button>
-                    <button onClick={() => updateActiveBlock({ styles: { flexWrap: 'wrap' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexWrap === 'wrap' ? 'bg-blue-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Zawijaj (Tetris)</button>
+                    <button onClick={() => updateActiveBlock({ styles: { flexWrap: 'nowrap' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexWrap === 'nowrap' ? 'bg-neutral-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Miażdż (No-wrap)</button>
+                    {/* FIX V18.36: Zawijaj jest teraz domyślnie zaznaczone */}
+                    <button onClick={() => updateActiveBlock({ styles: { flexWrap: 'wrap' } })} className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${styles.flexWrap === 'wrap' || !styles.flexWrap ? 'bg-blue-600 text-white shadow-sm' : 'text-neutral-500 hover:text-white'}`}>Zawijaj (Tetris)</button>
                   </div>
                 </div>
 
@@ -123,7 +122,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
 
             <hr className="border-white/5" />
 
-            {/* Przestrzeń (Odstępy wewn/zewn) */}
             <div>
               <h4 className="text-[10px] font-bold text-neutral-500 mb-3 uppercase tracking-widest">Odstępy (Box Model)</h4>
               <div className="grid grid-cols-2 gap-4">

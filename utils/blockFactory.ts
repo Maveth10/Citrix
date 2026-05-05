@@ -13,7 +13,8 @@ export const createBlock = (type: string, variant: string, label: string) => {
       backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
       opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'visible', 
       bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1,
-      clearRow: true 
+      // FIX V18.36: Globalne wymuszenie zawijania, żeby elementy naturalnie spadały w dół zamiast wykraczać poza ekran!
+      clearRow: true, flexWrap: 'wrap'
     },
   };
 

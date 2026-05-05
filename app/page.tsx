@@ -272,7 +272,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.35! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.36! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -331,9 +331,8 @@ export default function Home() {
         
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
         
-        // FIX V18.35: TWARDA WYSKOKOŚĆ (Pełna władza nad rozmiarem Y)
+        // FIX V18.36: Stosujemy TYLKO minHeight, by sekcja mogła bezpiecznie rosnąć i nie ucinać zawartości!
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
-          updates.height = `${newHeightPx}px`;
           updates.minHeight = `${newHeightPx}px`;
         }
 
