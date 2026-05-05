@@ -37,8 +37,9 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
     zIndex: b.styles.zIndex || 1,
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
-    // KLUCZ V18.14: ZAKAZ ZGNIATANIA. Sekcja ZAWSZE wypchnie płótno w dół i zachowa swój naturalny rozmiar!
-    flexShrink: 0 
+    flexShrink: 0,
+    // FIX V18.15: Zabezpieczenie starych klocków. Zaznaczony = Zawsze Visible!
+    overflow: isActive ? 'visible' : (b.styles.overflow || 'visible')
   };
 
   if (b.children) { 
@@ -161,10 +162,8 @@ export default function CanvasBlock({ b, activeId, setActiveId, isEditing, setIs
         )}
         
         {b.children && (
-          // KLUCZ V18.14: Usunięto h-full, dodano 'flex flex-col' aby wrapper rósł naturalnie
           <div className="w-full min-h-[40px] relative pointer-events-none flex flex-col flex-1" style={{zIndex: 10}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             {/* KLUCZ V18.14: Usunięto h-full ze środkowego grida */}
              <div className="pointer-events-auto w-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
                    if (b.styles.display === 'grid') child.styles.width = '100%';

@@ -11,7 +11,9 @@ export const createBlock = (type: string, variant: string, label: string) => {
       width: '100%', 
       height: 'auto', 
       backgroundColor: 'transparent', borderRadius: '0px', boxShadow: 'none', border: '0px solid #000', 
-      opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', overflow: 'hidden',
+      opacity: '1', backdropFilter: 'none', transition: 'all 0.3s ease', 
+      // FIX V18.15: Zmiana z hidden na visible, by kontrolki mogły oddychać
+      overflow: 'visible', 
       bgType: 'color', bgImage: '', bgVideo: '', bgOverlay: 'rgba(0,0,0,0)', zIndex: 1
     },
   };
@@ -71,10 +73,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
           styles: { 
             color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', 
             margin: 0, width: '100%',
-            padding: '30px 20px 20px 25px',
-            // KLUCZ V18.11: Tekst potrafi się kurczyć i zyskuje suwak!
-            overflowY: 'auto', 
-            flex: '1' 
+            padding: '30px 20px 20px 25px', overflowY: 'auto', flex: '1' 
           }
         }
       ];
