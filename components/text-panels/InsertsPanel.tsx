@@ -1,45 +1,54 @@
 import React from 'react';
 
-const btnWrapper = "group relative w-full text-left rounded-lg p-3 transition-all duration-300 bg-[#16161a] border border-white/5 hover:bg-white/[0.05] hover:border-[color:var(--theme-color)] hover:shadow-[0_0_15px_var(--theme-shadow)] overflow-hidden flex items-center gap-4";
-const neonEdge = "absolute right-0 top-0 bottom-0 w-[3px] bg-[var(--theme-color)] shadow-[0_0_15px_var(--theme-color)] opacity-0 group-hover:opacity-100 transition-all duration-300 z-20";
+const btnWrapper = "group relative w-full text-left p-4 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-[color:var(--theme-color)]/[0.03] flex items-center gap-4 overflow-hidden";
+const activeLine = "absolute left-0 top-1/4 bottom-1/4 w-[2px] bg-[color:var(--theme-color)] scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow-[0_0_10px_var(--theme-color)] rounded-r-full";
+const iconBox = "relative w-9 h-9 rounded-lg bg-white/[0.02] border border-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0 group-hover:border-[color:var(--theme-color)]/40 group-hover:bg-[color:var(--theme-color)]/10 transition-all duration-300";
 
 export default function InsertsPanel({ handleAddBlock }: { handleAddBlock: any }) {
   return (
-    <div className="flex flex-col gap-2 p-3 bg-[#0a0a0f]/80 backdrop-blur-md rounded-b-xl border border-t-0 border-[color:var(--theme-color)] shadow-[inset_0_-10px_20px_rgba(0,0,0,0.3)]">
+    <div className="flex flex-col bg-black/10">
       
       <button onClick={() => handleAddBlock('container', 'alert-success', 'Wstawka: Sukces')} className={btnWrapper}>
-         <div className={neonEdge}></div>
-         <div className="w-10 h-8 border-l-4 border-emerald-500 bg-emerald-500/20 rounded-r relative shrink-0"><div className="absolute -top-1 left-1 bg-emerald-500 w-4 h-1.5 rounded-sm shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div></div>
+         <div className={activeLine}></div>
+         <div className="relative w-9 h-7 border-l-2 border-emerald-500 bg-emerald-500/10 rounded-r flex shrink-0 group-hover:border-emerald-400 transition-colors">
+            <div className="absolute -top-1 left-1 bg-emerald-500 w-3 h-1 rounded-sm"></div>
+         </div>
          <div>
-           <span className="text-xs font-bold text-white block mb-0.5 group-hover:text-[color:var(--theme-color)] transition-colors">Panel Sukcesu</span>
-           <span className="text-[9px] text-neutral-400 block leading-tight">Zielony pasek i plakietka.</span>
+           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Panel Sukcesu</span>
+           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Zielony pasek i plakietka.</span>
          </div>
       </button>
 
       <button onClick={() => handleAddBlock('container', 'alert-warning', 'Wstawka: Uwaga')} className={btnWrapper}>
-         <div className={neonEdge}></div>
-         <div className="w-10 h-8 border-l-4 border-amber-500 bg-amber-500/20 rounded-r relative shrink-0"><div className="absolute -top-1 left-1 bg-amber-500 w-4 h-1.5 rounded-sm shadow-[0_0_5px_rgba(245,158,11,0.5)]"></div></div>
+         <div className={activeLine}></div>
+         <div className="relative w-9 h-7 border-l-2 border-amber-500 bg-amber-500/10 rounded-r flex shrink-0 group-hover:border-amber-400 transition-colors">
+            <div className="absolute -top-1 left-1 bg-amber-500 w-3 h-1 rounded-sm"></div>
+         </div>
          <div>
-           <span className="text-xs font-bold text-white block mb-0.5 group-hover:text-[color:var(--theme-color)] transition-colors">Panel Ostrzeżenia</span>
-           <span className="text-[9px] text-neutral-400 block leading-tight">Musztardowy pasek.</span>
+           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Panel Ostrzeżenia</span>
+           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Musztardowy pasek.</span>
          </div>
       </button>
 
       <button onClick={() => handleAddBlock('container', 'alert-tip', 'Wstawka: Wskazówka')} className={btnWrapper}>
-         <div className={neonEdge}></div>
-         <div className="w-10 h-8 border-l-4 border-blue-500 bg-blue-500/20 rounded-r relative shrink-0"><div className="absolute -top-1 left-1 bg-blue-500 w-4 h-1.5 rounded-sm shadow-[0_0_5px_rgba(59,130,246,0.5)]"></div></div>
+         <div className={activeLine}></div>
+         <div className="relative w-9 h-7 border-l-2 border-blue-500 bg-blue-500/10 rounded-r flex shrink-0 group-hover:border-blue-400 transition-colors">
+            <div className="absolute -top-1 left-1 bg-blue-500 w-3 h-1 rounded-sm"></div>
+         </div>
          <div>
-           <span className="text-xs font-bold text-white block mb-0.5 group-hover:text-[color:var(--theme-color)] transition-colors">Panel Info (Tip)</span>
-           <span className="text-[9px] text-neutral-400 block leading-tight">Niebieski pasek i plakietka.</span>
+           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Panel Info (Tip)</span>
+           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Niebieski pasek i plakietka.</span>
          </div>
       </button>
 
       <button onClick={() => handleAddBlock('container', 'notice-box', 'Złożony Alert')} className={btnWrapper}>
-         <div className={neonEdge}></div>
-         <div className="w-10 h-8 border border-red-500 bg-red-500/20 rounded relative shrink-0"><div className="absolute -top-1.5 left-1 bg-red-500 w-6 h-2 rounded-sm shadow-[0_0_5px_rgba(239,68,68,0.8)]"></div></div>
+         <div className={activeLine}></div>
+         <div className="relative w-9 h-7 border border-red-500/50 bg-red-500/10 rounded shrink-0 group-hover:border-red-400 transition-colors">
+            <div className="absolute -top-1 left-1 bg-red-500 w-4 h-1.5 rounded-sm"></div>
+         </div>
          <div>
-           <span className="text-xs font-bold text-white block mb-0.5 group-hover:text-[color:var(--theme-color)] transition-colors">Alert z Ramką</span>
-           <span className="text-[9px] text-neutral-400 block leading-tight">Pełna czerwona ramka.</span>
+           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Alert z Ramką</span>
+           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Pełna ramka, górna plakietka.</span>
          </div>
       </button>
 
