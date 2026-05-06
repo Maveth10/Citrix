@@ -26,6 +26,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
       if (variant === 'gradient') { newBlock.text = 'Magiczny Gradient'; newBlock.styles.backgroundImage = 'linear-gradient(90deg, #0ea5e9 0%, #8b5cf6 100%)'; newBlock.styles.WebkitBackgroundClip = 'text'; newBlock.styles.WebkitTextFillColor = 'transparent'; newBlock.styles.color = 'transparent'; } 
       else if (variant === 'outline') { newBlock.text = 'Pusty w Środku'; newBlock.styles.color = 'transparent'; newBlock.styles.WebkitTextStroke = '2px #0f172a'; } 
       else if (variant === 'highlight') { newBlock.text = 'Kluczowy <span style="background: linear-gradient(120deg, rgba(253, 224, 71, 0.8) 0%, rgba(253, 224, 71, 0.8) 100%) no-repeat; background-size: 100% 35%; background-position: 0 90%;">Wyróżnik</span>'; }
+      else if (variant === 'brand') { newBlock.text = 'MARKOWY TYTUŁ'; newBlock.styles.color='#3b82f6'; newBlock.styles.textTransform='uppercase'; newBlock.styles.letterSpacing = '-0.02em'; }
     }
     if (type === 'h2') {
       newBlock.text = 'Mocny Podtytuł H2'; newBlock.styles.fontSize = '36px'; newBlock.styles.fontWeight = '800'; newBlock.styles.lineHeight = '1.2'; newBlock.styles.letterSpacing = '-0.02em'; newBlock.styles.color = '#1e293b';
@@ -39,13 +40,12 @@ export const createBlock = (type: string, variant: string, label: string) => {
     }
   }
 
-  // --- GRAFIKI, LICZNIKI, WYKRESY (NOWOŚĆ V18.45) ---
+  // --- GRAFIKI, LICZNIKI, WYKRESY ---
   if (type === 'graphic') {
     newBlock.styles.width = '100%';
     newBlock.styles.padding = '0px';
 
     if (variant === 'counter') {
-      // Magia czystego CSS! @property pozwala przeglądarce animować cyfry bez skryptów JS.
       newBlock.text = `
         <style>
           @property --num_${rnd} { syntax: "<integer>"; initial-value: 0; inherits: false; }
@@ -135,7 +135,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
     else if (variant === 'google') { newBlock.text = 'G Zaloguj przez Google'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.color = '#334155'; newBlock.styles.border = '1px solid #e2e8f0'; newBlock.styles.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'; newBlock.styles.borderRadius = '9999px'; }
   }
 
-  // --- KONTENERY I INNE ---
+  // --- KONTENERY I WSTAWKI ---
   if (type === 'container') {
     if (variant === 'gallery-bento') {
       newBlock.name = 'BENTO GRID'; newBlock.styles.display = 'grid'; newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '16px'; newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.padding = '0px';
@@ -156,7 +156,7 @@ export const createBlock = (type: string, variant: string, label: string) => {
     else if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
     else if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
     else if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
-    else if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'h2', name:'TYTUŁ', text:'Tytuł', styles:{fontSize:'28px', fontWeight:'bold', clearRow: true}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Opis...', styles:{fontSize:'16px', clearRow: true}}]; }
+    else if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'p', name:'ETYKIETA', text:'NOWOŚĆ', styles:{fontSize:'14px', fontWeight:'bold', color:'#3b82f6', letterSpacing:'0.1em', textTransform:'uppercase', margin:'0 0 10px 0', clearRow: true}}, {id:generateId(), type:'h2', name:'TYTUŁ', text:'Czysta Architektura', styles:{fontSize:'36px', fontWeight:'900', letterSpacing:'-0.02em', lineHeight:'1.1', color:'#0f172a', margin:'0 0 15px 0', clearRow: true}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Odkryj nowy wymiar projektowania stron internetowych.', styles:{fontSize:'18px', color:'#64748b', lineHeight:'1.6', clearRow: true}}]; }
     
     else if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
       newBlock.styles.position = 'relative'; newBlock.styles.width = '450px'; newBlock.styles.maxWidth = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.padding = '0px'; newBlock.styles.marginTop = '25px'; newBlock.styles.overflow = 'visible'; newBlock.styles.display = 'block'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
@@ -185,9 +185,22 @@ export const createBlock = (type: string, variant: string, label: string) => {
 
   if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
   if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
-  if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.clearRow = true; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
+  
+  if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.clearRow = true; 
+    if (variant === 'video-hero') { 
+      newBlock.name = 'SEKCJA KINOWA'; newBlock.styles.minHeight = '600px'; newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; 
+      newBlock.children = [{ id: generateId(), type: 'h1', name: 'NAGŁÓWEK', text: 'KINO NA TWOJEJ STRONIE', styles: { color: '#ffffff', fontSize: '64px', fontWeight: '900', textAlign: 'center' } }];
+    } 
+  }
+  
   if (type === 'grid' && variant === 'gallery-grid') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px'; newBlock.children = [createBlock('img', 'rounded', 'Foto 1'), createBlock('img', 'rounded', 'Foto 2'), createBlock('img', 'rounded', 'Foto 3')]; }
-  if (type === 'video') { newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4'; newBlock.styles.width = '100%'; newBlock.styles.height = '315px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.borderRadius = '12px'; }
+  
+  if (type === 'video') { 
+    newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4'; newBlock.styles.width = '100%'; newBlock.styles.height = '400px'; newBlock.styles.borderRadius = '12px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.overflow = 'hidden';
+    if (variant === 'youtube') { newBlock.src = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; } 
+    else if (variant === 'vimeo') { newBlock.src = 'https://vimeo.com/76979871'; }
+  }
+  
   if (type === 'embed') { newBlock.text = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2504.66487841855!2d16.92516811563456!3d51.10788527957199!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470fe9c2d4b58abf%3A0xb70956aec205e0f5!2zV3JvY8WCYXc!5e0!3m2!1spl!2spl!4v1625560000000!5m2!1spl!2spl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>'; newBlock.styles.width = '100%'; newBlock.styles.height = '400px'; newBlock.styles.borderRadius = '12px'; }
 
   return newBlock;
