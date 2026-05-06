@@ -142,20 +142,20 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // Klocek jest ZAWSZE przenośny (chyba, że właśnie edytujesz w nim tekst)
+        // Klocek musi być zawsze chwytny, jeśli nie jesteśmy w trybie edycji tekstu!
         draggable={!isEditing && !isAbsolute}
         
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          // Payload konieczny, żeby przeglądarka się nie zesrała
+          // Payload dla przeglądarki - absolutnie krytyczny!
           e.dataTransfer.setData('text/plain', b.id.toString());
           e.dataTransfer.effectAllowed = 'move';
           
-          // Ustawiamy state z opóźnieniem. Przeglądarka robi zdjęcie, a React ładuje się chwilę potem.
+          // Odsunięcie w czasie pozwala przeglądarce zrobić "Ghosta" bez zakłóceń ze strony Reacta!
           setTimeout(() => {
             if (activeId !== b.id) setActiveId(b.id);
             if (setDraggedId) setDraggedId(b.id); 
-          }, 10);
+          }, 50);
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
@@ -169,21 +169,21 @@ export default function CanvasBlock({
           if (setDraggedId) setDraggedId(null);
         }}
 
-        // Normalne kliknięcie (zaznaczanie bez przerywania przeciągania)
-        onClick={(e) => { 
-          e.stopPropagation(); 
-          if (activeId !== b.id) { 
-            if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) { setActiveId(parentId); setIsEditing(false); return; }
-            setActiveId(b.id); setIsEditing(false); 
+        // Zaznaczanie po puszczeniu klawisza myszy - bezpieczne dla DOM!
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          if (!isAbsolute && activeId !== b.id) {
+            setActiveId(b.id);
+            setIsEditing(false);
           }
-        }} 
+        }}
         
-        // Z mouseDown wywaliliśmy raka (setActiveId), który psuł drag & drop
+        // Z onMouseDown WYJEBALIŚMY ZMIANĘ STANU (setActiveId)
         onMouseDown={(e) => { 
           e.stopPropagation(); 
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
           
-          // Tu obsługujemy tylko swobodne przeciąganie absolutnych popupów
+          // Zostawiamy tu tylko obsługę popupów (Absolute), bo one nie używają HTML5 Drag&Drop
           if (isAbsolute) {
             if (activeId !== b.id) setActiveId(b.id);
             const el = document.getElementById(`block-${b.id}`);
