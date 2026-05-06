@@ -93,7 +93,6 @@ export default function CanvasBlock({
   };
 
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements) => {
-    // Bazowe style dla tagu tekstowego
     const textStyles: any = { 
       fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, 
       overflowY: b.styles.overflowY || 'hidden', overflowX: 'hidden', 
@@ -102,20 +101,16 @@ export default function CanvasBlock({
       zIndex: 10, position: 'relative', flex: b.styles.flex || 'auto'
     };
 
-    // FIX V18.57: Przechwytujemy style gradientu i wrzucamy je BEZPOŚREDNIO na tekst, wycinając je z kontenera!
     if (b.styles.WebkitBackgroundClip === 'text') {
       textStyles.backgroundImage = b.styles.backgroundImage;
       textStyles.WebkitBackgroundClip = 'text';
       textStyles.WebkitTextFillColor = 'transparent';
-      textStyles.color = 'transparent'; // Wymuszamy transparent żeby gradient był widoczny
-      
-      // Czyścimy kontener, żeby tło nie wyciekało poza tekst
+      textStyles.color = 'transparent'; 
       containerStyles.backgroundImage = 'none';
       containerStyles.WebkitBackgroundClip = 'unset';
       containerStyles.WebkitTextFillColor = 'unset';
     }
 
-    // To samo robimy dla tekstu Outline (Pusty w środku)
     if (b.styles.WebkitTextStroke) {
       textStyles.WebkitTextStroke = b.styles.WebkitTextStroke;
       textStyles.color = b.styles.color || 'transparent'; 
@@ -147,19 +142,21 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        draggable={isActive && !isEditing && !isAbsolute}
+        // FIX V18.63: Odblokowujemy przeciąganie DLA WSZYSTKICH (nie tylko aktywnych)
+        draggable={!isEditing && !isAbsolute}
+        
         onDragStart={(e) => { 
           e.stopPropagation(); 
+          // Natychmiastowa aktywacja podczas rzutu, żeby UI wiedziało kogo niesiesz
+          if (activeId !== b.id) { setActiveId(b.id); }
           if (setDraggedId) setDraggedId(b.id); 
-          const dragGhost = document.createElement('div');
-          dragGhost.id = 'drag-ghost';
-          dragGhost.textContent = `⠿ Przenosisz: ${b.name}`;
-          dragGhost.style.cssText = 'background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; position: absolute; top: -1000px; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-family: sans-serif; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);';
-          document.body.appendChild(dragGhost);
-          e.dataTransfer.setDragImage(dragGhost, 15, 15);
-          setTimeout(() => { if (document.body.contains(dragGhost)) document.body.removeChild(dragGhost); }, 0);
+          e.dataTransfer.effectAllowed = 'move';
+          // Wyjebaliśmy customowego, psującego się ghosta. Działa natywnie.
         }}
-        onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
+        onDragEnd={(e) => { 
+          e.stopPropagation();
+          if (setDraggedId) setDraggedId(null); 
+        }}
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={(e) => { 
