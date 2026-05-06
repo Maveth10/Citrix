@@ -211,7 +211,10 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
-  // FIX V18.56: Uszczelnione usuwanie bloków (przywracanie clearRow dla sąsiadów)
+  // =========================================================================
+  // FIX V18.58: KULOODPORNE WYRYWANIE I USUWANIE KLOCKÓW Z LINII (BUTCHER EDITION)
+  // =========================================================================
+
   const removeActiveBlock = () => {
     setBlocks(prev => {
       const removeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
@@ -225,9 +228,17 @@ export default function Home() {
           const removedBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          // Jeśli usuwany element zamykał wiersz, przekaż ten obowiązek poprzednikowi
+          
+          // Zwróć godność i przestrzeń sąsiadowi, z którym byliśmy w parze!
           if (index > 0 && removedBlock.styles.clearRow !== false) {
-             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
+             const prevWidth = newArr[index - 1].styles.width;
+             // Odzyskaj pełną szerokość
+             const newWidth = (prevWidth === '48%' || prevWidth === '40%') ? '100%' : prevWidth;
+             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true, width: newWidth } };
+          }
+          // Ostatni element w tablicy MUSI blokować linię, inaczej wisi w próżni.
+          if (newArr.length > 0) {
+             newArr[newArr.length - 1] = { ...newArr[newArr.length - 1], styles: { ...newArr[newArr.length - 1].styles, clearRow: true } };
           }
           return newArr;
         }
@@ -238,7 +249,6 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  // FIX V18.56: Uszczelnione upuszczanie (Drop) i obsługa clearRow
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
@@ -250,9 +260,15 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          // Gdy wyciągamy klocek, który zamykał linię, oddajemy tę własność sąsiadowi po lewej!
+          
+          // Dokładnie ta sama logika zwrotu szerokości i zablokowania wiersza sąsiadowi!
           if (index > 0 && sourceBlock.styles.clearRow !== false) {
-             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
+             const prevWidth = newArr[index - 1].styles.width;
+             const newWidth = (prevWidth === '48%' || prevWidth === '40%') ? '100%' : prevWidth;
+             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true, width: newWidth } };
+          }
+          if (newArr.length > 0) {
+             newArr[newArr.length - 1] = { ...newArr[newArr.length - 1], styles: { ...newArr[newArr.length - 1].styles, clearRow: true } };
           }
           return newArr;
         }
@@ -267,16 +283,21 @@ export default function Home() {
         if (index > -1) {
           if (dropType === 'inline') {
             const newArr = [...arr];
-            // Cel przestaje zamykać wiersz
-            newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
+            let targetWidth = newArr[index].styles.width;
+            if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; // Zgnieć cel do połowy!
+            newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false, width: targetWidth } };
+            
             let safeWidth = sourceBlock!.styles.width;
-            if (safeWidth === '100%') safeWidth = '40%';
-            // Upuszczany klocek zaczyna zamykać wiersz
+            if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; // Zgnieć wstawiany element do połowy!
+            
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            // Normalne upuszczenie: klocek POWRACA do zajmowania linii
-            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true } };
+            // Normalne zrzucenie w puste miejsce - odzyskaj rozmiar!
+            let restoredWidth = sourceBlock!.styles.width;
+            if (restoredWidth === '48%' || restoredWidth === '40%') restoredWidth = '100%';
+            
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
             return [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
           }
         }
@@ -288,7 +309,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.56! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.58! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -338,7 +359,7 @@ export default function Home() {
         newHeightPx = Math.max(20, newHeightPx);
 
         let percentWidth = (newWidthPx / parentWidth) * 100;
-        const snaps = [10, 15, 20, 25, 30, 33.33, 40, 50, 60, 66.66, 70, 75, 80, 85, 90, 100];
+        const snaps = [10, 15, 20, 25, 30, 33.33, 40, 48, 50, 60, 66.66, 70, 75, 80, 85, 90, 100];
         for (const snap of snaps) {
           if (Math.abs(percentWidth - snap) < 3) { percentWidth = snap; break; }
         }
