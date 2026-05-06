@@ -14,17 +14,17 @@ interface RightPanelProps {
 export default function RightPanel({ activeBlock, rightTab, setRightTab, updateActiveBlock, removeActiveBlock, setIsMediaManagerOpen }: RightPanelProps) {
   
   if (!activeBlock) return (
-    <aside className="w-80 bg-[#09090b] border-l border-white/5 h-full flex flex-col items-center justify-center text-neutral-500 shadow-2xl z-40">
+    <aside className="w-80 bg-[#09090b]/50 backdrop-blur-xl border-l border-white/5 h-full flex flex-col items-center justify-center text-neutral-500 shadow-2xl z-40">
       <span className="text-4xl mb-3 opacity-20">🎯</span>
       <p className="text-[11px] tracking-widest uppercase font-bold text-neutral-600">Zaznacz obiekt na płótnie</p>
     </aside>
   );
 
   return (
-    <aside className="w-80 bg-[#09090b] border-l border-white/5 h-full flex flex-col shadow-2xl z-40 animate-in slide-in-from-right-4">
+    <aside className="w-80 bg-[#09090b]/50 backdrop-blur-xl border-l border-white/5 h-full flex flex-col shadow-2xl z-40 animate-in slide-in-from-right-4">
       
       {/* HEADER PRAWNEGO PANELU */}
-      <div className="p-4 border-b border-white/5 bg-[#0c0c0e]">
+      <div className="p-4 border-b border-white/5 bg-transparent">
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-2">
             <span className="bg-blue-600/20 text-blue-400 text-[9px] px-2 py-1 rounded uppercase font-bold tracking-widest border border-blue-500/20">
@@ -55,8 +55,6 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
       {/* ZAWARTOŚĆ ZAKŁADKI */}
       <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
          {rightTab === 'layout' && <LayoutTab activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}
-         
-         {/* FIX V18.70: Podpięcie nowego modułu Wyglądu */}
          {rightTab === 'design' && <DesignTab activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}
          
          {rightTab === 'text' && (

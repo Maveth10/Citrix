@@ -347,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.69! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.70! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -413,7 +413,6 @@ export default function Home() {
       }
     };
 
-    // FIX V18.69: OVERLOAD SCANNER uruchamiany przy puszczeniu myszki po rozciąganiu (Resize)
     const handleMouseUp = () => {
       if (interaction && interaction.type === 'resize') {
         setInternalBlocks(prevBlocks => {
@@ -430,25 +429,20 @@ export default function Home() {
               let w = 100;
               if (typeof wStr === 'string' && wStr.endsWith('%')) w = parseFloat(wStr) || 100;
               
-              // Jeśli łączna szerokość rzędu przekracza dopuszczalny błąd matematyczny (102%)
               if (currentRowWidth + w > 102 && i > rowStartIndex) {
-                // Brutalnie opuszczamy szlaban dla poprzedniego klocka w rzędzie! (Lock the row)
                 res[i - 1] = { ...res[i - 1], styles: { ...res[i - 1].styles, clearRow: true } };
-                // Ten element z racji ucięcia zaczyna nową linię w analizatorze
                 currentRowWidth = w;
                 rowStartIndex = i;
               } else {
                 currentRowWidth += w;
               }
               
-              // Jeśli element i tak zamyka linię
               if (res[i].styles.clearRow !== false) {
                 currentRowWidth = 0;
                 rowStartIndex = i + 1;
               }
             }
             
-            // Ostatni element bezwzględnie musi zamknąć linię
             if (res.length > 0 && res[res.length - 1].styles.clearRow === false) {
               res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
             }
@@ -533,17 +527,19 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden">
-      <style dangerouslySetInnerHTML={{__html: `@keyframes scroll-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}} />
+    // FIX V18.70: GLASSMORPHISM ROOT - Dodałem relative i przeniosłem tu grid
+    <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden relative">
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-      <aside className="w-16 bg-[#09090b] border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
+      {/* Szklany lewy pasek */}
+      <aside className="w-16 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
         <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'add' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'layers' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>☰</button>
       </aside>
 
       <div className="relative z-40 h-full flex">
         {leftTab === 'add' && (
-          <div className="w-56 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+          <div className="w-56 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
             <div className="px-6 py-5 border-b border-white/5"><span className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">DODAJ ELEMENT</span></div>
             <div className="flex-1 overflow-y-auto py-3 scrollbar-hide px-2">
               {categories.map(cat => (
@@ -553,13 +549,13 @@ export default function Home() {
           </div>
         )}
         {leftTab === 'layers' && (
-          <div className="w-64 bg-[#09090b] border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+          <div className="w-64 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
             <div className="flex-1 overflow-y-auto py-2">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
         {leftTab === 'add' && addCategory && (
-          <div className="absolute left-[100%] top-0 w-[340px] bg-[#0c0c0e]/95 backdrop-blur-xl border-r border-white/5 h-full shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-30 flex flex-col">
+          <div className="absolute left-[100%] top-0 w-[340px] bg-[#0c0c0e]/70 backdrop-blur-2xl border-r border-white/5 h-full shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5"><h3 className="text-[10px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
@@ -579,8 +575,7 @@ export default function Home() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col relative bg-[#09090b]">
-        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <div className="flex-1 flex flex-col relative z-10">
         <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} />
         
         {isAiOpen && (
