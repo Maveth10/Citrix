@@ -347,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.70! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.71! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -527,35 +527,46 @@ export default function Home() {
   };
 
   return (
-    // FIX V18.70: GLASSMORPHISM ROOT - Dodałem relative i przeniosłem tu grid
+    // GLASSMORPHISM ROOT
     <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden relative">
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
-      {/* Szklany lewy pasek */}
-      <aside className="w-16 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
+      {/* Main Nav (Leftmost) */}
+      <aside className="w-16 bg-[#09090b]/40 backdrop-blur-xl border-r border-white/5 flex flex-col items-center py-6 gap-5 z-50 shrink-0">
         <button onClick={() => { setLeftTab(leftTab === 'add' ? null : 'add'); if(leftTab !== 'add') setAddCategory('tekst'); }} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'add' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>+</button>
         <button onClick={() => setLeftTab(leftTab === 'layers' ? null : 'layers')} className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'layers' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`}>☰</button>
       </aside>
 
       <div className="relative z-40 h-full flex">
+        {/* FIX V18.71: ZWIANY PANEL KATEGORII (Z 224px do 64px!) */}
         {leftTab === 'add' && (
-          <div className="w-56 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
-            <div className="px-6 py-5 border-b border-white/5"><span className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">DODAJ ELEMENT</span></div>
-            <div className="flex-1 overflow-y-auto py-3 scrollbar-hide px-2">
+          <div className="w-16 bg-[#09090b]/40 backdrop-blur-xl border-r border-white/5 h-full flex flex-col shadow-lg animate-in slide-in-from-left-4">
+            <div className="flex-1 overflow-y-auto py-4 scrollbar-hide flex flex-col items-center gap-2">
               {categories.map(cat => (
-                <button key={cat.id} onMouseEnter={() => setAddCategory(cat.id)} onClick={() => setAddCategory(cat.id)} className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-3 mb-1 ${addCategory === cat.id ? 'bg-blue-600/10 text-blue-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}><span className="w-4 text-center">{cat.icon}</span> {cat.label}</button>
+                <button 
+                  key={cat.id} 
+                  onMouseEnter={() => setAddCategory(cat.id)} 
+                  onClick={() => setAddCategory(cat.id)} 
+                  title={cat.label} /* Tooltip po najechaniu! */
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${addCategory === cat.id ? 'bg-blue-600/20 text-blue-400' : 'text-neutral-400 hover:bg-white/10 hover:text-white'}`}
+                >
+                  {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px]">T</span> : cat.icon}
+                </button>
               ))}
             </div>
           </div>
         )}
+        
         {leftTab === 'layers' && (
-          <div className="w-64 bg-[#09090b]/50 backdrop-blur-xl border-r border-white/5 h-full flex flex-col shadow-2xl animate-in slide-in-from-left-4">
+          <div className="w-64 bg-[#09090b]/40 backdrop-blur-xl border-r border-white/5 h-full flex flex-col shadow-xl animate-in slide-in-from-left-4">
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
             <div className="flex-1 overflow-y-auto py-2">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
+
+        {/* FIX V18.71: Lżejszy pod-panel elementów i delikatniejszy cień */}
         {leftTab === 'add' && addCategory && (
-          <div className="absolute left-[100%] top-0 w-[340px] bg-[#0c0c0e]/70 backdrop-blur-2xl border-r border-white/5 h-full shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-30 flex flex-col">
+          <div className="absolute left-[100%] top-0 w-[320px] bg-[#0c0c0e]/45 backdrop-blur-2xl border-r border-white/5 h-full shadow-[8px_0_24px_rgba(0,0,0,0.3)] z-30 flex flex-col">
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5"><h3 className="text-[10px] font-bold text-white uppercase tracking-widest">{categories.find(c => c.id === addCategory)?.label}</h3><button onClick={() => {setLeftTab(null); setAddCategory(null);}} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button></div>
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
