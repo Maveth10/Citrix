@@ -347,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.99 THE REACTOR CORE! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.NEXT! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -529,21 +529,23 @@ export default function Home() {
   const activeCategoryData = categories.find(c => c.id === addCategory);
 
   return (
+    // THE ULTIMATE CYBER KOKPIT (V18.NEXT)
     <div className="flex h-screen w-screen bg-[#070709] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30">
       
-      {/* WYCZYSZCZONE STYLE. 
-        Zostawiłem tylko neony do bocznego paska i tło. 
-        Cała reszta hacków (cyber-inner-options) wyjebana. Robimy to natywnie.
-      */}
+      {/* MAGIA ANIMACJI (REAKTOR & SCANNER) */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes breathe-orange { 0%, 100% { box-shadow: 0 0 10px rgba(255,69,0,0.4), inset 0 0 5px rgba(255,69,0,0.2); border-color: rgba(255,69,0,0.5); } 50% { box-shadow: 0 0 25px rgba(255,69,0,0.8), inset 0 0 15px rgba(255,69,0,0.4); border-color: rgba(255,69,0,1); } }
-        @keyframes breathe-cyan { 0%, 100% { box-shadow: 0 0 10px rgba(0,229,255,0.4), inset 0 0 5px rgba(0,229,255,0.2); border-color: rgba(0,229,255,0.5); } 50% { box-shadow: 0 0 25px rgba(0,229,255,0.8), inset 0 0 15px rgba(0,229,255,0.4); border-color: rgba(0,229,255,1); } }
-        @keyframes breathe-red { 0%, 100% { box-shadow: 0 0 10px rgba(255,0,85,0.4), inset 0 0 5px rgba(255,0,85,0.2); border-color: rgba(255,0,85,0.5); } 50% { box-shadow: 0 0 25px rgba(255,0,85,0.8), inset 0 0 15px rgba(255,0,85,0.4); border-color: rgba(255,0,85,1); } }
-        @keyframes breathe-yellow { 0%, 100% { box-shadow: 0 0 10px rgba(255,234,0,0.4), inset 0 0 5px rgba(255,234,0,0.2); border-color: rgba(255,234,0,0.5); } 50% { box-shadow: 0 0 25px rgba(255,234,0,0.8), inset 0 0 15px rgba(255,234,0,0.4); border-color: rgba(255,234,0,1); } }
-        @keyframes breathe-green { 0%, 100% { box-shadow: 0 0 10px rgba(0,255,102,0.4), inset 0 0 5px rgba(0,255,102,0.2); border-color: rgba(0,255,102,0.5); } 50% { box-shadow: 0 0 25px rgba(0,255,102,0.8), inset 0 0 15px rgba(0,255,102,0.4); border-color: rgba(0,255,102,1); } }
-        @keyframes breathe-pink { 0%, 100% { box-shadow: 0 0 10px rgba(255,0,170,0.4), inset 0 0 5px rgba(255,0,170,0.2); border-color: rgba(255,0,170,0.5); } 50% { box-shadow: 0 0 25px rgba(255,0,170,0.8), inset 0 0 15px rgba(255,0,170,0.4); border-color: rgba(255,0,170,1); } }
-        @keyframes breathe-purple { 0%, 100% { box-shadow: 0 0 10px rgba(123,97,255,0.4), inset 0 0 5px rgba(123,97,255,0.2); border-color: rgba(123,97,255,0.5); } 50% { box-shadow: 0 0 25px rgba(123,97,255,0.8), inset 0 0 15px rgba(123,97,255,0.4); border-color: rgba(123,97,255,1); } }
-        @keyframes breathe-gray { 0%, 100% { box-shadow: 0 0 10px rgba(160,160,176,0.4), inset 0 0 5px rgba(160,160,176,0.2); border-color: rgba(160,160,176,0.5); } 50% { box-shadow: 0 0 25px rgba(160,160,176,0.8), inset 0 0 15px rgba(160,160,176,0.4); border-color: rgba(160,160,176,1); } }
+        @keyframes reaktor-breathe { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.8; } }
+        @keyframes orbital-scanner-fast { 0% { top: -10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 110%; opacity: 0; } }
+        @keyframes neon-glow-pulse { 0%, 100% { shadow-color: var(--theme-color); } 50% { shadow-color: rgba(255,255,255,0.3); } }
+
+        @keyframes breathe-orange { 0%, 100% { box-shadow: 0 0 10px rgba(255,69,0,0.4); border-color: rgba(255,69,0,0.5); } 50% { box-shadow: 0 0 25px rgba(255,69,0,0.8); border-color: rgba(255,69,0,1); } }
+        @keyframes breathe-cyan { 0%, 100% { box-shadow: 0 0 10px rgba(0,229,255,0.4); border-color: rgba(0,229,255,0.5); } 50% { box-shadow: 0 0 25px rgba(0,229,255,0.8); border-color: rgba(0,229,255,1); } }
+        @keyframes breathe-red { 0%, 100% { box-shadow: 0 0 10px rgba(255,0,85,0.4); border-color: rgba(255,0,85,0.5); } 50% { box-shadow: 0 0 25px rgba(255,0,85,0.8); border-color: rgba(255,0,85,1); } }
+        @keyframes breathe-yellow { 0%, 100% { box-shadow: 0 0 10px rgba(255,234,0,0.4); border-color: rgba(255,234,0,0.5); } 50% { box-shadow: 0 0 25px rgba(255,234,0,0.8); border-color: rgba(255,234,0,1); } }
+        @keyframes breathe-green { 0%, 100% { box-shadow: 0 0 10px rgba(0,255,102,0.4); border-color: rgba(0,255,102,0.5); } 50% { box-shadow: 0 0 25px rgba(0,255,102,0.8); border-color: rgba(0,255,102,1); } }
+        @keyframes breathe-pink { 0%, 100% { box-shadow: 0 0 10px rgba(255,0,170,0.4); border-color: rgba(255,0,170,0.5); } 50% { box-shadow: 0 0 25px rgba(255,0,170,0.8); border-color: rgba(255,0,170,1); } }
+        @keyframes breathe-purple { 0%, 100% { box-shadow: 0 0 10px rgba(123,97,255,0.4); border-color: rgba(123,97,255,0.5); } 50% { box-shadow: 0 0 25px rgba(123,97,255,0.8); border-color: rgba(123,97,255,1); } }
+        @keyframes breathe-gray { 0%, 100% { box-shadow: 0 0 10px rgba(160,160,176,0.4); border-color: rgba(160,160,176,0.5); } 50% { box-shadow: 0 0 25px rgba(160,160,176,0.8); border-color: rgba(160,160,176,1); } }
         
         .neon-orange { animation: breathe-orange 2s infinite ease-in-out; color: #fff; background: rgba(255,69,0,0.1); }
         .neon-cyan { animation: breathe-cyan 2s infinite ease-in-out; color: #fff; background: rgba(0,229,255,0.1); }
@@ -556,21 +558,37 @@ export default function Home() {
         
         .cyber-panel { background: #111115; border: 1px solid rgba(255,255,255,0.05); }
 
-        .cyber-bg-scanner {
+        /* NOWY: ULTIMATE GLASSMOPHISM & PULSING REACTOR TŁA */
+        .category-container {
+          background-color: rgba(17, 17, 21, 0.7) !important;
+          backdrop-filter: blur(20px) saturate(180%) !important;
+          -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+          position: relative !important;
+          overflow: hidden !important;
+        }
+
+        /* Pulsujący Reaktor pod spodem - Siatka Technologiczna */
+        .reactor-core-bg {
           position: absolute;
-          top: -100%; left: 0; right: 0; 
-          height: 4px; /* Pogrubione */
-          background: var(--theme-color);
-          box-shadow: 0 0 40px 10px var(--theme-color), 0 0 80px 20px var(--theme-color); /* Mocniejsza poświata */
-          animation: scan-line 4s linear infinite;
-          opacity: 0.9;
+          inset: 0;
+          background-image: radial-gradient(circle at center, var(--theme-color) 1px, transparent 1px);
+          background-size: 24px 24px;
+          opacity: 0.1;
+          animation: reaktor-breathe 4s infinite ease-in-out;
+          pointer-events: none;
           z-index: 1;
-       }
-        @keyframes scan-line {
-           0% { top: -10%; opacity: 0; }
-           10% { opacity: 0.8; }
-           90% { opacity: 0.8; }
-           100% { top: 110%; opacity: 0; }
+        }
+
+        /* Skaner Orbitujący - Szybki, przebijający się refles */
+        .reactor-scanner-beam {
+          position: absolute;
+          left: 0; right: 0; height: 1.5px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), var(--theme-color), rgba(255,255,255,0.6), transparent);
+          box-shadow: 0 0 20px var(--theme-color), 0 0 40px var(--theme-color);
+          animation: orbital-scanner-fast 3s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+          pointer-events: none;
+          z-index: 2;
         }
       `}} />
 
@@ -646,10 +664,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* PANELE KATEGORII (Przekazujemy natywnie zmienne do Tailwind CSS) */}
+        {/* PANELE KATEGORII (NOWY Wizualny Standard V18.NEXT) */}
         {addCategory && activeCategoryData && (
           <div 
-            className="cyber-panel w-[340px] h-full shadow-[40px_0_60px_rgba(0,0,0,0.9)] z-30 flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden" 
+            className="category-container w-[340px] h-full shadow-[40px_0_60px_rgba(0,0,0,0.9)] z-30 flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden" 
             style={{ 
               borderRightColor: `${activeCategoryData.color}40`,
               '--theme-color': activeCategoryData.color,
@@ -657,19 +675,24 @@ export default function Home() {
             } as React.CSSProperties}
           >
             
-            <div className="cyber-bg-scanner pointer-events-none"></div>
-            <div className="absolute inset-0 z-0 opacity-[0.05]" style={{ backgroundImage: `radial-gradient(${activeCategoryData.color} 1px, transparent 1px)`, backgroundSize: '16px 16px' }}></div>
-            <div className={`absolute top-0 left-0 w-full h-[2px]`} style={{ backgroundColor: activeCategoryData.color, boxShadow: `0 0 10px ${activeCategoryData.color}` }}></div>
+            {/* Pulsujący Reaktor underlay */}
+            <div className="reactor-core-bg pointer-events-none"></div>
+            {/* Przebijający się Skaner pod spodem */}
+            <div className="reactor-scanner-beam pointer-events-none"></div>
             
-            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10 bg-[#111115]/90 backdrop-blur-md">
-              <h3 className="text-[12px] font-bold uppercase tracking-widest flex items-center gap-3" style={{ color: activeCategoryData.color, textShadow: `0 0 10px ${activeCategoryData.color}` }}>
-                <span className="text-xl opacity-90 drop-shadow-lg">{activeCategoryData.icon}</span>
+            {/* Ultra-cienka Laserowa Linia góry */}
+            <div className={`absolute top-0 left-0 w-full h-[1.5px]`} style={{ backgroundColor: activeCategoryData.color, boxShadow: `0 0 10px ${activeCategoryData.color}` }}></div>
+            
+            {/* Header (Lżejszy, bez ramki bocznej) */}
+            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10 backdrop-blur-xl">
+              <h3 className="text-[10px] font-medium uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: activeCategoryData.color, textShadow: `0 0 8px ${activeCategoryData.color}` }}>
                 {activeCategoryData.label}
               </h3>
-              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none transition-colors">✕</button>
+              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide relative z-10 pb-20">
+            {/* Wnętrze - Bezszwowe Columny, Hairlines */}
+            <div className="flex-1 overflow-y-auto p-0 flex flex-col gap-0 scrollbar-hide relative z-10 pb-20 bg-transparent">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}

@@ -1,8 +1,8 @@
 import React from 'react';
 
-const btnWrapper = "group relative w-full text-left p-4 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-[color:var(--theme-color)]/[0.03] flex items-center gap-4 overflow-hidden";
-const activeLine = "absolute left-0 top-1/4 bottom-1/4 w-[2px] bg-[color:var(--theme-color)] scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow-[0_0_10px_var(--theme-color)] rounded-r-full";
-const iconBox = "relative w-9 h-9 rounded-lg bg-white/[0.02] border border-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0 group-hover:border-[color:var(--theme-color)]/40 group-hover:bg-[color:var(--theme-color)]/10 transition-all duration-300";
+const btnWrapper = "group relative w-full text-left p-4 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-/ flex items-center gap-4 overflow-hidden";
+const activeLine = "absolute left-0 top-1/4 bottom-1/4 w- bg- scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow- rounded-r-full";
+const iconBox = "relative w-9 h-9 rounded-lg bg-white/ border border-white/ shadow- flex items-center justify-center shrink-0 group-hover:border-/40 group-hover:bg-/10 transition-all duration-300";
 
 export default function InsertsPanel({ handleAddBlock }: { handleAddBlock: any }) {
   return (
