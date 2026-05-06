@@ -62,11 +62,8 @@ export default function Home() {
   };
 
   const [activeId, setActiveId] = useState<number | null>(null);
-  
-  // FIX V18.72: Zaktualizowane stany lewego panelu (dodano 'pages')
   const [leftTab, setLeftTab] = useState<'pages' | 'layers' | null>(null);
   const [addCategory, setAddCategory] = useState<string | null>(null);
-  
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
   const [pageSlug, setPageSlug] = useState('titan-v18-architekt');
   
@@ -350,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.72! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.73! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -530,34 +527,41 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden relative">
+    // FIX V18.73: KOSMICZNE TŁO I AMBIENT GLOW
+    <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden relative selection:bg-blue-500/30">
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
-      {/* FIX V18.72: Zwarty, 64px Lewy Pasek ze wszystkim na widoku */}
-      <aside className="w-16 bg-[#09090b]/90 backdrop-blur-xl border-r border-white/10 flex flex-col items-center py-4 gap-2 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-xl">
+      {/* FIX V18.73: LEWY PASEK PREMIUM - HOVER TO OPEN */}
+      <aside className="w-16 bg-white/[0.02] backdrop-blur-3xl border-r border-white/5 flex flex-col items-center py-4 gap-3 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-2xl relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none z-0"></div>
+        
         <button 
           onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
-          className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'pages' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`} 
+          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'pages' ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
           title="Zarządzanie Stronami"
         >
           +
         </button>
         <button 
           onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
-          className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all shadow-sm ${leftTab === 'layers' ? 'bg-blue-600 text-white scale-95' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10'}`} 
+          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'layers' ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
           title="Nawigator DOM"
         >
           ☰
         </button>
         
-        <div className="w-8 h-px bg-white/10 my-2"></div>
+        <div className="w-8 h-px bg-white/10 my-2 z-10"></div>
         
         {categories.map(cat => (
           <button 
             key={cat.id} 
+            // Magia: Zwykłe najechanie otwiera/zmienia panel klocków! Nie trzeba klikać.
+            onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
             onClick={() => { setAddCategory(addCategory === cat.id ? null : cat.id); setLeftTab(null); }} 
             title={cat.label}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${addCategory === cat.id ? 'bg-blue-600/20 text-blue-400' : 'text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+            className={`relative w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 z-10 ${addCategory === cat.id ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] scale-110' : 'text-neutral-400 hover:bg-white/10 hover:text-white hover:scale-110'}`}
           >
             {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px]">T</span> : cat.icon}
           </button>
@@ -566,39 +570,42 @@ export default function Home() {
 
       <div className="relative z-40 h-full flex">
         
-        {/* PANEL STRON (Nowość!) */}
+        {/* PANEL STRON */}
         {leftTab === 'pages' && (
-          <div className="w-64 bg-[#09090b]/95 backdrop-blur-2xl border-r border-white/10 h-full flex flex-col shadow-[8px_0_30px_rgba(0,0,0,0.4)] animate-in slide-in-from-left-4">
-            <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">Zarządzanie Stronami</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
-            <div className="flex-1 p-4">
-               <div className="p-3 bg-blue-600/10 rounded-lg border border-blue-500/30 flex justify-between items-center cursor-pointer">
+          <div className="w-64 bg-gradient-to-b from-[#121218]/90 to-[#09090b]/90 backdrop-blur-2xl border-r border-white/5 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-200 relative">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-400">Zarządzanie Stronami</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
+            <div className="flex-1 p-4 relative z-10">
+               <div className="p-3 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-lg border border-blue-500/20 flex justify-between items-center cursor-pointer shadow-inner">
                  <span className="text-xs font-bold text-blue-400">/{pageSlug}</span>
-                 <span className="text-[9px] bg-blue-600 px-2 py-0.5 rounded text-white uppercase tracking-widest">Aktywna</span>
+                 <span className="text-[9px] bg-blue-600 px-2 py-0.5 rounded text-white uppercase tracking-widest shadow-sm">Aktywna</span>
                </div>
-               <button className="w-full mt-3 p-2 border border-dashed border-white/20 hover:border-white/40 text-neutral-400 hover:text-white text-xs font-bold rounded-lg transition-all">+ Dodaj Podstronę</button>
+               <button className="w-full mt-3 p-2 border border-dashed border-white/10 hover:border-white/30 text-neutral-400 hover:text-white text-xs font-bold rounded-lg transition-all">+ Dodaj Podstronę</button>
             </div>
           </div>
         )}
         
         {/* PANEL WARSTW */}
         {leftTab === 'layers' && (
-          <div className="w-64 bg-[#09090b]/95 backdrop-blur-2xl border-r border-white/10 h-full flex flex-col shadow-[8px_0_30px_rgba(0,0,0,0.4)] animate-in slide-in-from-left-4">
-            <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-500">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
-            <div className="flex-1 overflow-y-auto py-2">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
+          <div className="w-64 bg-gradient-to-b from-[#121218]/90 to-[#09090b]/90 backdrop-blur-2xl border-r border-white/5 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-200 relative">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-400">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
+            <div className="flex-1 overflow-y-auto py-2 relative z-10">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
 
-        {/* PANELE KATEGORII Z PRZYCIEMNIONYM TŁEM DLA CZYTELNOŚCI */}
+        {/* PANELE KATEGORII Z ANIMACJĄ I LŻEJSZYM TŁEM */}
         {addCategory && (
-          <div className="w-[320px] bg-[#0c0c0e]/95 backdrop-blur-2xl border-r border-white/10 h-full shadow-[8px_0_30px_rgba(0,0,0,0.4)] z-30 flex flex-col animate-in slide-in-from-left-4">
-            <div className="flex justify-between items-center px-6 py-5 border-b border-white/10">
-              <h3 className="text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                <span className="text-neutral-500">{categories.find(c => c.id === addCategory)?.icon}</span>
+          <div className="w-[320px] bg-gradient-to-b from-[#121218]/90 to-[#09090b]/90 backdrop-blur-3xl border-r border-white/5 h-full shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-30 flex flex-col animate-in slide-in-from-left-8 duration-200 relative">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
+              <h3 className="text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-2 drop-shadow-md">
+                <span className="text-blue-400">{categories.find(c => c.id === addCategory)?.icon}</span>
                 {categories.find(c => c.id === addCategory)?.label}
               </h3>
-              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none">✕</button>
+              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none transition-colors">✕</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide relative z-10">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
