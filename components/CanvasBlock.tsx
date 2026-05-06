@@ -142,15 +142,13 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        draggable={!isEditing && !isAbsolute}
+        // FIX V18.65: WYMUSZAMY AKTYWACJĘ! Najpierw kliknij, potem przeciągaj. Koniec z puszczaniem z rąk.
+        draggable={isActive && !isEditing && !isAbsolute}
         
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          if (activeId !== b.id) { setActiveId(b.id); }
           if (setDraggedId) setDraggedId(b.id); 
-          
-          // FIX V18.64: TEN JEDEN JEBANY KOD RATUJE PRZECIĄGANIE W PRZEGLĄDARKACH.
-          // Jeśli nie wrzucisz nic do dataTransfer, przeglądarka anuluje Drag&Drop zanim się zacznie!
+          // Payload konieczny żeby Chrome/Safari nie anulowały Drag&Drop
           e.dataTransfer.setData('text/plain', b.id.toString());
           e.dataTransfer.effectAllowed = 'move';
         }}
