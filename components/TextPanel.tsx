@@ -1,55 +1,35 @@
-import React, { useState } from 'react';
-import HeadingsPanel from './text-panels/HeadingsPanel';
-import ParagraphsPanel from './text-panels/ParagraphsPanel';
-import InsertsPanel from './text-panels/InsertsPanel';
+import React from 'react';
 
-interface TextPanelProps {
-  handleAddBlock: (type: string, variant: string, label: string) => void;
-}
+const btnClass = "group relative overflow-hidden w-full text-left p-4 rounded-xl bg-gradient-to-br from-[#19191e]/95 to-[#0a0a0f]/98 border border-white/5 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.03] hover:border-[color:var(--theme-color)] hover:shadow-[0_0_25px_var(--theme-shadow),inset_0_0_15px_var(--theme-shadow),0_10px_20px_rgba(0,0,0,0.9)] before:absolute before:inset-0 before:-left-[100%] before:w-1/2 before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent before:-skew-x-12 before:transition-all before:duration-700 hover:before:left-[200%] cursor-grab active:cursor-grabbing";
+const titleClass = "text-[12px] font-bold text-neutral-300 transition-colors duration-300 group-hover:text-white group-hover:drop-shadow-[0_0_8px_var(--theme-color)] flex items-center gap-2 mb-1";
+const descClass = "text-[10px] text-neutral-500 group-hover:text-neutral-300 transition-colors";
 
-export default function TextPanel({ handleAddBlock }: TextPanelProps) {
-  // Stan przechowujący informację, która sekcja akordeonu jest otwarta
-  const [activeTab, setActiveTab] = useState<'headings' | 'paragraphs' | 'inserts'>('headings');
-
+export default function TextPanel({ handleAddBlock }: any) {
   return (
-    <div className="flex flex-col gap-3 pb-10">
+    <div className="flex flex-col gap-4">
+      <div className="text-[10px] font-bold text-neutral-500 mb-1 tracking-widest uppercase border-b border-white/5 pb-2">Główne</div>
       
-      {/* KATEGORIA 1: NAGŁÓWKI */}
-      <div className="flex flex-col">
-        <button 
-          onClick={() => setActiveTab(activeTab === 'headings' ? '' as any : 'headings')}
-          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'headings' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
-        >
-          <span>Tytuły Główne (H1 & H2)</span>
-          <span className="text-lg leading-none">{activeTab === 'headings' ? '▾' : '▸'}</span>
-        </button>
-        {activeTab === 'headings' && <HeadingsPanel handleAddBlock={handleAddBlock} />}
-      </div>
+      <button className={btnClass} onClick={() => handleAddBlock('h1', '', 'Nagłówek H1')}>
+        <div className={titleClass}><span className="text-lg">H1</span> Główny Tytuł</div>
+        <div className={descClass}>Najważniejszy nagłówek na stronie (SEO).</div>
+      </button>
 
-      {/* KATEGORIA 2: AKAPITY */}
-      <div className="flex flex-col">
-        <button 
-          onClick={() => setActiveTab(activeTab === 'paragraphs' ? '' as any : 'paragraphs')}
-          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'paragraphs' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
-        >
-          <span>Akapity i Treść (P)</span>
-          <span className="text-lg leading-none">{activeTab === 'paragraphs' ? '▾' : '▸'}</span>
-        </button>
-        {activeTab === 'paragraphs' && <ParagraphsPanel handleAddBlock={handleAddBlock} />}
-      </div>
+      <button className={btnClass} onClick={() => handleAddBlock('h2', '', 'Nagłówek H2')}>
+        <div className={titleClass}><span className="text-base">H2</span> Tytuł Sekcji</div>
+        <div className={descClass}>Nagłówek wspierający strukturę.</div>
+      </button>
 
-      {/* KATEGORIA 3: WSTAWKI */}
-      <div className="flex flex-col">
-        <button 
-          onClick={() => setActiveTab(activeTab === 'inserts' ? '' as any : 'inserts')}
-          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'inserts' ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
-        >
-          <span>Złożone Wstawki (Alerty)</span>
-          <span className="text-lg leading-none">{activeTab === 'inserts' ? '▾' : '▸'}</span>
-        </button>
-        {activeTab === 'inserts' && <InsertsPanel handleAddBlock={handleAddBlock} />}
-      </div>
+      <div className="text-[10px] font-bold text-neutral-500 mb-1 mt-2 tracking-widest uppercase border-b border-white/5 pb-2">Treść</div>
+      
+      <button className={btnClass} onClick={() => handleAddBlock('p', '', 'Akapit')}>
+        <div className={titleClass}><span className="text-base">¶</span> Zwykły Tekst</div>
+        <div className={descClass}>Podstawowy blok tekstu. Pisz do woli.</div>
+      </button>
 
+      <button className={btnClass} onClick={() => handleAddBlock('marquee', '', 'Przesuwany Tekst')}>
+        <div className={titleClass}><span className="text-base">〰️</span> Pasek Giełdowy</div>
+        <div className={descClass}>Animowany, przesuwający się tekst.</div>
+      </button>
     </div>
   );
 }
