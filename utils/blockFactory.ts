@@ -1,5 +1,6 @@
 export const createBlock = (type: string, variant: string, label: string) => {
   const generateId = () => Math.floor(Math.random() * 10000000);
+  const rnd = Math.floor(Math.random() * 10000); // Unikalny seed dla animacji CSS
   
   let newBlock: any = {
     id: generateId(), type, name: label.toUpperCase(),
@@ -38,6 +39,82 @@ export const createBlock = (type: string, variant: string, label: string) => {
     }
   }
 
+  // --- GRAFIKI, LICZNIKI, WYKRESY (NOWOŚĆ V18.45) ---
+  if (type === 'graphic') {
+    newBlock.styles.width = '100%';
+    newBlock.styles.padding = '0px';
+
+    if (variant === 'counter') {
+      // Magia czystego CSS! @property pozwala przeglądarce animować cyfry bez skryptów JS.
+      newBlock.text = `
+        <style>
+          @property --num_${rnd} { syntax: "<integer>"; initial-value: 0; inherits: false; }
+          @keyframes count_${rnd} { to { --num_${rnd}: 24500; } }
+          .counter-anim-${rnd} { animation: count_${rnd} 2.5s cubic-bezier(0, 0.5, 0, 1) forwards; counter-reset: n_${rnd} var(--num_${rnd}); font-variant-numeric: tabular-nums; }
+          .counter-anim-${rnd}::after { content: counter(n_${rnd}) "+"; }
+        </style>
+        <div style="text-align: center; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;">
+          <div class="counter-anim-${rnd}" style="font-size: 56px; font-weight: 900; color: #f59e0b; line-height: 1;"></div>
+          <div style="font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 10px;">Sprzedanych Ładowarek EV</div>
+        </div>
+      `;
+    }
+    else if (variant === 'bar-chart') {
+      newBlock.text = `
+        <style>
+          @keyframes grow_${rnd} { from { width: 0%; opacity: 0; } to { opacity: 1; } }
+          .bar-${rnd} { animation: grow_${rnd} 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; height: 100%; border-radius: 999px; }
+        </style>
+        <div style="display: flex; flex-direction: column; gap: 20px; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;">
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Zebrane Jabłka (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #ef4444;">92%</span></div>
+            <div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 92%; background: linear-gradient(90deg, #ef4444, #f87171);"></div></div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Winogrona (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #8b5cf6;">65%</span></div>
+            <div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 65%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div></div>
+          </div>
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Gruszki (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #f59e0b;">40%</span></div>
+            <div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 40%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
+          </div>
+        </div>
+      `;
+    }
+    else if (variant === 'circle-chart') {
+      newBlock.text = `
+        <style>
+          @keyframes fill_${rnd} { 0% { stroke-dasharray: 0, 100; } 100% { stroke-dasharray: 78, 100; } }
+          .circle-anim-${rnd} { animation: fill_${rnd} 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        </style>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;">
+          <div style="position: relative; width: 140px; height: 140px;">
+            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" stroke-width="3" />
+              <path class="circle-anim-${rnd}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="78, 100" stroke-linecap="round" />
+            </svg>
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; color: #1e293b;">78%</div>
+          </div>
+          <div style="margin-top: 20px; font-size: 14px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px;">Wypełnienie Celu</div>
+        </div>
+      `;
+    }
+    else if (variant === 'blob') {
+      newBlock.text = `
+        <style>
+          @keyframes morph_${rnd} { 0%,100%{border-radius:40% 60% 70% 30% / 40% 40% 60% 50%} 34%{border-radius:70% 30% 50% 50% / 30% 30% 70% 70%} 67%{border-radius:100% 60% 60% 100% / 100% 100% 60% 60%} }
+          .blob-${rnd} { animation: morph_${rnd} 8s ease-in-out infinite; background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%); width: 250px; height: 250px; box-shadow: 0 20px 30px -10px rgba(245, 158, 11, 0.4); }
+        </style>
+        <div style="display:flex; justify-content:center; align-items:center; width:100%; padding: 40px 0;"><div class="blob-${rnd}"></div></div>
+      `;
+    }
+  }
+
+  if (type === 'ribbon') { 
+    newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; 
+    newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }, { type: 'text', value: 'DARMOWA DOSTAWA' }]; 
+  }
+
   // --- OBRAZY, GIFy I GALERIE ---
   if (type === 'img') { 
     newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80'; newBlock.styles.width = '100%'; newBlock.styles.height = 'auto'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
@@ -46,65 +123,16 @@ export const createBlock = (type: string, variant: string, label: string) => {
     else if (variant === 'polaroid') { newBlock.styles.padding = '12px 12px 50px 12px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.2)'; }
   }
 
-  // --- PRZYCISKI (NOWOŚĆ V18.44) ---
+  // --- PRZYCISKI ---
   if (type === 'button') {
-    newBlock.text = 'Przycisk CTA';
-    newBlock.styles.padding = '14px 32px';
-    newBlock.styles.borderRadius = '8px';
-    newBlock.styles.backgroundColor = '#0f172a';
-    newBlock.styles.color = '#ffffff';
-    newBlock.styles.fontWeight = '600';
-    newBlock.styles.fontSize = '15px';
-    newBlock.styles.width = 'max-content';
-    newBlock.styles.border = 'none';
-    newBlock.styles.cursor = 'pointer';
-    newBlock.styles.display = 'flex';
-    newBlock.styles.alignItems = 'center';
-    newBlock.styles.justifyContent = 'center';
-    newBlock.styles.gap = '8px';
-
-    if (variant === 'gradient') {
-      newBlock.text = 'Kup Teraz';
-      newBlock.styles.backgroundImage = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)';
-      newBlock.styles.backgroundColor = 'transparent';
-      newBlock.styles.boxShadow = '0 10px 15px -3px rgba(139, 92, 246, 0.3)';
-    }
-    else if (variant === 'neon') {
-      newBlock.text = 'Dołącz do Bety';
-      newBlock.styles.backgroundColor = '#000000';
-      newBlock.styles.border = '1px solid #00f2ff';
-      newBlock.styles.color = '#00f2ff';
-      newBlock.styles.boxShadow = '0 0 15px rgba(0, 242, 255, 0.4), inset 0 0 10px rgba(0, 242, 255, 0.2)';
-    }
-    else if (variant === 'rounded') {
-       newBlock.styles.borderRadius = '9999px';
-       newBlock.styles.padding = '16px 40px';
-    }
-    else if (variant === 'outline') {
-      newBlock.text = 'Dowiedz się więcej';
-      newBlock.styles.backgroundColor = 'transparent';
-      newBlock.styles.border = '2px solid #0f172a';
-      newBlock.styles.color = '#0f172a';
-    }
-    else if (variant === 'ghost') {
-      newBlock.text = 'Anuluj operację';
-      newBlock.styles.backgroundColor = 'transparent';
-      newBlock.styles.color = '#64748b';
-      newBlock.styles.padding = '14px 16px';
-    }
-    else if (variant === 'apple') {
-       newBlock.text = ' Zaloguj przez Apple';
-       newBlock.styles.backgroundColor = '#000000';
-       newBlock.styles.borderRadius = '9999px';
-    }
-    else if (variant === 'google') {
-       newBlock.text = 'G Zaloguj przez Google';
-       newBlock.styles.backgroundColor = '#ffffff';
-       newBlock.styles.color = '#334155';
-       newBlock.styles.border = '1px solid #e2e8f0';
-       newBlock.styles.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-       newBlock.styles.borderRadius = '9999px';
-    }
+    newBlock.text = 'Przycisk CTA'; newBlock.styles.padding = '14px 32px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#0f172a'; newBlock.styles.color = '#ffffff'; newBlock.styles.fontWeight = '600'; newBlock.styles.fontSize = '15px'; newBlock.styles.width = 'max-content'; newBlock.styles.border = 'none'; newBlock.styles.cursor = 'pointer'; newBlock.styles.display = 'flex'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.gap = '8px';
+    if (variant === 'gradient') { newBlock.text = 'Kup Teraz'; newBlock.styles.backgroundImage = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)'; newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(139, 92, 246, 0.3)'; }
+    else if (variant === 'neon') { newBlock.text = 'Dołącz do Bety'; newBlock.styles.backgroundColor = '#000000'; newBlock.styles.border = '1px solid #00f2ff'; newBlock.styles.color = '#00f2ff'; newBlock.styles.boxShadow = '0 0 15px rgba(0, 242, 255, 0.4), inset 0 0 10px rgba(0, 242, 255, 0.2)'; }
+    else if (variant === 'rounded') { newBlock.styles.borderRadius = '9999px'; newBlock.styles.padding = '16px 40px'; }
+    else if (variant === 'outline') { newBlock.text = 'Dowiedz się więcej'; newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.border = '2px solid #0f172a'; newBlock.styles.color = '#0f172a'; }
+    else if (variant === 'ghost') { newBlock.text = 'Anuluj operację'; newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.color = '#64748b'; newBlock.styles.padding = '14px 16px'; }
+    else if (variant === 'apple') { newBlock.text = ' Zaloguj przez Apple'; newBlock.styles.backgroundColor = '#000000'; newBlock.styles.borderRadius = '9999px'; }
+    else if (variant === 'google') { newBlock.text = 'G Zaloguj przez Google'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.color = '#334155'; newBlock.styles.border = '1px solid #e2e8f0'; newBlock.styles.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'; newBlock.styles.borderRadius = '9999px'; }
   }
 
   // --- KONTENERY I INNE ---
@@ -156,7 +184,6 @@ export const createBlock = (type: string, variant: string, label: string) => {
   }
 
   if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
-  if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }]; }
   if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
   if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.clearRow = true; if (variant === 'video-hero') { newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; } }
   if (type === 'grid' && variant === 'gallery-grid') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px'; newBlock.children = [createBlock('img', 'rounded', 'Foto 1'), createBlock('img', 'rounded', 'Foto 2'), createBlock('img', 'rounded', 'Foto 3')]; }

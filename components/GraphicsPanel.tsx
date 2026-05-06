@@ -1,92 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
+import DataVisPanel from './graphics-panels/DataVisPanel';
+import DynamicElementsPanel from './graphics-panels/DynamicElementsPanel';
+import ShapesPanel from './graphics-panels/ShapesPanel';
 
 interface GraphicsPanelProps {
   handleAddBlock: (type: string, variant: string, label: string) => void;
 }
 
 export default function GraphicsPanel({ handleAddBlock }: GraphicsPanelProps) {
+  const [activeTab, setActiveTab] = useState<'data' | 'dynamic' | 'shapes'>('data');
+
   return (
-    <div className="flex flex-col gap-4 pb-10">
+    <div className="flex flex-col gap-3 pb-10">
       
-      {/* 1. NAKLEJKI (STICKERS) */}
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Naklejki (Stickers)</span>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex flex-col">
         <button 
-          onClick={() => handleAddBlock('img', 'sticker-sale', 'Naklejka Sale')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-red-500 flex flex-col items-center gap-2 group"
+          onClick={() => setActiveTab(activeTab === 'data' ? '' as any : 'data')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'data' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
         >
-          <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-[10px] group-hover:scale-110 transition-transform">SALE</div>
-          <span className="text-[10px] font-bold text-neutral-300">Wyprzedaż</span>
+          <span>Wizualizacja Danych</span>
+          <span className="text-lg leading-none">{activeTab === 'data' ? '▾' : '▸'}</span>
         </button>
+        {activeTab === 'data' && <DataVisPanel handleAddBlock={handleAddBlock} />}
+      </div>
 
+      <div className="flex flex-col">
         <button 
-          onClick={() => handleAddBlock('img', 'sticker-new', 'Naklejka New')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-emerald-500 flex flex-col items-center gap-2 group"
+          onClick={() => setActiveTab(activeTab === 'dynamic' ? '' as any : 'dynamic')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'dynamic' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
         >
-          <div className="w-10 h-10 bg-emerald-500 flex items-center justify-center text-white font-bold text-[10px] group-hover:scale-110 transition-transform" style={{clipPath: 'polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%)'}}>NEW</div>
-          <span className="text-[10px] font-bold text-neutral-300">Nowość</span>
+          <span>Elementy Dynamiczne</span>
+          <span className="text-lg leading-none">{activeTab === 'dynamic' ? '▾' : '▸'}</span>
         </button>
+        {activeTab === 'dynamic' && <DynamicElementsPanel handleAddBlock={handleAddBlock} />}
       </div>
 
-      {/* 2. IKONY (ICONS) */}
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Ikony Wektorowe</span>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex flex-col">
         <button 
-          onClick={() => handleAddBlock('img', 'icon-star', 'Ikona Gwiazdka')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-yellow-500 flex flex-col items-center gap-2 group"
+          onClick={() => setActiveTab(activeTab === 'shapes' ? '' as any : 'shapes')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'shapes' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
         >
-          <div className="text-2xl text-yellow-400 group-hover:scale-110 transition-transform drop-shadow-md">⭐</div>
-          <span className="text-[10px] font-bold text-neutral-300">Gwiazdka</span>
+          <span>Kształty i Wektory</span>
+          <span className="text-lg leading-none">{activeTab === 'shapes' ? '▾' : '▸'}</span>
         </button>
-
-        <button 
-          onClick={() => handleAddBlock('img', 'icon-heart', 'Ikona Serce')} 
-          className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-pink-500 flex flex-col items-center gap-2 group"
-        >
-          <div className="text-2xl text-pink-500 group-hover:scale-110 transition-transform drop-shadow-md">💖</div>
-          <span className="text-[10px] font-bold text-neutral-300">Serce</span>
-        </button>
-      </div>
-
-      {/* 3. ILUSTRACJE / WEKTORY */}
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Ilustracje</span>
-      </div>
-      <button 
-        onClick={() => handleAddBlock('img', 'vector-chart', 'Wektor Wykres')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-blue-500 group text-left w-full flex items-center gap-4"
-      >
-        <div className="w-10 h-10 flex items-end justify-between gap-1 group-hover:scale-110 transition-transform shrink-0">
-          <div className="w-2.5 h-4 bg-blue-500 rounded-sm"></div>
-          <div className="w-2.5 h-7 bg-purple-500 rounded-sm"></div>
-          <div className="w-2.5 h-10 bg-indigo-500 rounded-sm"></div>
-        </div>
-        <div>
-          <span className="text-sm font-bold text-white block mb-0.5">Wykres Flat</span>
-          <span className="text-[9px] text-neutral-400 block leading-tight">Wektorowa ilustracja biznesowa. Posiada tło przezroczyste.</span>
-        </div>
-      </button>
-
-      {/* 4. KSZTAŁTY PODSTAWOWE (Klasyka) */}
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Proste Kształty (Div)</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <button onClick={() => handleAddBlock('shape', 'box', 'Kwadrat')} className="aspect-square bg-[#222] hover:bg-[#2A2A2A] rounded-lg border border-neutral-700 hover:border-blue-500 flex flex-col items-center justify-center gap-2 group">
-          <div className="w-6 h-6 bg-blue-500 group-hover:scale-110 transition-transform rounded-sm"></div>
-        </button>
-
-        <button onClick={() => handleAddBlock('shape', 'circle', 'Koło')} className="aspect-square bg-[#222] hover:bg-[#2A2A2A] rounded-lg border border-neutral-700 hover:border-pink-500 flex flex-col items-center justify-center gap-2 group">
-          <div className="w-6 h-6 bg-pink-500 rounded-full group-hover:scale-110 transition-transform"></div>
-        </button>
-
-        <button onClick={() => handleAddBlock('shape', 'line', 'Linia')} className="aspect-square bg-[#222] hover:bg-[#2A2A2A] rounded-lg border border-neutral-700 hover:border-white flex flex-col items-center justify-center gap-2 group">
-          <div className="w-8 h-1 bg-white group-hover:scale-110 transition-transform"></div>
-        </button>
+        {activeTab === 'shapes' && <ShapesPanel handleAddBlock={handleAddBlock} />}
       </div>
 
     </div>
