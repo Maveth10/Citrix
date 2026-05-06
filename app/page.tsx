@@ -17,7 +17,6 @@ import FormPanel from '../components/FormPanel';
 import MenuPanel from '../components/MenuPanel';
 import PopupPanel from '../components/PopupPanel';
 import ListPanel from '../components/ListPanel';
-import GalleryPanel from '../components/GalleryPanel';
 import SocialPanel from '../components/SocialPanel';
 import EmbedPanel from '../components/EmbedPanel';
 import MediaManager from '../components/MediaManager';
@@ -73,6 +72,14 @@ export default function Home() {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
+
+  // FIX V18.55: Tablica przechowująca ID ukrytych klocków (do popupów)
+  const [hiddenBlocks, setHiddenBlocks] = useState<number[]>([]);
+
+  const toggleBlockVisibility = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    setHiddenBlocks(prev => prev.includes(id) ? prev.filter(bId => bId !== id) : [...prev, id]);
+  };
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
@@ -179,7 +186,7 @@ export default function Home() {
     const newBlock = createBlock(type, variant, label);
     setBlocks(prevBlocks => {
       if (!activeId) {
-        if (type !== 'section') {
+        if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
            autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
            autoWrapper.children = [newBlock];
@@ -215,19 +222,12 @@ export default function Home() {
             newArr[index] = createBlock('container', 'empty', 'Puste Pole');
             return newArr;
           }
-          
           const removedBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          
-          // FIX V18.38: AUTO-HEAL przy usuwaniu!
           if (index > 0 && removedBlock.styles.clearRow) {
-             newArr[index - 1] = {
-                ...newArr[index - 1],
-                styles: { ...newArr[index - 1].styles, clearRow: true }
-             };
+             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
           }
-          
           return newArr;
         }
         return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
@@ -248,16 +248,9 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          
-          // FIX V18.38: AUTO-HEAL przy wyciąganiu Drag&Drop!
-          // Jeśli usunięty klocek był odpowiedzialny za złamanie wiersza, przekazuje to zadanie na klocek przed nim.
           if (index > 0 && sourceBlock.styles.clearRow) {
-             newArr[index - 1] = {
-                ...newArr[index - 1],
-                styles: { ...newArr[index - 1].styles, clearRow: true }
-             };
+             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
           }
-          
           return newArr;
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
@@ -272,20 +265,12 @@ export default function Home() {
           if (dropType === 'inline') {
             const newArr = [...arr];
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
-            
             let safeWidth = sourceBlock!.styles.width;
             if (safeWidth === '100%') safeWidth = '40%';
-
-            const updatedSource = { 
-              ...sourceBlock!, 
-              styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } 
-            };
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            const updatedSource = { 
-              ...sourceBlock!, 
-              styles: { ...sourceBlock!.styles, flex: 'unset' } 
-            };
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset' } };
             return [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
           }
         }
@@ -297,7 +282,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.38! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.55! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -353,17 +338,12 @@ export default function Home() {
         }
         
         const updates: any = {};
-        
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
-        
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
           updates.height = `${newHeightPx}px`;
           updates.minHeight = `${newHeightPx}px`;
         }
-
-        updates.marginLeft = '0px';
-        updates.marginTop = '0px';
-
+        updates.marginLeft = '0px'; updates.marginTop = '0px';
         updateActiveBlock({ styles: updates }, true);
       }
     };
@@ -396,15 +376,44 @@ export default function Home() {
   const activeBlock = findBlockById(blocks, activeId);
 
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T' }, { id: 'obraz', label: 'Obraz', icon: '🖼️' }, { id: 'przycisk', label: 'Przycisk', icon: '👆' }, { id: 'grafika', label: 'Grafika', icon: '⭐' }, { id: 'pola', label: 'Pola', icon: '📦' }, { id: 'wideo', label: 'Wideo', icon: '▶️' }, { id: 'formularze', label: 'Formularze', icon: '📝' }, { id: 'menu', label: 'Menu', icon: '☰' }, { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, { id: 'lista', label: 'Lista', icon: '📋' }, { id: 'galeria', label: 'Galeria', icon: '🎠' }, { id: 'social', label: 'Social Media', icon: '❤️' }, { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+    { id: 'tekst', label: 'Tekst', icon: 'T' }, 
+    { id: 'obraz', label: 'Obraz', icon: '🖼️' }, 
+    { id: 'przycisk', label: 'Przycisk', icon: '👆' }, 
+    { id: 'grafika', label: 'Grafika', icon: '⭐' }, 
+    { id: 'pola', label: 'Pola', icon: '📦' }, 
+    { id: 'wideo', label: 'Wideo', icon: '▶️' }, 
+    { id: 'formularze', label: 'Formularze', icon: '📝' }, 
+    { id: 'menu', label: 'Menu', icon: '☰' }, 
+    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, 
+    { id: 'lista', label: 'Lista', icon: '📋' }, 
+    { id: 'social', label: 'Social Media', icon: '❤️' }, 
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
   ];
 
+  // FIX V18.55: Renderowanie drzewka warstw z ikonką oczka
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">
-        <button onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} className={`text-left text-[11px] py-1.5 px-2 truncate transition flex items-center gap-2 ${activeId === b.id ? 'bg-blue-500/20 text-blue-400 font-bold border-l-2 border-blue-500' : 'text-neutral-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent'}`} style={{ paddingLeft: `${(depth * 12) + 8}px` }}>
-          {b.children ? '📂' : '📄'} {b.name}
-        </button>
+        <div className={`flex items-center justify-between pr-2 transition ${activeId === b.id ? 'bg-blue-500/20 border-l-2 border-blue-500' : 'hover:bg-white/5 border-l-2 border-transparent'}`}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} 
+            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-blue-400 font-bold' : 'text-neutral-400 hover:text-white'}`} 
+            style={{ paddingLeft: `${(depth * 12) + 8}px` }}
+          >
+            <span className={hiddenBlocks.includes(b.id) ? 'opacity-30 line-through' : ''}>
+              {b.children ? '📂' : '📄'} {b.name}
+            </span>
+          </button>
+          
+          <button 
+            onClick={(e) => toggleBlockVisibility(e, b.id)}
+            className={`text-xs px-1 ${hiddenBlocks.includes(b.id) ? 'text-red-400 hover:text-red-300' : 'text-neutral-500 hover:text-white'}`}
+            title="Pokaż/Ukryj w edytorze"
+          >
+            {hiddenBlocks.includes(b.id) ? '🙈' : '👁️'}
+          </button>
+        </div>
+        
         {b.children && renderLayerTree(b.children, depth + 1)}
       </div>
     ));
@@ -450,7 +459,6 @@ export default function Home() {
               {addCategory === 'menu' && <MenuPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'wyskakujace' && <PopupPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'lista' && <ListPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'galeria' && <GalleryPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'social' && <SocialPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'osadzona' && <EmbedPanel handleAddBlock={handleAddBlock} />}
             </div>
@@ -490,9 +498,10 @@ export default function Home() {
                       isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
                       setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                       interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                      hiddenBlocks={hiddenBlocks}
                     />
                     
-                    {showGhost && (
+                    {showGhost && !hiddenBlocks.includes(b.id) && (
                       <div 
                         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if(setDraggedId) setDraggedId(null); }}
@@ -502,7 +511,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {isBreak && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
+                    {isBreak && !hiddenBlocks.includes(b.id) && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
                   </React.Fragment>
                 );
              })}

@@ -16,14 +16,18 @@ interface CanvasBlockProps {
   draggedId?: number | null;
   setDraggedId?: (id: number | null) => void;
   handleDrop?: (sourceId: number, targetId: number, type?: 'before'|'inline') => void;
+  hiddenBlocks?: number[];
 }
 
 export default function CanvasBlock({ 
   b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, 
   setInteraction, updateActiveBlock, parentId, parentActive, interaction,
-  draggedId, setDraggedId, handleDrop
+  draggedId, setDraggedId, handleDrop, hiddenBlocks = []
 }: CanvasBlockProps) {
   
+  // FIX V18.55: Jeśli to ID znajduje się w tablicy ukrytych, w ogóle nie renderujemy klocka!
+  if (hiddenBlocks.includes(b.id)) return null;
+
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
   const isBeingDragged = interaction?.type === 'drag' && isActive;
@@ -183,7 +187,6 @@ export default function CanvasBlock({
         {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
         {b.type === 'graphic' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}} dangerouslySetInnerHTML={{ __html: b.text || '' }}></div>}
         
-        {/* FIX V18.48: Uwolnienie stylów Pól Tekstowych (Input / Textarea) */}
         {['input', 'textarea'].includes(b.type) && (
           <div className="w-full h-full text-inherit pointer-events-none z-10 relative flex" style={{ alignItems: b.styles.alignItems || 'center' }}>
             {b.text}
@@ -228,6 +231,7 @@ export default function CanvasBlock({
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                        parentId={b.id} parentActive={isActive} interaction={interaction}
                        draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                       hiddenBlocks={hiddenBlocks} // Przekazujemy tablicę dalej w dół drzewa!
                      />
                    );
                 })}
