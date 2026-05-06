@@ -347,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.99 GAMING MODE! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.99 THE REACTOR CORE! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -483,20 +483,20 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
 
-  // FIX V18.99: TOKSYCZNE NEONY (CITRIX / RAZER VIBE)
+  // FIX V18.99: PEŁNE DANE KATEGORII (Cienie i Neony do wstrzyknięcia)
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T', color: '#ff4500', glowClass: 'neon-orange' }, 
-    { id: 'obraz', label: 'Obraz', icon: '🖼️', color: '#00e5ff', glowClass: 'neon-cyan' }, 
-    { id: 'przycisk', label: 'Przycisk', icon: '👆', color: '#ff0055', glowClass: 'neon-red' }, 
-    { id: 'grafika', label: 'Grafika', icon: '⭐', color: '#ffea00', glowClass: 'neon-yellow' }, 
-    { id: 'pola', label: 'Pola', icon: '📦', color: '#00ff66', glowClass: 'neon-green' }, 
-    { id: 'wideo', label: 'Wideo', icon: '▶️', color: '#ff00aa', glowClass: 'neon-pink' }, 
-    { id: 'formularze', label: 'Formularze', icon: '📝', color: '#ff4500', glowClass: 'neon-orange' }, 
-    { id: 'menu', label: 'Menu', icon: '☰', color: '#7b61ff', glowClass: 'neon-purple' }, 
-    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟', color: '#00e5ff', glowClass: 'neon-cyan' }, 
-    { id: 'lista', label: 'Lista', icon: '📋', color: '#00ff66', glowClass: 'neon-green' }, 
-    { id: 'social', label: 'Social Media', icon: '❤️', color: '#ff0055', glowClass: 'neon-red' }, 
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗', color: '#a0a0b0', glowClass: 'neon-gray' }
+    { id: 'tekst', label: 'Tekst', icon: 'T', color: '#ff4500', glowClass: 'neon-orange', shadowColor: 'rgba(255,69,0,0.5)' }, 
+    { id: 'obraz', label: 'Obraz', icon: '🖼️', color: '#00e5ff', glowClass: 'neon-cyan', shadowColor: 'rgba(0,229,255,0.5)' }, 
+    { id: 'przycisk', label: 'Przycisk', icon: '👆', color: '#ff0055', glowClass: 'neon-red', shadowColor: 'rgba(255,0,85,0.5)' }, 
+    { id: 'grafika', label: 'Grafika', icon: '⭐', color: '#ffea00', glowClass: 'neon-yellow', shadowColor: 'rgba(255,234,0,0.5)' }, 
+    { id: 'pola', label: 'Pola', icon: '📦', color: '#00ff66', glowClass: 'neon-green', shadowColor: 'rgba(0,255,102,0.5)' }, 
+    { id: 'wideo', label: 'Wideo', icon: '▶️', color: '#ff00aa', glowClass: 'neon-pink', shadowColor: 'rgba(255,0,170,0.5)' }, 
+    { id: 'formularze', label: 'Formularze', icon: '📝', color: '#ff4500', glowClass: 'neon-orange', shadowColor: 'rgba(255,69,0,0.5)' }, 
+    { id: 'menu', label: 'Menu', icon: '☰', color: '#7b61ff', glowClass: 'neon-purple', shadowColor: 'rgba(123,97,255,0.5)' }, 
+    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟', color: '#00e5ff', glowClass: 'neon-cyan', shadowColor: 'rgba(0,229,255,0.5)' }, 
+    { id: 'lista', label: 'Lista', icon: '📋', color: '#00ff66', glowClass: 'neon-green', shadowColor: 'rgba(0,255,102,0.5)' }, 
+    { id: 'social', label: 'Social Media', icon: '❤️', color: '#ff0055', glowClass: 'neon-red', shadowColor: 'rgba(255,0,85,0.5)' }, 
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗', color: '#a0a0b0', glowClass: 'neon-gray', shadowColor: 'rgba(160,160,176,0.5)' }
   ];
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
@@ -530,10 +530,10 @@ export default function Home() {
   const activeCategoryData = categories.find(c => c.id === addCategory);
 
   return (
-    // FIX V18.99: GAMING MODE (Razer / Citrix Terminal Vibe)
+    // THE REACTOR CORE UI
     <div className="flex h-screen w-screen bg-[#070709] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30">
       
-      {/* DEFINICJE NEONÓW I ODDYCHANIA (BREATHING GLOW) */}
+      {/* MAGIA CSS: Wstrzykujemy brutalne style nadpisujące wszystkie klocki w bocznym menu */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes breathe-orange { 0%, 100% { box-shadow: 0 0 10px rgba(255,69,0,0.4), inset 0 0 5px rgba(255,69,0,0.2); border-color: rgba(255,69,0,0.5); } 50% { box-shadow: 0 0 25px rgba(255,69,0,0.8), inset 0 0 15px rgba(255,69,0,0.4); border-color: rgba(255,69,0,1); } }
         @keyframes breathe-cyan { 0%, 100% { box-shadow: 0 0 10px rgba(0,229,255,0.4), inset 0 0 5px rgba(0,229,255,0.2); border-color: rgba(0,229,255,0.5); } 50% { box-shadow: 0 0 25px rgba(0,229,255,0.8), inset 0 0 15px rgba(0,229,255,0.4); border-color: rgba(0,229,255,1); } }
@@ -553,12 +553,79 @@ export default function Home() {
         .neon-purple { animation: breathe-purple 2s infinite ease-in-out; color: #fff; background: rgba(123,97,255,0.1); }
         .neon-gray { animation: breathe-gray 2s infinite ease-in-out; color: #fff; background: rgba(160,160,176,0.1); }
         
-        .cyber-panel { background: #111116; border: 1px solid rgba(255,255,255,0.05); }
+        .cyber-panel { background: #111115; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* THE CHAMELEON HACK - Bezpośrednie włamanie do komponentów kart! */
+        .cyber-inner-options > div > div, 
+        .cyber-inner-options > div > button,
+        .cyber-inner-options button {
+           background: linear-gradient(145deg, rgba(25,25,30,0.95) 0%, rgba(10,10,15,0.98) 100%) !important;
+           border: 1px solid rgba(255, 255, 255, 0.08) !important;
+           border-radius: 12px !important;
+           transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+           position: relative !important;
+           overflow: hidden !important;
+           box-shadow: 0 4px 10px rgba(0,0,0,0.6) !important;
+        }
+
+        .cyber-inner-options > div > div:hover, 
+        .cyber-inner-options > div > button:hover,
+        .cyber-inner-options button:hover {
+           border-color: var(--theme-color) !important;
+           box-shadow: 0 0 25px var(--theme-shadow), inset 0 0 15px var(--theme-shadow), 0 10px 20px rgba(0,0,0,0.9) !important;
+           transform: translateY(-5px) scale(1.03) !important;
+           background: linear-gradient(145deg, rgba(35,35,45,1) 0%, rgba(15,15,20,1) 100%) !important;
+           z-index: 20 !important;
+        }
+
+        /* Błysk skanera przez kraty (Laser sweep) */
+        .cyber-inner-options > div > div::before, 
+        .cyber-inner-options > div > button::before,
+        .cyber-inner-options button::before {
+           content: '';
+           position: absolute;
+           top: 0; left: -100%; width: 50%; height: 100%;
+           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+           transform: skewX(-20deg);
+           transition: 0s;
+        }
+
+        .cyber-inner-options > div > div:hover::before, 
+        .cyber-inner-options > div > button:hover::before,
+        .cyber-inner-options button:hover::before {
+           left: 200%;
+           transition: 0.6s ease-in-out;
+        }
+
+        /* Podbicie tekstu w kartach na hover */
+        .cyber-inner-options > div > div:hover *,
+        .cyber-inner-options > div > button:hover *,
+        .cyber-inner-options button:hover * {
+           color: #ffffff !important;
+           text-shadow: 0 0 8px var(--theme-color);
+        }
+
+        /* Global Background Scanner */
+        .cyber-bg-scanner {
+           position: absolute;
+           top: -100%; left: 0; right: 0; height: 2px;
+           background: var(--theme-color);
+           box-shadow: 0 0 30px var(--theme-color), 0 0 60px var(--theme-color);
+           animation: scan-line 4s linear infinite;
+           opacity: 0.8;
+           z-index: 1;
+        }
+        @keyframes scan-line {
+           0% { top: -10%; opacity: 0; }
+           10% { opacity: 0.8; }
+           90% { opacity: 0.8; }
+           100% { top: 110%; opacity: 0; }
+        }
       `}} />
 
       <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
       
-      {/* Tło rdzenia */}
+      {/* Oddychający Rdzeń Tła (Pulsing Core) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] bg-[#ff4500]/5 blur-[200px] rounded-full pointer-events-none z-0"></div>
 
       {/* LEWY PASEK TERMINALA */}
@@ -581,7 +648,7 @@ export default function Home() {
         
         <div className="w-8 h-px bg-white/5 my-1 z-10"></div>
         
-        {/* KATEGORIE - PULSUJĄCE NEONY */}
+        {/* KATEGORIE - PULSUJĄCE NEONY Z HOVER OTWARTYM */}
         {categories.map(cat => {
           const isActive = addCategory === cat.id;
           return (
@@ -590,7 +657,7 @@ export default function Home() {
               onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
               onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
               title={cat.label}
-              className={`relative w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-300 z-10 ${isActive ? `${cat.glowClass} scale-110` : 'bg-[#1a1a20] border border-white/5 text-neutral-500 hover:bg-white/5 hover:text-white'}`}
+              className={`relative w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-300 z-10 ${isActive ? `${cat.glowClass} scale-110` : 'bg-[#1a1a20] border border-white/5 text-neutral-500 hover:bg-white/5 hover:text-white hover:scale-105'}`}
             >
               {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px] drop-shadow-md">T</span> : <span className="drop-shadow-md">{cat.icon}</span>}
             </button>
@@ -602,7 +669,7 @@ export default function Home() {
         
         {/* PANEL STRON */}
         {leftTab === 'pages' && (
-          <div className="cyber-panel w-64 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-left-4 relative border-r border-[#ff4500]/30">
+          <div className="cyber-panel w-64 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-left-4 relative border-r border-[#ff4500]/30 overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ff4500] shadow-[0_0_10px_#ff4500]"></div>
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
               <h2 className="font-bold text-[11px] uppercase tracking-widest text-[#ff4500] drop-shadow-[0_0_5px_rgba(255,69,0,0.8)]">Zarządzanie Stronami</h2>
@@ -620,7 +687,7 @@ export default function Home() {
         
         {/* PANEL WARSTW */}
         {leftTab === 'layers' && (
-          <div className="cyber-panel w-64 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-left-4 relative border-r border-[#00e5ff]/30">
+          <div className="cyber-panel w-64 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-left-4 relative border-r border-[#00e5ff]/30 overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-[#00e5ff] shadow-[0_0_10px_#00e5ff]"></div>
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
               <h2 className="font-bold text-[11px] uppercase tracking-widest text-[#00e5ff] drop-shadow-[0_0_5px_rgba(0,229,255,0.8)]">Nawigator DOM</h2>
@@ -630,22 +697,36 @@ export default function Home() {
           </div>
         )}
 
-        {/* PANELE KATEGORII (TERMINAL STYLE) */}
+        {/* PANELE KATEGORII (DYNAMIC CHAMELEON MODE) */}
         {addCategory && activeCategoryData && (
-          <div className="cyber-panel w-[340px] h-full shadow-[40px_0_60px_rgba(0,0,0,0.9)] z-30 flex flex-col animate-in slide-in-from-left-4 relative" style={{ borderRightColor: `${activeCategoryData.color}40` }}>
+          <div 
+            className="cyber-panel w-[340px] h-full shadow-[40px_0_60px_rgba(0,0,0,0.9)] z-30 flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden" 
+            style={{ 
+              borderRightColor: `${activeCategoryData.color}50`,
+              '--theme-color': activeCategoryData.color,
+              '--theme-shadow': activeCategoryData.shadowColor
+            } as React.CSSProperties}
+          >
+            
+            {/* Animowany Skaner Tła */}
+            <div className="cyber-bg-scanner pointer-events-none"></div>
+
+            {/* Subtelna Kratka Tła */}
+            <div className="absolute inset-0 z-0 opacity-[0.05]" style={{ backgroundImage: `radial-gradient(${activeCategoryData.color} 1px, transparent 1px)`, backgroundSize: '16px 16px' }}></div>
             
             {/* Ostra linia góry (Laser Edge) */}
-            <div className={`absolute top-0 left-0 w-full h-[2px]`} style={{ backgroundColor: activeCategoryData.color, boxShadow: `0 0 10px ${activeCategoryData.color}` }}></div>
+            <div className={`absolute top-0 left-0 w-full h-[2px]`} style={{ backgroundColor: activeCategoryData.color, boxShadow: `0 0 20px ${activeCategoryData.color}` }}></div>
             
-            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10 bg-[#16161a]">
-              <h3 className="text-[12px] font-bold uppercase tracking-widest flex items-center gap-3" style={{ color: activeCategoryData.color, textShadow: `0 0 10px ${activeCategoryData.color}` }}>
-                <span className="text-xl opacity-90">{activeCategoryData.icon}</span>
+            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10 bg-[#111115]/90 backdrop-blur-md">
+              <h3 className="text-[12px] font-bold uppercase tracking-widest flex items-center gap-3" style={{ color: activeCategoryData.color, textShadow: `0 0 15px ${activeCategoryData.color}` }}>
+                <span className="text-xl opacity-90 drop-shadow-lg">{activeCategoryData.icon}</span>
                 {activeCategoryData.label}
               </h3>
               <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none transition-colors">✕</button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide relative z-10">
+            {/* Wnętrze z HAKOWANYM CSS (Zupełnie odmienione opcje!) */}
+            <div className="cyber-inner-options flex-1 overflow-y-auto p-5 flex flex-col gap-3 scrollbar-hide relative z-10 pb-20">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
