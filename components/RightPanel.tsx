@@ -1,5 +1,6 @@
 import React from 'react';
 import LayoutTab from './right-panels/LayoutTab';
+import DesignTab from './right-panels/DesignTab';
 
 interface RightPanelProps {
   activeBlock: any;
@@ -12,7 +13,6 @@ interface RightPanelProps {
 
 export default function RightPanel({ activeBlock, rightTab, setRightTab, updateActiveBlock, removeActiveBlock, setIsMediaManagerOpen }: RightPanelProps) {
   
-  // Jeśli żaden klocek nie jest zaznaczony, pokazujemy ekran powitalny
   if (!activeBlock) return (
     <aside className="w-80 bg-[#09090b] border-l border-white/5 h-full flex flex-col items-center justify-center text-neutral-500 shadow-2xl z-40">
       <span className="text-4xl mb-3 opacity-20">🎯</span>
@@ -56,12 +56,8 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
       <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
          {rightTab === 'layout' && <LayoutTab activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}
          
-         {rightTab === 'design' && (
-           <div className="p-6 text-center text-neutral-500 flex flex-col items-center gap-3">
-             <span className="text-3xl">🎨</span>
-             <p className="text-xs">Zaraz tu wejdziemy z buta. Zakładka Wygląd czeka na wdrożenie.</p>
-           </div>
-         )}
+         {/* FIX V18.70: Podpięcie nowego modułu Wyglądu */}
+         {rightTab === 'design' && <DesignTab activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}
          
          {rightTab === 'text' && (
            <div className="p-6 text-center text-neutral-500 flex flex-col items-center gap-3">
@@ -73,7 +69,7 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
          {rightTab === 'effects' && (
            <div className="p-6 text-center text-neutral-500 flex flex-col items-center gap-3">
              <span className="text-3xl">✨</span>
-             <p className="text-xs">Cienie, Blur, Opacity i animacje najazdu (Hover).</p>
+             <p className="text-xs">Animacje najazdu (Hover) i zaawansowane filtry w drodze.</p>
            </div>
          )}
       </div>
