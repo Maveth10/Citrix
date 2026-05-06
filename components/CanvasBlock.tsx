@@ -142,15 +142,21 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // FIX V18.65: WYMUSZAMY AKTYWACJĘ! Najpierw kliknij, potem przeciągaj. Koniec z puszczaniem z rąk.
-        draggable={isActive && !isEditing && !isAbsolute}
+        // FIX V18.66: Zawsze draggable (chyba że edytujesz tekst lub jest Absolute)
+        draggable={!isEditing && !isAbsolute}
         
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          if (setDraggedId) setDraggedId(b.id); 
-          // Payload konieczny żeby Chrome/Safari nie anulowały Drag&Drop
+          // Natywny payload (wymagany, żeby przeglądarka nie przerwała rzutu)
           e.dataTransfer.setData('text/plain', b.id.toString());
           e.dataTransfer.effectAllowed = 'move';
+          
+          // MAGIC FIX: Przesuwamy zmianę stanu Reacta na koniec kolejki.
+          // Przeglądarka ma czas złapać "Ghosta", a my zmieniamy state ułamek sekundy później.
+          setTimeout(() => {
+            if (activeId !== b.id) setActiveId(b.id);
+            if (setDraggedId) setDraggedId(b.id); 
+          }, 0);
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
