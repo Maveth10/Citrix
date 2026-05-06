@@ -218,38 +218,52 @@ export default function Home() {
   };
 
   // =========================================================================
-  // FIX V18.61: RZEŹNIK LINIOWY (THE BUTCHER CLEANUP)
+  // FIX V18.62: TOTALNA RZEŹ LINIOWA (BUTCHER'S ROW SCANNER)
   // =========================================================================
   const cleanupRows = (arr: Block[]): Block[] => {
-    const res = [...arr];
-    for (let i = 0; i < res.length; i++) {
-      let block = res[i];
-      const isLast = i === res.length - 1;
-      const prevClear = i === 0 || res[i - 1].styles.clearRow !== false;
-      let currentClear = block.styles.clearRow !== false;
-      let currentWidth = block.styles.width || '100%';
+    let rows: Block[][] = [];
+    let currentRow: Block[] = [];
 
-      let needsUpdate = false;
-      let newStyles = { ...block.styles };
-
-      // 1. Ostatni musi bezwzględnie zamykać wiersz
-      if (isLast && !currentClear) {
-        newStyles.clearRow = true;
-        currentClear = true;
-        needsUpdate = true;
-      }
-
-      // 2. Jeśli został sam jak palec i jest zwężony (48%) -> rozciągnij go
-      if (prevClear && currentClear && ['48%', '40%', '50%'].includes(currentWidth)) {
-        newStyles.width = '100%';
-        needsUpdate = true;
-      }
-
-      if (needsUpdate) {
-        res[i] = { ...block, styles: newStyles };
+    // Krok 1: Tniemy tablicę na rzędy. Jeśli klocek zamyka linię - kończymy wiersz.
+    for (let b of arr) {
+      currentRow.push(b);
+      if (b.styles.clearRow !== false) {
+        rows.push(currentRow);
+        currentRow = [];
       }
     }
-    return res;
+    // Jeśli zostały jakieś resztki (ostatni klocek miał clearRow: false), wymuszamy zamknięcie
+    if (currentRow.length > 0) {
+      const lastIdx = currentRow.length - 1;
+      currentRow[lastIdx] = {
+        ...currentRow[lastIdx],
+        styles: { ...currentRow[lastIdx].styles, clearRow: true }
+      };
+      rows.push(currentRow);
+    }
+
+    // Krok 2: Analizujemy każdy rykoszet
+    const processedRows = rows.map(row => {
+      // Jeśli w rzędzie został SAM JEDEN CHOLERNY KLOCEK
+      if (row.length === 1) {
+        const single = row[0];
+        const w = single.styles.width;
+        // Jeśli jest ściśnięty, bo kiedyś miał tu sąsiada - przywróć mu chwałę (100%)
+        if (['48%', '40%', '50%'].includes(w)) {
+          return [{ ...single, styles: { ...single.styles, clearRow: true, width: '100%' } }];
+        }
+        // W przeciwnym razie tylko się upewnij, że zamyka rząd
+        return [{ ...single, styles: { ...single.styles, clearRow: true } }];
+      }
+      
+      // Jeśli sąsiadów jest więcej, tylko ostatni ma prawo zamknąć linię
+      return row.map((b, i) => ({
+        ...b,
+        styles: { ...b.styles, clearRow: i === row.length - 1 }
+      }));
+    });
+
+    return processedRows.flat();
   };
 
   const removeActiveBlock = () => {
@@ -264,7 +278,7 @@ export default function Home() {
           }
           const newArr = [...arr];
           newArr.splice(index, 1);
-          return cleanupRows(newArr); // Oi! Sprzątamy!
+          return cleanupRows(newArr); // Skuteczna rzeź
         }
         return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
       };
@@ -279,7 +293,7 @@ export default function Home() {
     setBlocks(prevBlocks => {
       const sourceBlockNode = findBlockById(prevBlocks, sourceId);
       
-      // ANTI-BLACKHOLE PROTOCOL: Zabezpieczenie przed wrzuceniem rodzica do dziecka
+      // Anti-Blackhole: nie rzucaj klocka w jego własne dziecko!
       if (sourceBlockNode && checkIsChild(sourceBlockNode, targetId)) {
          return prevBlocks; 
       }
@@ -292,7 +306,7 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          return cleanupRows(newArr); // Oi! Sprzątamy linię po wyciągniętym klocku!
+          return cleanupRows(newArr); // Rzeź po wyciągnięciu!
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
@@ -307,19 +321,22 @@ export default function Home() {
             const newArr = [...arr];
             let targetWidth = newArr[index].styles.width;
             if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; 
+            
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false, width: targetWidth } };
             
             let safeWidth = sourceBlock!.styles.width;
             if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; 
             
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
-            return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
+            const mergedArr = [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
+            return cleanupRows(mergedArr); // Ostateczna weryfikacja
           } else {
             let restoredWidth = sourceBlock!.styles.width;
             if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
             
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
-            return [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
+            const mergedArr = [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
+            return cleanupRows(mergedArr);
           }
         }
         return arr.map(b => ({ ...b, children: b.children ? insertBlock(b.children) : undefined }));
@@ -331,7 +348,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.61! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.62! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
