@@ -217,22 +217,17 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
-  // =========================================================================
-  // FIX V18.68: THE BUTCHER PROTOCOL - BATON PASS & ROW SCANNER
-  // =========================================================================
   const cleanupRows = (arr: Block[]): Block[] => {
     let rows: Block[][] = [];
     let currentRow: Block[] = [];
 
     for (let b of arr) {
       currentRow.push(b);
-      // Jak element blokuje linię, zamykamy rząd
       if (b.styles.clearRow !== false) {
         rows.push(currentRow);
         currentRow = [];
       }
     }
-    // Awaryjne zamknięcie, jak ktoś na końcu nie ma flagi
     if (currentRow.length > 0) {
       const lastIdx = currentRow.length - 1;
       currentRow[lastIdx] = { ...currentRow[lastIdx], styles: { ...currentRow[lastIdx].styles, clearRow: true } };
@@ -240,15 +235,12 @@ export default function Home() {
     }
 
     const processedRows = rows.map(row => {
-      // Jeśli w rzędzie został SAM JEDEN element!
       if (row.length === 1) {
         const single = row[0];
         const w = single.styles.width;
-        // Wymuszamy 100% jeśli był ściśnięty z kumplem, którego już nie ma
         if (['48%', '40%', '50%'].includes(w)) {
           return [{ ...single, styles: { ...single.styles, clearRow: true, width: '100%' } }];
         }
-        // Bezwzględnie blokujemy linię
         return [{ ...single, styles: { ...single.styles, clearRow: true } }];
       }
       return row.map((b, i) => ({ ...b, styles: { ...b.styles, clearRow: i === row.length - 1 } }));
@@ -271,8 +263,6 @@ export default function Home() {
           const newArr = [...arr];
           newArr.splice(index, 1);
           
-          // PRZEKAZANIE PAŁECZKI (Baton Pass):
-          // Usunęliśmy element zamykający linię. Jego sąsiad z lewej (który ją otwierał) musi ją teraz zamykać.
           if (index > 0 && removedBlock.styles.clearRow !== false && newArr[index - 1].styles.clearRow === false) {
              newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
           }
@@ -304,7 +294,6 @@ export default function Home() {
           const newArr = [...arr];
           newArr.splice(index, 1);
           
-          // PRZEKAZANIE PAŁECZKI (Baton Pass) przy wyciąganiu B z [A B]
           if (index > 0 && sourceBlock.styles.clearRow !== false && newArr[index - 1].styles.clearRow === false) {
              newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
           }
@@ -358,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.68! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.69! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -423,7 +412,56 @@ export default function Home() {
         updateActiveBlock({ styles: updates }, true);
       }
     };
-    const handleMouseUp = () => setInteraction(null);
+
+    // FIX V18.69: OVERLOAD SCANNER uruchamiany przy puszczeniu myszki po rozciąganiu (Resize)
+    const handleMouseUp = () => {
+      if (interaction && interaction.type === 'resize') {
+        setInternalBlocks(prevBlocks => {
+          const sanitizeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
+            if (parentIsGrid) return arr.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, true) : undefined }));
+            
+            let res = [...arr];
+            let currentRowWidth = 0;
+            let rowStartIndex = 0;
+
+            for (let i = 0; i < res.length; i++) {
+              const block = res[i];
+              const wStr = block.styles.width || '100%';
+              let w = 100;
+              if (typeof wStr === 'string' && wStr.endsWith('%')) w = parseFloat(wStr) || 100;
+              
+              // Jeśli łączna szerokość rzędu przekracza dopuszczalny błąd matematyczny (102%)
+              if (currentRowWidth + w > 102 && i > rowStartIndex) {
+                // Brutalnie opuszczamy szlaban dla poprzedniego klocka w rzędzie! (Lock the row)
+                res[i - 1] = { ...res[i - 1], styles: { ...res[i - 1].styles, clearRow: true } };
+                // Ten element z racji ucięcia zaczyna nową linię w analizatorze
+                currentRowWidth = w;
+                rowStartIndex = i;
+              } else {
+                currentRowWidth += w;
+              }
+              
+              // Jeśli element i tak zamyka linię
+              if (res[i].styles.clearRow !== false) {
+                currentRowWidth = 0;
+                rowStartIndex = i + 1;
+              }
+            }
+            
+            // Ostatni element bezwzględnie musi zamknąć linię
+            if (res.length > 0 && res[res.length - 1].styles.clearRow === false) {
+              res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
+            }
+
+            return res.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, b.styles.display === 'grid') : undefined }));
+          };
+          
+          return sanitizeRecursive(prevBlocks);
+        });
+      }
+      setInteraction(null);
+    };
+
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport]);
