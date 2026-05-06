@@ -217,17 +217,22 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
+  // =========================================================================
+  // FIX V18.68: THE BUTCHER PROTOCOL - BATON PASS & ROW SCANNER
+  // =========================================================================
   const cleanupRows = (arr: Block[]): Block[] => {
     let rows: Block[][] = [];
     let currentRow: Block[] = [];
 
     for (let b of arr) {
       currentRow.push(b);
+      // Jak element blokuje linię, zamykamy rząd
       if (b.styles.clearRow !== false) {
         rows.push(currentRow);
         currentRow = [];
       }
     }
+    // Awaryjne zamknięcie, jak ktoś na końcu nie ma flagi
     if (currentRow.length > 0) {
       const lastIdx = currentRow.length - 1;
       currentRow[lastIdx] = { ...currentRow[lastIdx], styles: { ...currentRow[lastIdx].styles, clearRow: true } };
@@ -235,12 +240,15 @@ export default function Home() {
     }
 
     const processedRows = rows.map(row => {
+      // Jeśli w rzędzie został SAM JEDEN element!
       if (row.length === 1) {
         const single = row[0];
         const w = single.styles.width;
+        // Wymuszamy 100% jeśli był ściśnięty z kumplem, którego już nie ma
         if (['48%', '40%', '50%'].includes(w)) {
           return [{ ...single, styles: { ...single.styles, clearRow: true, width: '100%' } }];
         }
+        // Bezwzględnie blokujemy linię
         return [{ ...single, styles: { ...single.styles, clearRow: true } }];
       }
       return row.map((b, i) => ({ ...b, styles: { ...b.styles, clearRow: i === row.length - 1 } }));
@@ -259,8 +267,16 @@ export default function Home() {
             newArr[index] = createBlock('container', 'empty', 'Puste Pole');
             return newArr;
           }
+          const removedBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
+          
+          // PRZEKAZANIE PAŁECZKI (Baton Pass):
+          // Usunęliśmy element zamykający linię. Jego sąsiad z lewej (który ją otwierał) musi ją teraz zamykać.
+          if (index > 0 && removedBlock.styles.clearRow !== false && newArr[index - 1].styles.clearRow === false) {
+             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
+          }
+          
           return cleanupRows(newArr);
         }
         return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
@@ -270,13 +286,11 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  // FIX V18.65: Rzucanie na dół strony
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' | 'bottom' = 'before') => {
     if (sourceId === targetId) return;
     
     setBlocks(prevBlocks => {
       const sourceBlockNode = findBlockById(prevBlocks, sourceId);
-      
       if (sourceBlockNode && targetId !== -1 && checkIsChild(sourceBlockNode, targetId)) {
          return prevBlocks; 
       }
@@ -289,6 +303,12 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
+          
+          // PRZEKAZANIE PAŁECZKI (Baton Pass) przy wyciąganiu B z [A B]
+          if (index > 0 && sourceBlock.styles.clearRow !== false && newArr[index - 1].styles.clearRow === false) {
+             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
+          }
+          
           return cleanupRows(newArr);
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
@@ -297,7 +317,6 @@ export default function Home() {
       let intermediate = removeSource(prevBlocks);
       if (!sourceBlock) return prevBlocks;
 
-      // Zrzut na dół strony!
       if (dropType === 'bottom') {
          let restoredWidth = sourceBlock!.styles.width;
          if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
@@ -339,7 +358,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.65! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.68! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -572,7 +591,6 @@ export default function Home() {
                 );
              })}
 
-             {/* FIX V18.65: Strefa rzutu na dole strony */}
              <div 
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggedId && handleDrop) handleDrop(draggedId, -1, 'bottom'); if(setDraggedId) setDraggedId(null); }}
