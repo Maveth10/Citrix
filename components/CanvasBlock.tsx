@@ -25,6 +25,7 @@ export default function CanvasBlock({
   draggedId, setDraggedId, handleDrop, hiddenBlocks = []
 }: CanvasBlockProps) {
   
+  // FIX: Ukrywanie elementów w edytorze
   if (hiddenBlocks.includes(b.id)) return null;
 
   const isActive = activeId === b.id;
@@ -142,21 +143,20 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // FIX V18.66: Zawsze draggable (chyba że edytujesz tekst lub jest Absolute)
-        draggable={!isEditing && !isAbsolute}
-        
+        // TWARDY ROLLBACK DO WERSJI Z FORMULARZY
+        draggable={isActive && !isEditing && !isAbsolute}
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          // Natywny payload (wymagany, żeby przeglądarka nie przerwała rzutu)
-          e.dataTransfer.setData('text/plain', b.id.toString());
-          e.dataTransfer.effectAllowed = 'move';
+          if (setDraggedId) setDraggedId(b.id); 
           
-          // MAGIC FIX: Przesuwamy zmianę stanu Reacta na koniec kolejki.
-          // Przeglądarka ma czas złapać "Ghosta", a my zmieniamy state ułamek sekundy później.
-          setTimeout(() => {
-            if (activeId !== b.id) setActiveId(b.id);
-            if (setDraggedId) setDraggedId(b.id); 
-          }, 0);
+          const dragGhost = document.createElement('div');
+          dragGhost.id = 'drag-ghost';
+          dragGhost.textContent = `⠿ Przenosisz: ${b.name}`;
+          dragGhost.style.cssText = 'background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; position: absolute; top: -1000px; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-family: sans-serif; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);';
+          document.body.appendChild(dragGhost);
+          e.dataTransfer.setDragImage(dragGhost, 15, 15);
+          
+          setTimeout(() => { if (document.body.contains(dragGhost)) document.body.removeChild(dragGhost); }, 0);
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
