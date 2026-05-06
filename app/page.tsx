@@ -557,14 +557,15 @@ export default function Home() {
         .cyber-panel { background: #111115; border: 1px solid rgba(255,255,255,0.05); }
 
         .cyber-bg-scanner {
-           position: absolute;
-           top: -100%; left: 0; right: 0; height: 2px;
-           background: var(--theme-color);
-           box-shadow: 0 0 30px var(--theme-color), 0 0 60px var(--theme-color);
-           animation: scan-line 4s linear infinite;
-           opacity: 0.8;
-           z-index: 1;
-        }
+          position: absolute;
+          top: -100%; left: 0; right: 0; 
+          height: 4px; /* Pogrubione */
+          background: var(--theme-color);
+          box-shadow: 0 0 40px 10px var(--theme-color), 0 0 80px 20px var(--theme-color); /* Mocniejsza poświata */
+          animation: scan-line 4s linear infinite;
+          opacity: 0.9;
+          z-index: 1;
+       }
         @keyframes scan-line {
            0% { top: -10%; opacity: 0; }
            10% { opacity: 0.8; }
