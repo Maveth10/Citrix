@@ -73,7 +73,6 @@ export default function Home() {
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
 
-  // FIX V18.55: Tablica przechowująca ID ukrytych klocków (do popupów)
   const [hiddenBlocks, setHiddenBlocks] = useState<number[]>([]);
 
   const toggleBlockVisibility = (e: React.MouseEvent, id: number) => {
@@ -212,6 +211,7 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
+  // FIX V18.56: Uszczelnione usuwanie bloków (przywracanie clearRow dla sąsiadów)
   const removeActiveBlock = () => {
     setBlocks(prev => {
       const removeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
@@ -225,7 +225,8 @@ export default function Home() {
           const removedBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          if (index > 0 && removedBlock.styles.clearRow) {
+          // Jeśli usuwany element zamykał wiersz, przekaż ten obowiązek poprzednikowi
+          if (index > 0 && removedBlock.styles.clearRow !== false) {
              newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
           }
           return newArr;
@@ -237,6 +238,7 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
+  // FIX V18.56: Uszczelnione upuszczanie (Drop) i obsługa clearRow
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
     setBlocks(prevBlocks => {
@@ -248,7 +250,8 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          if (index > 0 && sourceBlock.styles.clearRow) {
+          // Gdy wyciągamy klocek, który zamykał linię, oddajemy tę własność sąsiadowi po lewej!
+          if (index > 0 && sourceBlock.styles.clearRow !== false) {
              newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
           }
           return newArr;
@@ -264,13 +267,16 @@ export default function Home() {
         if (index > -1) {
           if (dropType === 'inline') {
             const newArr = [...arr];
+            // Cel przestaje zamykać wiersz
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false } };
             let safeWidth = sourceBlock!.styles.width;
             if (safeWidth === '100%') safeWidth = '40%';
+            // Upuszczany klocek zaczyna zamykać wiersz
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset' } };
+            // Normalne upuszczenie: klocek POWRACA do zajmowania linii
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true } };
             return [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
           }
         }
@@ -282,7 +288,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.55! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.56! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -390,7 +396,6 @@ export default function Home() {
     { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
   ];
 
-  // FIX V18.55: Renderowanie drzewka warstw z ikonką oczka
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">

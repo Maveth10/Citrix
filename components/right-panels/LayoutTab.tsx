@@ -4,7 +4,7 @@ export default function LayoutTab({ activeBlock, updateActiveBlock }: any) {
   if (!activeBlock) return null;
   const { styles } = activeBlock;
 
-  const handleStyleChange = (key: string, value: string) => {
+  const handleStyleChange = (key: string, value: any) => {
     updateActiveBlock({ styles: { [key]: value } });
   };
 
@@ -68,6 +68,20 @@ export default function LayoutTab({ activeBlock, updateActiveBlock }: any) {
              <span className="text-[10px] text-neutral-400 block mb-1 font-semibold">Wysokość (H)</span>
              <input type="text" value={styles.height || 'auto'} onChange={(e) => handleStyleChange('height', e.target.value)} className="w-full bg-[#1c1c21] border border-white/10 text-white text-[11px] p-2 rounded-lg focus:border-blue-500 outline-none" />
            </div>
+         </div>
+
+         {/* FIX V18.56: MANUALNA KONTROLA CLEAR ROW */}
+         <div className="flex justify-between items-center p-3 bg-black/20 rounded-xl border border-white/5 mt-3">
+            <div>
+              <span className="text-[11px] text-neutral-200 font-bold block">Blokuj Linię (Clear Row)</span>
+              <span className="text-[9px] text-neutral-500 block">Łamie wiersz i zrzuca inne elementy w dół.</span>
+            </div>
+            <button 
+              onClick={() => handleStyleChange('clearRow', styles.clearRow === false ? true : false)} 
+              className={`w-10 h-6 rounded-full relative transition-colors border border-white/10 ${styles.clearRow !== false ? 'bg-blue-600' : 'bg-black/50'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full transition-transform ${styles.clearRow !== false ? 'left-5 bg-white' : 'left-1 bg-neutral-500'}`}></div>
+            </button>
          </div>
       </div>
 
