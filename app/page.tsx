@@ -212,8 +212,32 @@ export default function Home() {
   };
 
   // =========================================================================
-  // FIX V18.58: KULOODPORNE WYRYWANIE I USUWANIE KLOCKÓW Z LINII (BUTCHER EDITION)
+  // FIX V18.59: KULOODPORNY ANALIZATOR "CLEANUP ROWS"
   // =========================================================================
+  const cleanupRows = (arr: Block[]): Block[] => {
+    const res = [...arr];
+    for (let i = 0; i < res.length; i++) {
+      const isLast = i === res.length - 1;
+      let currentClear = res[i].styles.clearRow !== false;
+      
+      // Ostatni element bezwzględnie musi zamykać wiersz
+      if (isLast && !currentClear) {
+         res[i] = { ...res[i], styles: { ...res[i].styles, clearRow: true } };
+         currentClear = true;
+      }
+      
+      // Sprawdzamy czy blok jest "sierotą"
+      const prevClear = i === 0 || res[i - 1].styles.clearRow !== false;
+      if (prevClear && currentClear) {
+         const w = res[i].styles.width;
+         // Jeśli był ściśnięty, przywracamy mu 100%
+         if (w === '48%' || w === '40%' || w === '50%') {
+            res[i] = { ...res[i], styles: { ...res[i].styles, width: '100%' } };
+         }
+      }
+    }
+    return res;
+  };
 
   const removeActiveBlock = () => {
     setBlocks(prev => {
@@ -223,24 +247,11 @@ export default function Home() {
           if (parentIsGrid) {
             const newArr = [...arr];
             newArr[index] = createBlock('container', 'empty', 'Puste Pole');
-            return newArr;
+            return newArr; // Grid radzi sobie sam, nie ma clearRow
           }
-          const removedBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          
-          // Zwróć godność i przestrzeń sąsiadowi, z którym byliśmy w parze!
-          if (index > 0 && removedBlock.styles.clearRow !== false) {
-             const prevWidth = newArr[index - 1].styles.width;
-             // Odzyskaj pełną szerokość
-             const newWidth = (prevWidth === '48%' || prevWidth === '40%') ? '100%' : prevWidth;
-             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true, width: newWidth } };
-          }
-          // Ostatni element w tablicy MUSI blokować linię, inaczej wisi w próżni.
-          if (newArr.length > 0) {
-             newArr[newArr.length - 1] = { ...newArr[newArr.length - 1], styles: { ...newArr[newArr.length - 1].styles, clearRow: true } };
-          }
-          return newArr;
+          return cleanupRows(newArr); // Magia się dzieje tutaj
         }
         return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
       };
@@ -260,17 +271,7 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          
-          // Dokładnie ta sama logika zwrotu szerokości i zablokowania wiersza sąsiadowi!
-          if (index > 0 && sourceBlock.styles.clearRow !== false) {
-             const prevWidth = newArr[index - 1].styles.width;
-             const newWidth = (prevWidth === '48%' || prevWidth === '40%') ? '100%' : prevWidth;
-             newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true, width: newWidth } };
-          }
-          if (newArr.length > 0) {
-             newArr[newArr.length - 1] = { ...newArr[newArr.length - 1], styles: { ...newArr[newArr.length - 1].styles, clearRow: true } };
-          }
-          return newArr;
+          return cleanupRows(newArr); // Sprzątamy linię, z której wyrwano klocek
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
@@ -284,16 +285,15 @@ export default function Home() {
           if (dropType === 'inline') {
             const newArr = [...arr];
             let targetWidth = newArr[index].styles.width;
-            if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; // Zgnieć cel do połowy!
+            if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; 
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false, width: targetWidth } };
             
             let safeWidth = sourceBlock!.styles.width;
-            if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; // Zgnieć wstawiany element do połowy!
+            if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; 
             
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            // Normalne zrzucenie w puste miejsce - odzyskaj rozmiar!
             let restoredWidth = sourceBlock!.styles.width;
             if (restoredWidth === '48%' || restoredWidth === '40%') restoredWidth = '100%';
             
@@ -309,7 +309,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.58! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.59! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
