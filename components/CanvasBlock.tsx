@@ -142,20 +142,20 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // Klocek musi być zawsze chwytny, jeśli nie jesteśmy w trybie edycji tekstu!
-        draggable={!isEditing && !isAbsolute}
+        // FIX V18.67: Przeciąganie działa TYLKO GDY ZAZNACZYSZ KLOCEK (isActive). 
+        // Wtedy natywne przeglądarki nie kradną kliknięć!
+        draggable={isActive && !isEditing && !isAbsolute}
         
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          // Payload dla przeglądarki - absolutnie krytyczny!
+          // Payload dla przeglądarki (bez tego rzut zostaje anulowany)
           e.dataTransfer.setData('text/plain', b.id.toString());
           e.dataTransfer.effectAllowed = 'move';
           
-          // Odsunięcie w czasie pozwala przeglądarce zrobić "Ghosta" bez zakłóceń ze strony Reacta!
+          // Wyłączamy re-render w tej samej klatce, aby nie zgubić "Ghosta"
           setTimeout(() => {
-            if (activeId !== b.id) setActiveId(b.id);
             if (setDraggedId) setDraggedId(b.id); 
-          }, 50);
+          }, 10);
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
@@ -169,23 +169,23 @@ export default function CanvasBlock({
           if (setDraggedId) setDraggedId(null);
         }}
 
-        // Zaznaczanie po puszczeniu klawisza myszy - bezpieczne dla DOM!
-        onMouseUp={(e) => {
-          e.stopPropagation();
-          if (!isAbsolute && activeId !== b.id) {
-            setActiveId(b.id);
-            setIsEditing(false);
-          }
-        }}
-        
-        // Z onMouseDown WYJEBALIŚMY ZMIANĘ STANU (setActiveId)
+        onClick={(e) => { e.stopPropagation(); }} 
         onMouseDown={(e) => { 
           e.stopPropagation(); 
+          
+          // Natychmiastowe zaznaczenie (przywraca władzę nad klikaniem!)
+          if (activeId !== b.id) { 
+            // Drążenie: Najpierw rodzic, potem dziecko
+            if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) { 
+              setActiveId(parentId); setIsEditing(false); return; 
+            }
+            setActiveId(b.id); setIsEditing(false); 
+          } 
+          
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
           
-          // Zostawiamy tu tylko obsługę popupów (Absolute), bo one nie używają HTML5 Drag&Drop
+          // Obsługa absolutnych PopUpów (Figma style move)
           if (isAbsolute) {
-            if (activeId !== b.id) setActiveId(b.id);
             const el = document.getElementById(`block-${b.id}`);
             const currentLeft = el ? el.offsetLeft : 0; const currentTop = el ? el.offsetTop : 0;
             setInteraction({ type: 'drag', startX: e.pageX, startY: e.pageY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
