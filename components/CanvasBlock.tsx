@@ -142,16 +142,17 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // FIX V18.63: Odblokowujemy przeciąganie DLA WSZYSTKICH (nie tylko aktywnych)
         draggable={!isEditing && !isAbsolute}
         
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          // Natychmiastowa aktywacja podczas rzutu, żeby UI wiedziało kogo niesiesz
           if (activeId !== b.id) { setActiveId(b.id); }
           if (setDraggedId) setDraggedId(b.id); 
+          
+          // FIX V18.64: TEN JEDEN JEBANY KOD RATUJE PRZECIĄGANIE W PRZEGLĄDARKACH.
+          // Jeśli nie wrzucisz nic do dataTransfer, przeglądarka anuluje Drag&Drop zanim się zacznie!
+          e.dataTransfer.setData('text/plain', b.id.toString());
           e.dataTransfer.effectAllowed = 'move';
-          // Wyjebaliśmy customowego, psującego się ghosta. Działa natywnie.
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
