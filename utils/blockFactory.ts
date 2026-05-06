@@ -42,88 +42,110 @@ export const createBlock = (type: string, variant: string, label: string) => {
 
   // --- GRAFIKI, LICZNIKI, WYKRESY ---
   if (type === 'graphic') {
-    newBlock.styles.width = '100%';
-    newBlock.styles.padding = '0px';
-
+    newBlock.styles.width = '100%'; newBlock.styles.padding = '0px';
     if (variant === 'counter') {
-      newBlock.text = `
-        <style>
-          @property --num_${rnd} { syntax: "<integer>"; initial-value: 0; inherits: false; }
-          @keyframes count_${rnd} { to { --num_${rnd}: 24500; } }
-          .counter-anim-${rnd} { animation: count_${rnd} 2.5s cubic-bezier(0, 0.5, 0, 1) forwards; counter-reset: n_${rnd} var(--num_${rnd}); font-variant-numeric: tabular-nums; }
-          .counter-anim-${rnd}::after { content: counter(n_${rnd}) "+"; }
-        </style>
-        <div style="text-align: center; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;">
-          <div class="counter-anim-${rnd}" style="font-size: 56px; font-weight: 900; color: #f59e0b; line-height: 1;"></div>
-          <div style="font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 10px;">Sprzedanych Ładowarek EV</div>
-        </div>
-      `;
+      newBlock.text = `<style>@property --num_${rnd} { syntax: "<integer>"; initial-value: 0; inherits: false; } @keyframes count_${rnd} { to { --num_${rnd}: 24500; } } .counter-anim-${rnd} { animation: count_${rnd} 2.5s cubic-bezier(0, 0.5, 0, 1) forwards; counter-reset: n_${rnd} var(--num_${rnd}); font-variant-numeric: tabular-nums; } .counter-anim-${rnd}::after { content: counter(n_${rnd}) "+"; }</style><div style="text-align: center; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;"><div class="counter-anim-${rnd}" style="font-size: 56px; font-weight: 900; color: #f59e0b; line-height: 1;"></div><div style="font-size: 14px; font-weight: 800; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 10px;">Sprzedanych Ładowarek EV</div></div>`;
     }
     else if (variant === 'bar-chart') {
-      newBlock.text = `
-        <style>
-          @keyframes grow_${rnd} { from { width: 0%; opacity: 0; } to { opacity: 1; } }
-          .bar-${rnd} { animation: grow_${rnd} 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; height: 100%; border-radius: 999px; }
-        </style>
-        <div style="display: flex; flex-direction: column; gap: 20px; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;">
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Zebrane Jabłka (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #ef4444;">92%</span></div>
-            <div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 92%; background: linear-gradient(90deg, #ef4444, #f87171);"></div></div>
-          </div>
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Winogrona (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #8b5cf6;">65%</span></div>
-            <div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 65%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div></div>
-          </div>
-          <div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Gruszki (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #f59e0b;">40%</span></div>
-            <div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 40%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div>
-          </div>
-        </div>
-      `;
+      newBlock.text = `<style>@keyframes grow_${rnd} { from { width: 0%; opacity: 0; } to { opacity: 1; } } .bar-${rnd} { animation: grow_${rnd} 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; height: 100%; border-radius: 999px; }</style><div style="display: flex; flex-direction: column; gap: 20px; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;"><div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Zebrane Jabłka (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #ef4444;">92%</span></div><div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 92%; background: linear-gradient(90deg, #ef4444, #f87171);"></div></div></div><div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Winogrona (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #8b5cf6;">65%</span></div><div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 65%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div></div></div><div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span style="font-size: 14px; font-weight: 800; color: #1e293b;">Gruszki (Tony)</span><span style="font-size: 14px; font-weight: 900; color: #f59e0b;">40%</span></div><div style="width: 100%; background: #f1f5f9; border-radius: 999px; height: 16px; overflow: hidden;"><div class="bar-${rnd}" style="width: 40%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div></div></div></div>`;
     }
     else if (variant === 'circle-chart') {
-      newBlock.text = `
-        <style>
-          @keyframes fill_${rnd} { 0% { stroke-dasharray: 0, 100; } 100% { stroke-dasharray: 78, 100; } }
-          .circle-anim-${rnd} { animation: fill_${rnd} 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        </style>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;">
-          <div style="position: relative; width: 140px; height: 140px;">
-            <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
-              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" stroke-width="3" />
-              <path class="circle-anim-${rnd}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="78, 100" stroke-linecap="round" />
-            </svg>
-            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; color: #1e293b;">78%</div>
-          </div>
-          <div style="margin-top: 20px; font-size: 14px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px;">Wypełnienie Celu</div>
-        </div>
-      `;
+      newBlock.text = `<style>@keyframes fill_${rnd} { 0% { stroke-dasharray: 0, 100; } 100% { stroke-dasharray: 78, 100; } } .circle-anim-${rnd} { animation: fill_${rnd} 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }</style><div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; background: #ffffff; border-radius: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 100%;"><div style="position: relative; width: 140px; height: 140px;"><svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);"><path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f1f5f9" stroke-width="3" /><path class="circle-anim-${rnd}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="78, 100" stroke-linecap="round" /></svg><div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; color: #1e293b;">78%</div></div><div style="margin-top: 20px; font-size: 14px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px;">Wypełnienie Celu</div></div>`;
     }
     else if (variant === 'blob') {
-      newBlock.text = `
-        <style>
-          @keyframes morph_${rnd} { 0%,100%{border-radius:40% 60% 70% 30% / 40% 40% 60% 50%} 34%{border-radius:70% 30% 50% 50% / 30% 30% 70% 70%} 67%{border-radius:100% 60% 60% 100% / 100% 100% 60% 60%} }
-          .blob-${rnd} { animation: morph_${rnd} 8s ease-in-out infinite; background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%); width: 250px; height: 250px; box-shadow: 0 20px 30px -10px rgba(245, 158, 11, 0.4); }
-        </style>
-        <div style="display:flex; justify-content:center; align-items:center; width:100%; padding: 40px 0;"><div class="blob-${rnd}"></div></div>
-      `;
+      newBlock.text = `<style>@keyframes morph_${rnd} { 0%,100%{border-radius:40% 60% 70% 30% / 40% 40% 60% 50%} 34%{border-radius:70% 30% 50% 50% / 30% 30% 70% 70%} 67%{border-radius:100% 60% 60% 100% / 100% 100% 60% 60%} } .blob-${rnd} { animation: morph_${rnd} 8s ease-in-out infinite; background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%); width: 250px; height: 250px; box-shadow: 0 20px 30px -10px rgba(245, 158, 11, 0.4); }</style><div style="display:flex; justify-content:center; align-items:center; width:100%; padding: 40px 0;"><div class="blob-${rnd}"></div></div>`;
     }
   }
 
-  if (type === 'ribbon') { 
-    newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; 
-    newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }, { type: 'text', value: 'DARMOWA DOSTAWA' }]; 
+  // --- POLA TEKSTOWE I FORMULARZE (NOWOŚĆ V18.48) ---
+  if (type === 'input') {
+    newBlock.text = 'Wprowadź tekst...';
+    newBlock.styles.padding = '14px 16px';
+    newBlock.styles.backgroundColor = '#f8fafc';
+    newBlock.styles.border = '1px solid #e2e8f0';
+    newBlock.styles.borderRadius = '8px';
+    newBlock.styles.color = '#94a3b8';
+    newBlock.styles.fontSize = '14px';
+    newBlock.styles.width = '100%';
+    newBlock.styles.display = 'flex';
+    newBlock.styles.alignItems = 'center';
+
+    if (variant === 'textarea') {
+      newBlock.text = 'Wpisz dłuższą wiadomość...';
+      newBlock.styles.minHeight = '120px';
+      newBlock.styles.alignItems = 'flex-start';
+    }
+    else if (variant === 'underline') {
+      newBlock.styles.backgroundColor = 'transparent';
+      newBlock.styles.border = 'none';
+      newBlock.styles.borderBottom = '2px solid #cbd5e1';
+      newBlock.styles.borderRadius = '0px';
+      newBlock.styles.padding = '12px 0px';
+    }
   }
 
-  // --- OBRAZY, GIFy I GALERIE ---
+  if (type === 'form') {
+    newBlock.styles.width = '100%';
+    newBlock.styles.backgroundColor = 'transparent';
+    newBlock.styles.padding = '0px';
+
+    if (variant === 'newsletter') {
+      newBlock.name = 'NEWSLETTER';
+      newBlock.styles.display = 'flex';
+      newBlock.styles.flexDirection = 'row';
+      newBlock.styles.gap = '10px';
+      
+      const input = createBlock('input', 'classic', 'Email'); input.text = 'Twój adres email...'; input.styles.flex = '1';
+      const btn = createBlock('button', 'classic', 'Zapisz'); btn.text = 'Zapisz się'; btn.styles.backgroundColor = '#f43f5e'; // rose-500
+      
+      newBlock.children = [input, btn];
+    }
+    else if (variant === 'contact') {
+      newBlock.name = 'KONTAKT';
+      newBlock.styles.padding = '40px';
+      newBlock.styles.backgroundColor = '#ffffff';
+      newBlock.styles.borderRadius = '24px';
+      newBlock.styles.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.05)';
+      newBlock.styles.border = '1px solid #f1f5f9';
+      newBlock.styles.gap = '16px';
+      newBlock.styles.maxWidth = '500px';
+
+      const h2 = createBlock('h2', 'classic', 'Tytuł'); h2.text = 'Napisz do nas'; h2.styles.marginBottom = '10px'; h2.styles.color = '#0f172a';
+      const nameInp = createBlock('input', 'classic', 'Imię'); nameInp.text = 'Twoje imię';
+      const emailInp = createBlock('input', 'classic', 'Email'); emailInp.text = 'Adres e-mail';
+      const msgInp = createBlock('input', 'textarea', 'Wiadomość'); msgInp.text = 'W czym możemy pomóc?';
+      const btn = createBlock('button', 'classic', 'Wyślij'); btn.text = 'Wyślij wiadomość'; btn.styles.width = '100%'; btn.styles.backgroundColor = '#f43f5e';
+
+      newBlock.children = [h2, nameInp, emailInp, msgInp, btn];
+    }
+    else if (variant === 'login') {
+      newBlock.name = 'LOGOWANIE';
+      newBlock.styles.padding = '40px';
+      newBlock.styles.backgroundColor = '#ffffff';
+      newBlock.styles.borderRadius = '24px';
+      newBlock.styles.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.05)';
+      newBlock.styles.border = '1px solid #f1f5f9';
+      newBlock.styles.gap = '16px';
+      newBlock.styles.maxWidth = '400px';
+
+      const h2 = createBlock('h2', 'classic', 'Tytuł'); h2.text = 'Zaloguj się'; h2.styles.marginBottom = '20px'; h2.styles.color = '#0f172a'; h2.styles.textAlign = 'center';
+      const emailInp = createBlock('input', 'classic', 'Email'); emailInp.text = 'Adres e-mail';
+      const passInp = createBlock('input', 'classic', 'Hasło'); passInp.text = '••••••••';
+      const btn = createBlock('button', 'classic', 'Wyślij'); btn.text = 'Zaloguj się'; btn.styles.width = '100%'; btn.styles.backgroundColor = '#0f172a';
+      const link = createBlock('p', 'classic', 'Link'); link.text = 'Zapomniałeś hasła?'; link.styles.textAlign = 'center'; link.styles.fontSize = '13px'; link.styles.color = '#64748b'; link.styles.marginTop = '10px';
+
+      newBlock.children = [h2, emailInp, passInp, btn, link];
+    }
+  }
+
+  // --- POZOSTAŁE (KONTENERY, ALERTY, PRZYCISKI) ---
+  if (type === 'ribbon') { newBlock.styles.width = '100%'; newBlock.styles.backgroundColor = '#facc15'; newBlock.styles.padding = '20px 0'; newBlock.ribbonItems = [{ type: 'text', value: '🔥 WYPRZEDAŻ' }, { type: 'img', value: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' }, { type: 'text', value: 'DARMOWA DOSTAWA' }]; }
   if (type === 'img') { 
     newBlock.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80'; newBlock.styles.width = '100%'; newBlock.styles.height = 'auto'; newBlock.styles.objectFit = 'cover'; newBlock.styles.imageScale = 1; 
     if (variant === 'rounded') { newBlock.styles.borderRadius = '24px'; newBlock.styles.boxShadow = '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)'; } 
     else if (variant === 'avatar') { newBlock.styles.width = '150px'; newBlock.styles.height = '150px'; newBlock.styles.borderRadius = '50%'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)'; } 
     else if (variant === 'polaroid') { newBlock.styles.padding = '12px 12px 50px 12px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.2)'; }
   }
-
-  // --- PRZYCISKI ---
   if (type === 'button') {
     newBlock.text = 'Przycisk CTA'; newBlock.styles.padding = '14px 32px'; newBlock.styles.borderRadius = '8px'; newBlock.styles.backgroundColor = '#0f172a'; newBlock.styles.color = '#ffffff'; newBlock.styles.fontWeight = '600'; newBlock.styles.fontSize = '15px'; newBlock.styles.width = 'max-content'; newBlock.styles.border = 'none'; newBlock.styles.cursor = 'pointer'; newBlock.styles.display = 'flex'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.styles.gap = '8px';
     if (variant === 'gradient') { newBlock.text = 'Kup Teraz'; newBlock.styles.backgroundImage = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)'; newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(139, 92, 246, 0.3)'; }
@@ -134,8 +156,6 @@ export const createBlock = (type: string, variant: string, label: string) => {
     else if (variant === 'apple') { newBlock.text = ' Zaloguj przez Apple'; newBlock.styles.backgroundColor = '#000000'; newBlock.styles.borderRadius = '9999px'; }
     else if (variant === 'google') { newBlock.text = 'G Zaloguj przez Google'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.color = '#334155'; newBlock.styles.border = '1px solid #e2e8f0'; newBlock.styles.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'; newBlock.styles.borderRadius = '9999px'; }
   }
-
-  // --- KONTENERY I WSTAWKI ---
   if (type === 'container') {
     if (variant === 'gallery-bento') {
       newBlock.name = 'BENTO GRID'; newBlock.styles.display = 'grid'; newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '16px'; newBlock.styles.backgroundColor = 'transparent'; newBlock.styles.padding = '0px';
@@ -149,28 +169,21 @@ export const createBlock = (type: string, variant: string, label: string) => {
       const slideSrcs = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80', 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80', 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80'];
       newBlock.children = slideSrcs.map((src, idx) => { const img = createBlock('img', 'rounded', `Slajd ${idx + 1}`); img.src = src; img.styles.width = '350px'; img.styles.height = '250px'; img.styles.flexShrink = '0'; return img; });
     }
-    else if (variant === 'empty') { 
-      newBlock.styles.border = '2px dashed #cbd5e1'; newBlock.styles.backgroundColor = '#f8fafc'; newBlock.styles.minHeight = '120px'; newBlock.styles.width = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.display = 'flex'; newBlock.styles.flexDirection = 'column'; newBlock.styles.gap = '10px';
-    }
+    else if (variant === 'empty') { newBlock.styles.border = '2px dashed #cbd5e1'; newBlock.styles.backgroundColor = '#f8fafc'; newBlock.styles.minHeight = '120px'; newBlock.styles.width = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.display = 'flex'; newBlock.styles.flexDirection = 'column'; newBlock.styles.gap = '10px'; }
     else if (variant === 'glass') { newBlock.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; newBlock.styles.backdropFilter = 'blur(10px)'; newBlock.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; newBlock.styles.borderRadius = '24px'; }
     else if (variant === 'neon') { newBlock.styles.backgroundColor = '#000'; newBlock.styles.border = '2px solid #00f2ff'; newBlock.styles.boxShadow = '0 0 15px #00f2ff, inset 0 0 10px #00f2ff'; newBlock.styles.borderRadius = '12px'; }
     else if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
     else if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
     else if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'p', name:'ETYKIETA', text:'NOWOŚĆ', styles:{fontSize:'14px', fontWeight:'bold', color:'#3b82f6', letterSpacing:'0.1em', textTransform:'uppercase', margin:'0 0 10px 0', clearRow: true}}, {id:generateId(), type:'h2', name:'TYTUŁ', text:'Czysta Architektura', styles:{fontSize:'36px', fontWeight:'900', letterSpacing:'-0.02em', lineHeight:'1.1', color:'#0f172a', margin:'0 0 15px 0', clearRow: true}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Odkryj nowy wymiar projektowania stron internetowych.', styles:{fontSize:'18px', color:'#64748b', lineHeight:'1.6', clearRow: true}}]; }
-    
     else if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) {
       newBlock.styles.position = 'relative'; newBlock.styles.width = '450px'; newBlock.styles.maxWidth = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.padding = '0px'; newBlock.styles.marginTop = '25px'; newBlock.styles.overflow = 'visible'; newBlock.styles.display = 'block'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
-      const badgeId = generateId(); const textId = generateId();
-      let badgeText = ''; let mainColor = ''; let bgColor = ''; let textColor = ''; let borderLeftColor = '';
-
+      const badgeId = generateId(); const textId = generateId(); let badgeText = ''; let mainColor = ''; let bgColor = ''; let textColor = ''; let borderLeftColor = '';
       if (variant === 'alert-success') { badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46'; borderLeftColor = mainColor; } 
       else if (variant === 'alert-warning') { badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e'; borderLeftColor = mainColor; } 
       else if (variant === 'alert-tip') { badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a'; borderLeftColor = mainColor; } 
       else if (variant === 'notice-box') { badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626'; newBlock.styles.border = `1px solid ${mainColor}`; }
-
       newBlock.styles.backgroundColor = bgColor;
       if (variant !== 'notice-box') { newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; }
-
       newBlock.children = [
         { id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText, styles: { position: 'absolute', top: '0px', left: '30px', transform: 'translateY(-50%)', backgroundColor: mainColor, color: '#ffffff', padding: '4px 12px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', borderRadius: '6px', zIndex: 50, width: 'max-content', whiteSpace: 'nowrap', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', clearRow: false } },
         { id: textId, type: 'p', name: 'TREŚĆ', text: variant === 'alert-success' ? 'Wszystkie systemy działają poprawnie.' : variant === 'alert-warning' ? 'Ta operacja jest nieodwracalna.' : variant === 'alert-tip' ? 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.' : 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.', styles: { color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', margin: 0, width: '100%', padding: '30px 20px 20px 25px', overflowY: 'auto', flex: '1', clearRow: true } }
@@ -182,25 +195,11 @@ export const createBlock = (type: string, variant: string, label: string) => {
     if (variant === 'steps') { newBlock.text = '<ol style="padding-left: 20px; list-style-type: decimal; font-size: 20px; font-weight: bold; display: flex; flex-direction: column; gap: 15px; margin: 0;"><li>Krok pierwszy<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Dokładny opis tego, co należy zrobić w pierwszym kroku.</div></li><li>Krok drugi<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Instrukcje do drugiego etapu procesu.</div></li><li>Krok trzeci<div style="font-size:14px; font-weight:normal; color:#666; margin-top:5px;">Zakończenie i podsumowanie akcji.</div></li></ol>'; newBlock.styles.backgroundColor = '#f9fafb'; newBlock.styles.padding = '30px'; newBlock.styles.borderRadius = '16px'; newBlock.styles.width = '100%'; } 
     else { newBlock.text = '<ul style="padding-left: 20px; list-style-type: disc; margin: 0;"><li>Pierwszy punkt</li><li>Drugi punkt</li><li>Trzeci punkt</li></ul>'; newBlock.styles.fontSize = '16px'; newBlock.styles.lineHeight = '2'; newBlock.styles.width = '100%'; }
   }
-
   if (type === 'faq') { newBlock.text = '▼ Pytanie FAQ<br><br>Odpowiedź.'; newBlock.styles.border = '1px solid #ccc'; newBlock.styles.padding = '15px'; newBlock.styles.backgroundColor = '#fff'; newBlock.styles.width = '100%'; }
   if (type === 'shape') { if(variant==='box'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#3b82f6';} if(variant==='circle'){newBlock.styles.width='100px'; newBlock.styles.height='100px'; newBlock.styles.backgroundColor='#ec4899'; newBlock.styles.borderRadius='50%';} }
-  
-  if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.clearRow = true; 
-    if (variant === 'video-hero') { 
-      newBlock.name = 'SEKCJA KINOWA'; newBlock.styles.minHeight = '600px'; newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; 
-      newBlock.children = [{ id: generateId(), type: 'h1', name: 'NAGŁÓWEK', text: 'KINO NA TWOJEJ STRONIE', styles: { color: '#ffffff', fontSize: '64px', fontWeight: '900', textAlign: 'center' } }];
-    } 
-  }
-  
+  if (type === 'section') { newBlock.styles.width = '100%'; newBlock.styles.minHeight = '400px'; newBlock.styles.backgroundColor = '#ffffff'; newBlock.styles.clearRow = true; if (variant === 'video-hero') { newBlock.name = 'SEKCJA KINOWA'; newBlock.styles.minHeight = '600px'; newBlock.styles.bgType = 'video'; newBlock.styles.bgVideo = 'https://cdn.pixabay.com/video/2021/08/11/84687-586745129_large.mp4'; newBlock.styles.bgOverlay = 'rgba(0,0,0,0.5)'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; newBlock.children = [{ id: generateId(), type: 'h1', name: 'NAGŁÓWEK', text: 'KINO NA TWOJEJ STRONIE', styles: { color: '#ffffff', fontSize: '64px', fontWeight: '900', textAlign: 'center' } }]; } }
   if (type === 'grid' && variant === 'gallery-grid') { newBlock.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newBlock.styles.gap = '20px'; newBlock.children = [createBlock('img', 'rounded', 'Foto 1'), createBlock('img', 'rounded', 'Foto 2'), createBlock('img', 'rounded', 'Foto 3')]; }
-  
-  if (type === 'video') { 
-    newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4'; newBlock.styles.width = '100%'; newBlock.styles.height = '400px'; newBlock.styles.borderRadius = '12px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.overflow = 'hidden';
-    if (variant === 'youtube') { newBlock.src = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; } 
-    else if (variant === 'vimeo') { newBlock.src = 'https://vimeo.com/76979871'; }
-  }
-  
+  if (type === 'video') { newBlock.src = 'https://www.w3schools.com/html/mov_bbb.mp4'; newBlock.styles.width = '100%'; newBlock.styles.height = '400px'; newBlock.styles.borderRadius = '12px'; newBlock.styles.backgroundColor = '#000'; newBlock.styles.overflow = 'hidden'; if (variant === 'youtube') { newBlock.src = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'; } else if (variant === 'vimeo') { newBlock.src = 'https://vimeo.com/76979871'; } }
   if (type === 'embed') { newBlock.text = '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2504.66487841855!2d16.92516811563456!3d51.10788527957199!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470fe9c2d4b58abf%3A0xb70956aec205e0f5!2zV3JvY8WCYXc!5e0!3m2!1spl!2spl!4v1625560000000!5m2!1spl!2spl" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>'; newBlock.styles.width = '100%'; newBlock.styles.height = '400px'; newBlock.styles.borderRadius = '12px'; }
 
   return newBlock;

@@ -181,7 +181,14 @@ export default function CanvasBlock({
         {['list', 'faq', 'button', 'social', 'alert'].includes(b.type) && renderTextElement('div')}
         {b.type === 'menu' && renderTextElement('nav')}
         {b.type === 'shape' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}}></div>}
-        {['input', 'textarea'].includes(b.type) && <div className="w-full h-full flex items-center text-neutral-400 pointer-events-none border border-neutral-300 rounded p-2 bg-neutral-50 z-10 relative">{b.text}</div>}
+        {b.type === 'graphic' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}} dangerouslySetInnerHTML={{ __html: b.text || '' }}></div>}
+        
+        {/* FIX V18.48: Uwolnienie stylów Pól Tekstowych (Input / Textarea) */}
+        {['input', 'textarea'].includes(b.type) && (
+          <div className="w-full h-full text-inherit pointer-events-none z-10 relative flex" style={{ alignItems: b.styles.alignItems || 'center' }}>
+            {b.text}
+          </div>
+        )}
         
         {b.type === 'video' && (
           <div className="w-full h-full relative z-10 overflow-hidden" style={{ borderRadius: b.styles.borderRadius }}>
@@ -209,38 +216,19 @@ export default function CanvasBlock({
         )}
         
         {b.children && (
-          // FIX V18.41: Zmieniono overflow-hidden na overflow-visible, aby plakietki mogły swobodnie lewitować poza obrys rodzica!
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-visible" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             <div className="pointer-events-auto w-full h-full relative flex-1 flex flex-row flex-wrap content-start" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
+             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexWrap: b.styles.flexWrap || 'wrap', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems || 'flex-start', justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
-                   const widthVal = parseFloat(child.styles.width || '100');
-                   const isBreak = child.styles.clearRow !== false;
-                   const showGhost = draggedId && draggedId !== child.id && isBreak && widthVal < 98 && b.styles.display !== 'grid';
-
                    return (
-                     <React.Fragment key={child.id}>
-                       <CanvasBlock 
-                         b={child} activeId={activeId} setActiveId={setActiveId} 
-                         isEditing={isEditing} setIsEditing={setIsEditing} 
-                         isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                         setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                         parentId={b.id} parentActive={isActive} interaction={interaction}
-                         draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                       />
-                       
-                       {showGhost && (
-                         <div 
-                           onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                           onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (handleDrop) { handleDrop(draggedId, child.id, 'inline'); } if(setDraggedId) setDraggedId(null); }}
-                           className="flex-1 min-h-[40px] border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:scale-[1.02] transition-all cursor-pointer shadow-inner"
-                         >
-                           <span className="text-blue-500 font-bold text-[9px] uppercase tracking-widest">+ Wstaw Obok</span>
-                         </div>
-                       )}
-
-                       {isBreak && b.styles.display !== 'grid' && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
-                     </React.Fragment>
+                     <CanvasBlock 
+                       key={child.id} b={child} activeId={activeId} setActiveId={setActiveId} 
+                       isEditing={isEditing} setIsEditing={setIsEditing} 
+                       isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
+                       setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                       parentId={b.id} parentActive={isActive} interaction={interaction}
+                       draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                     />
                    );
                 })}
              </div>
@@ -257,6 +245,7 @@ export default function CanvasBlock({
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
             <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
+            
             <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
             <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />

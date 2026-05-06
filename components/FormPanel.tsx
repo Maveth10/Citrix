@@ -1,79 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+import BasicFieldsPanel from './form-panels/BasicFieldsPanel';
+import ReadyFormsPanel from './form-panels/ReadyFormsPanel';
 
 interface FormPanelProps {
   handleAddBlock: (type: string, variant: string, label: string) => void;
 }
 
 export default function FormPanel({ handleAddBlock }: FormPanelProps) {
+  const [activeTab, setActiveTab] = useState<'basic' | 'ready'>('ready');
+
   return (
-    <div className="flex flex-col gap-4 pb-10">
+    <div className="flex flex-col gap-3 pb-10">
       
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Główny Kontener (Wymagany)
-        </span>
+      {/* KATEGORIA 1: GOTOWE FORMULARZE */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'ready' ? '' as any : 'ready')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'ready' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Gotowe Zestawy (Lead Gen)</span>
+          <span className="text-lg leading-none">{activeTab === 'ready' ? '▾' : '▸'}</span>
+        </button>
+        {activeTab === 'ready' && <ReadyFormsPanel handleAddBlock={handleAddBlock} />}
       </div>
 
-      <button 
-        onClick={() => handleAddBlock('form', '', 'Formularz Kontaktowy')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-emerald-500 group text-left w-full relative overflow-hidden"
-      >
-        {/* Renderowana miniatura formularza */}
-        <div className="w-full h-24 bg-white rounded-md mb-3 p-3 flex flex-col gap-2 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity">
-           <div className="w-full h-4 bg-neutral-200 rounded-sm border border-neutral-300"></div>
-           <div className="w-full h-8 bg-neutral-200 rounded-sm border border-neutral-300"></div>
-           <div className="w-1/2 h-5 bg-blue-500 rounded self-end mt-auto shadow-sm"></div>
-        </div>
-        
-        <span className="text-sm font-bold text-white block mb-1">Pudło Formularza</span>
-        <span className="text-[10px] text-emerald-400 font-bold block mb-1">Akcja: Zapis Leadów do bazy</span>
-        <span className="text-[9px] text-neutral-400 block leading-tight">Wstaw ten blok, a następnie wrzuć do niego Pola i Przycisk. Tyle wystarczy, by zbierać maile!</span>
-      </button>
-
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Pola Wprowadzania
-        </span>
+      {/* KATEGORIA 2: POJEDYNCZE POLA */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'basic' ? '' as any : 'basic')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'basic' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Pojedyncze Pola Input</span>
+          <span className="text-lg leading-none">{activeTab === 'basic' ? '▾' : '▸'}</span>
+        </button>
+        {activeTab === 'basic' && <BasicFieldsPanel handleAddBlock={handleAddBlock} />}
       </div>
-
-      <button 
-        onClick={() => handleAddBlock('input', '', 'Pole Tekstowe')} 
-        className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-neutral-400 group text-left w-full flex items-center gap-3"
-      >
-        <div className="w-8 h-8 bg-neutral-900 border border-neutral-600 rounded flex items-center justify-center text-xs text-neutral-400 font-serif italic group-hover:border-white transition-colors">Ab</div>
-        <div>
-          <span className="text-sm font-bold text-white block">Krótkie Pole (Input)</span>
-          <span className="text-[9px] text-neutral-500 block">E-mail, Imię, Telefon</span>
-        </div>
-      </button>
-
-      <button 
-        onClick={() => handleAddBlock('textarea', '', 'Wiadomość')} 
-        className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-neutral-400 group text-left w-full flex items-center gap-3"
-      >
-        <div className="w-8 h-8 bg-neutral-900 border border-neutral-600 rounded flex items-start justify-center pt-1 text-xs text-neutral-400 font-serif group-hover:border-white transition-colors">¶</div>
-        <div>
-          <span className="text-sm font-bold text-white block">Długi Tekst (Textarea)</span>
-          <span className="text-[9px] text-neutral-500 block">Treść wiadomości, opisy</span>
-        </div>
-      </button>
-
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Lokalizacja
-        </span>
-      </div>
-
-      <button 
-        onClick={() => handleAddBlock('map', '', 'Mapa Google')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-blue-400 group text-left w-full flex items-center gap-3"
-      >
-         <span className="text-2xl group-hover:scale-110 transition-transform">🗺️</span>
-         <div>
-           <span className="text-sm font-bold text-white block">Interaktywna Mapa</span>
-           <span className="text-[9px] text-neutral-400 block">Wymaga linku z Google Maps</span>
-         </div>
-      </button>
 
     </div>
   );
