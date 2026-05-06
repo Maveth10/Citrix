@@ -217,14 +217,10 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
-  // =========================================================================
-  // FIX V18.62: TOTALNA RZEŹ LINIOWA (BUTCHER'S ROW SCANNER)
-  // =========================================================================
   const cleanupRows = (arr: Block[]): Block[] => {
     let rows: Block[][] = [];
     let currentRow: Block[] = [];
 
-    // Krok 1: Tniemy tablicę na rzędy. Jeśli klocek zamyka linię - kończymy wiersz.
     for (let b of arr) {
       currentRow.push(b);
       if (b.styles.clearRow !== false) {
@@ -232,35 +228,22 @@ export default function Home() {
         currentRow = [];
       }
     }
-    // Jeśli zostały jakieś resztki (ostatni klocek miał clearRow: false), wymuszamy zamknięcie
     if (currentRow.length > 0) {
       const lastIdx = currentRow.length - 1;
-      currentRow[lastIdx] = {
-        ...currentRow[lastIdx],
-        styles: { ...currentRow[lastIdx].styles, clearRow: true }
-      };
+      currentRow[lastIdx] = { ...currentRow[lastIdx], styles: { ...currentRow[lastIdx].styles, clearRow: true } };
       rows.push(currentRow);
     }
 
-    // Krok 2: Analizujemy każdy rykoszet
     const processedRows = rows.map(row => {
-      // Jeśli w rzędzie został SAM JEDEN CHOLERNY KLOCEK
       if (row.length === 1) {
         const single = row[0];
         const w = single.styles.width;
-        // Jeśli jest ściśnięty, bo kiedyś miał tu sąsiada - przywróć mu chwałę (100%)
         if (['48%', '40%', '50%'].includes(w)) {
           return [{ ...single, styles: { ...single.styles, clearRow: true, width: '100%' } }];
         }
-        // W przeciwnym razie tylko się upewnij, że zamyka rząd
         return [{ ...single, styles: { ...single.styles, clearRow: true } }];
       }
-      
-      // Jeśli sąsiadów jest więcej, tylko ostatni ma prawo zamknąć linię
-      return row.map((b, i) => ({
-        ...b,
-        styles: { ...b.styles, clearRow: i === row.length - 1 }
-      }));
+      return row.map((b, i) => ({ ...b, styles: { ...b.styles, clearRow: i === row.length - 1 } }));
     });
 
     return processedRows.flat();
@@ -278,7 +261,7 @@ export default function Home() {
           }
           const newArr = [...arr];
           newArr.splice(index, 1);
-          return cleanupRows(newArr); // Skuteczna rzeź
+          return cleanupRows(newArr);
         }
         return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
       };
@@ -287,14 +270,14 @@ export default function Home() {
     setActiveId(null); setIsEditing(false); setIsMediaManagerOpen(false); setIsAiOpen(false);
   };
 
-  const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
+  // FIX V18.65: Rzucanie na dół strony
+  const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' | 'bottom' = 'before') => {
     if (sourceId === targetId) return;
     
     setBlocks(prevBlocks => {
       const sourceBlockNode = findBlockById(prevBlocks, sourceId);
       
-      // Anti-Blackhole: nie rzucaj klocka w jego własne dziecko!
-      if (sourceBlockNode && checkIsChild(sourceBlockNode, targetId)) {
+      if (sourceBlockNode && targetId !== -1 && checkIsChild(sourceBlockNode, targetId)) {
          return prevBlocks; 
       }
 
@@ -306,13 +289,21 @@ export default function Home() {
           sourceBlock = arr[index];
           const newArr = [...arr];
           newArr.splice(index, 1);
-          return cleanupRows(newArr); // Rzeź po wyciągnięciu!
+          return cleanupRows(newArr);
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
       
       let intermediate = removeSource(prevBlocks);
       if (!sourceBlock) return prevBlocks;
+
+      // Zrzut na dół strony!
+      if (dropType === 'bottom') {
+         let restoredWidth = sourceBlock!.styles.width;
+         if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
+         const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
+         return cleanupRows([...intermediate, updatedSource]);
+      }
 
       const insertBlock = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === targetId);
@@ -329,7 +320,7 @@ export default function Home() {
             
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
             const mergedArr = [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
-            return cleanupRows(mergedArr); // Ostateczna weryfikacja
+            return cleanupRows(mergedArr);
           } else {
             let restoredWidth = sourceBlock!.styles.width;
             if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
@@ -348,7 +339,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.62! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.65! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -580,6 +571,16 @@ export default function Home() {
                   </React.Fragment>
                 );
              })}
+
+             {/* FIX V18.65: Strefa rzutu na dole strony */}
+             <div 
+               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+               onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggedId && handleDrop) handleDrop(draggedId, -1, 'bottom'); if(setDraggedId) setDraggedId(null); }}
+               className="w-full h-32 mt-4 border-2 border-transparent hover:border-blue-500/50 hover:bg-blue-500/10 rounded-xl transition-all flex items-center justify-center text-transparent hover:text-blue-400 font-bold tracking-widest uppercase text-[10px]"
+             >
+               Upuść tutaj (Na koniec)
+             </div>
+
           </div>
         </main>
         <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
