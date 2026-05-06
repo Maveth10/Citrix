@@ -1,62 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+import PrimaryButtonsPanel from './button-panels/PrimaryButtonsPanel';
+import SecondaryButtonsPanel from './button-panels/SecondaryButtonsPanel';
 
 interface ButtonPanelProps {
   handleAddBlock: (type: string, variant: string, label: string) => void;
 }
 
 export default function ButtonPanel({ handleAddBlock }: ButtonPanelProps) {
+  const [activeTab, setActiveTab] = useState<'primary' | 'secondary'>('primary');
+
   return (
     <div className="flex flex-col gap-3 pb-10">
       
-      {/* --- GŁÓWNE AKCJE --- */}
-      <div className="mt-2 mb-1 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Główne Akcje (CTA)
-        </span>
+      {/* KATEGORIA 1: GŁÓWNE AKCJE */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'primary' ? '' as any : 'primary')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'primary' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Główne Akcje (CTA)</span>
+          <span className="text-lg leading-none">{activeTab === 'primary' ? '▾' : '▸'}</span>
+        </button>
+        {activeTab === 'primary' && <PrimaryButtonsPanel handleAddBlock={handleAddBlock} />}
       </div>
-      
-      <button 
-        onClick={() => handleAddBlock('button', '', 'Pełny kolor')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg flex items-center justify-center transition border border-neutral-700 hover:border-blue-500 group w-full text-left"
-      >
-        <span className="bg-white text-black font-bold py-2 px-6 rounded group-hover:scale-105 transition-transform w-full text-center block">
-          Pełny Kolor
-        </span>
-      </button>
 
-      <button 
-        onClick={() => handleAddBlock('button', 'outline', 'Tylko Obrys')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg flex items-center justify-center transition border border-neutral-700 hover:border-blue-500 group w-full text-left"
-      >
-        <span className="bg-transparent text-white font-bold py-2 px-6 rounded border-2 border-white group-hover:scale-105 transition-transform w-full text-center block">
-          Tylko Obrys
-        </span>
-      </button>
-
-      <button 
-        onClick={() => handleAddBlock('button', 'gradient', 'Gradient')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg flex items-center justify-center transition border border-neutral-700 hover:border-blue-500 group w-full text-left"
-      >
-        <span className="bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-2 px-6 rounded border-none group-hover:scale-105 transition-transform w-full text-center shadow-lg block">
-          Nowoczesny Gradient
-        </span>
-      </button>
-
-      {/* --- NARZĘDZIA ZASIĘGU --- */}
-      <div className="mt-4 mb-1 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Narzędzia Zasięgu
-        </span>
+      {/* KATEGORIA 2: POBOCZNE & SSO */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'secondary' ? '' as any : 'secondary')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'secondary' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Poboczne & Logowanie</span>
+          <span className="text-lg leading-none">{activeTab === 'secondary' ? '▾' : '▸'}</span>
+        </button>
+        {activeTab === 'secondary' && <SecondaryButtonsPanel handleAddBlock={handleAddBlock} />}
       </div>
-      
-      <button 
-        onClick={() => handleAddBlock('button', 'share', 'Pasek Udostępniania')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg flex items-center justify-center transition border border-neutral-700 hover:border-blue-500 group w-full text-left"
-      >
-        <span className="bg-neutral-100 text-black font-bold py-2 px-6 rounded-full group-hover:scale-105 transition-transform w-full flex items-center justify-center gap-2 block">
-          <span className="inline-block">🔗</span> Udostępnij
-        </span>
-      </button>
 
     </div>
   );
