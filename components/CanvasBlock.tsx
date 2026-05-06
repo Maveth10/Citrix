@@ -25,7 +25,6 @@ export default function CanvasBlock({
   draggedId, setDraggedId, handleDrop, hiddenBlocks = []
 }: CanvasBlockProps) {
   
-  // FIX: Ukrywanie elementów w edytorze
   if (hiddenBlocks.includes(b.id)) return null;
 
   const isActive = activeId === b.id;
@@ -143,20 +142,20 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // TWARDY ROLLBACK DO WERSJI Z FORMULARZY
-        draggable={isActive && !isEditing && !isAbsolute}
+        // Klocek jest ZAWSZE przenośny (chyba, że właśnie edytujesz w nim tekst)
+        draggable={!isEditing && !isAbsolute}
+        
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          if (setDraggedId) setDraggedId(b.id); 
+          // Payload konieczny, żeby przeglądarka się nie zesrała
+          e.dataTransfer.setData('text/plain', b.id.toString());
+          e.dataTransfer.effectAllowed = 'move';
           
-          const dragGhost = document.createElement('div');
-          dragGhost.id = 'drag-ghost';
-          dragGhost.textContent = `⠿ Przenosisz: ${b.name}`;
-          dragGhost.style.cssText = 'background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; position: absolute; top: -1000px; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-family: sans-serif; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);';
-          document.body.appendChild(dragGhost);
-          e.dataTransfer.setDragImage(dragGhost, 15, 15);
-          
-          setTimeout(() => { if (document.body.contains(dragGhost)) document.body.removeChild(dragGhost); }, 0);
+          // Ustawiamy state z opóźnieniem. Przeglądarka robi zdjęcie, a React ładuje się chwilę potem.
+          setTimeout(() => {
+            if (activeId !== b.id) setActiveId(b.id);
+            if (setDraggedId) setDraggedId(b.id); 
+          }, 10);
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
@@ -170,15 +169,23 @@ export default function CanvasBlock({
           if (setDraggedId) setDraggedId(null);
         }}
 
-        onClick={(e) => { e.stopPropagation(); }} 
-        onMouseDown={(e) => { 
+        // Normalne kliknięcie (zaznaczanie bez przerywania przeciągania)
+        onClick={(e) => { 
           e.stopPropagation(); 
           if (activeId !== b.id) { 
             if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) { setActiveId(parentId); setIsEditing(false); return; }
             setActiveId(b.id); setIsEditing(false); 
-          } 
+          }
+        }} 
+        
+        // Z mouseDown wywaliliśmy raka (setActiveId), który psuł drag & drop
+        onMouseDown={(e) => { 
+          e.stopPropagation(); 
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
+          
+          // Tu obsługujemy tylko swobodne przeciąganie absolutnych popupów
           if (isAbsolute) {
+            if (activeId !== b.id) setActiveId(b.id);
             const el = document.getElementById(`block-${b.id}`);
             const currentLeft = el ? el.offsetLeft : 0; const currentTop = el ? el.offsetTop : 0;
             setInteraction({ type: 'drag', startX: e.pageX, startY: e.pageY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
