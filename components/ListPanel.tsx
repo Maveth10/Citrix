@@ -1,66 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+import BasicListsPanel from './list-panels/BasicListsPanel';
+import PremiumListsPanel from './list-panels/PremiumListsPanel';
 
 interface ListPanelProps {
   handleAddBlock: (type: string, variant: string, label: string) => void;
 }
 
 export default function ListPanel({ handleAddBlock }: ListPanelProps) {
+  const [activeTab, setActiveTab] = useState<'premium' | 'basic'>('premium');
+
   return (
-    <div className="flex flex-col gap-4 pb-10">
+    <div className="flex flex-col gap-3 pb-10">
       
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Wyliczenia
-        </span>
+      {/* KATEGORIA 1: PREMIUM */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'premium' ? '' as any : 'premium')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'premium' ? 'bg-lime-500/10 text-lime-400 border border-lime-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Listy Pro i FAQ</span>
+          <span className="text-lg leading-none">{activeTab === 'premium' ? '▾' : '▸'}</span>
+        </button>
+        {activeTab === 'premium' && <PremiumListsPanel handleAddBlock={handleAddBlock} />}
       </div>
 
-      <button 
-        onClick={() => handleAddBlock('list', '', 'Lista Punktowana')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-blue-500 group text-left w-full flex items-start gap-3"
-      >
-        <div className="text-blue-500 font-black text-xl leading-none mt-1 group-hover:scale-125 transition-transform">•</div>
-        <div>
-          <span className="text-sm font-bold text-white block mb-1">Zwykła Lista (Punktory)</span>
-          <span className="text-[10px] text-neutral-400 block leading-tight">Klasyczna wypunktowana lista cech lub korzyści.</span>
-        </div>
-      </button>
-
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Procesy i Instrukcje
-        </span>
+      {/* KATEGORIA 2: BASIC */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'basic' ? '' as any : 'basic')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'basic' ? 'bg-lime-500/10 text-lime-400 border border-lime-500/30 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Klasyczne (UL/OL)</span>
+          <span className="text-lg leading-none">{activeTab === 'basic' ? '▾' : '▸'}</span>
+        </button>
+        {activeTab === 'basic' && <BasicListsPanel handleAddBlock={handleAddBlock} />}
       </div>
-
-      <button 
-        onClick={() => handleAddBlock('list', 'steps', 'Kroki Procesu')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-emerald-500 group text-left w-full relative overflow-hidden"
-      >
-        {/* Wizualizacja kroków */}
-        <div className="w-full bg-neutral-900 border border-neutral-700 rounded mb-3 p-3 flex flex-col gap-2">
-           <div className="flex items-center gap-2"><div className="w-4 h-4 bg-emerald-500 text-black font-bold text-[9px] flex items-center justify-center rounded-full shrink-0">1</div><div className="w-full h-2 bg-neutral-600 rounded-sm"></div></div>
-           <div className="flex items-center gap-2"><div className="w-4 h-4 bg-neutral-600 text-black font-bold text-[9px] flex items-center justify-center rounded-full shrink-0">2</div><div className="w-2/3 h-2 bg-neutral-700 rounded-sm"></div></div>
-        </div>
-        <span className="text-sm font-bold text-white block mb-1">Kroki Procesu (Timeline)</span>
-        <span className="text-[10px] text-neutral-400 block leading-tight">Lista numeryczna z miejscem na duży nagłówek i mniejszy opis dla każdego punktu.</span>
-      </button>
-
-      <div className="mt-2 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">
-          Interaktywne
-        </span>
-      </div>
-
-      <button 
-        onClick={() => handleAddBlock('faq', '', 'Zwijane FAQ')} 
-        className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg transition border border-neutral-700 hover:border-fuchsia-500 group text-left w-full"
-      >
-        <div className="w-full bg-neutral-900 border border-neutral-700 rounded mb-3 p-2 flex justify-between items-center group-hover:border-fuchsia-500 transition-colors">
-           <div className="w-1/2 h-2 bg-neutral-500 rounded-sm"></div>
-           <div className="text-xs text-neutral-500">▼</div>
-        </div>
-        <span className="text-sm font-bold text-white block mb-1">Zwijane FAQ (Akordeon)</span>
-        <span className="text-[10px] text-neutral-400 block leading-tight">Rozwijana odpowiedź ukryta pod klikalnym pytaniem.</span>
-      </button>
 
     </div>
   );
