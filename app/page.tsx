@@ -347,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.73! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.75! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -483,19 +483,20 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
 
+  // FIX V18.75: ZDEFINIOWANE KOLORY, GRADIENTY I CIENIE DLA KAŻDEJ KATEGORII!
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T' }, 
-    { id: 'obraz', label: 'Obraz', icon: '🖼️' }, 
-    { id: 'przycisk', label: 'Przycisk', icon: '👆' }, 
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, 
-    { id: 'pola', label: 'Pola', icon: '📦' }, 
-    { id: 'wideo', label: 'Wideo', icon: '▶️' }, 
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, 
-    { id: 'menu', label: 'Menu', icon: '☰' }, 
-    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, 
-    { id: 'lista', label: 'Lista', icon: '📋' }, 
-    { id: 'social', label: 'Social Media', icon: '❤️' }, 
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+    { id: 'tekst', label: 'Tekst', icon: 'T', color: 'from-blue-500 to-cyan-400', shadow: 'rgba(56,189,248,0.5)' }, 
+    { id: 'obraz', label: 'Obraz', icon: '🖼️', color: 'from-purple-500 to-fuchsia-400', shadow: 'rgba(232,121,249,0.5)' }, 
+    { id: 'przycisk', label: 'Przycisk', icon: '👆', color: 'from-orange-500 to-amber-400', shadow: 'rgba(251,146,60,0.5)' }, 
+    { id: 'grafika', label: 'Grafika', icon: '⭐', color: 'from-yellow-400 to-amber-500', shadow: 'rgba(250,204,21,0.5)' }, 
+    { id: 'pola', label: 'Pola', icon: '📦', color: 'from-emerald-500 to-teal-400', shadow: 'rgba(52,211,153,0.5)' }, 
+    { id: 'wideo', label: 'Wideo', icon: '▶️', color: 'from-red-500 to-rose-400', shadow: 'rgba(244,63,94,0.5)' }, 
+    { id: 'formularze', label: 'Formularze', icon: '📝', color: 'from-cyan-500 to-blue-500', shadow: 'rgba(6,182,212,0.5)' }, 
+    { id: 'menu', label: 'Menu', icon: '☰', color: 'from-indigo-500 to-violet-400', shadow: 'rgba(129,140,248,0.5)' }, 
+    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟', color: 'from-pink-500 to-rose-400', shadow: 'rgba(244,114,182,0.5)' }, 
+    { id: 'lista', label: 'Lista', icon: '📋', color: 'from-lime-500 to-emerald-500', shadow: 'rgba(132,204,22,0.5)' }, 
+    { id: 'social', label: 'Social Media', icon: '❤️', color: 'from-rose-500 to-red-500', shadow: 'rgba(225,29,72,0.5)' }, 
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗', color: 'from-slate-400 to-gray-400', shadow: 'rgba(148,163,184,0.5)' }
   ];
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
@@ -526,27 +527,31 @@ export default function Home() {
     ));
   };
 
+  const activeCategoryData = categories.find(c => c.id === addCategory);
+
   return (
-    // FIX V18.73: KOSMICZNE TŁO I AMBIENT GLOW
+    // FIX V18.75: Zmocniony Ambient Glow (Kule światła)
     <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden relative selection:bg-blue-500/30">
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-      <div className="absolute top-[-20%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[150px] rounded-full pointer-events-none z-0"></div>
+      
+      {/* Większe natężenie światła w tle */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/20 blur-[180px] rounded-full pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/20 blur-[180px] rounded-full pointer-events-none z-0"></div>
 
-      {/* FIX V18.73: LEWY PASEK PREMIUM - HOVER TO OPEN */}
-      <aside className="w-16 bg-white/[0.02] backdrop-blur-3xl border-r border-white/5 flex flex-col items-center py-4 gap-3 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-2xl relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none z-0"></div>
+      {/* LEWY PASEK PREMIUM */}
+      <aside className="w-16 bg-white/[0.02] backdrop-blur-3xl border-r border-white/5 flex flex-col items-center py-4 gap-3 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-[10px_0_30px_rgba(0,0,0,0.5)] relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none z-0"></div>
         
         <button 
           onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
-          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'pages' ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
+          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'pages' ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
           title="Zarządzanie Stronami"
         >
           +
         </button>
         <button 
           onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
-          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'layers' ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
+          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'layers' ? 'bg-gradient-to-tr from-purple-500 to-pink-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
           title="Nawigator DOM"
         >
           ☰
@@ -554,57 +559,64 @@ export default function Home() {
         
         <div className="w-8 h-px bg-white/10 my-2 z-10"></div>
         
-        {categories.map(cat => (
-          <button 
-            key={cat.id} 
-            // Magia: Zwykłe najechanie otwiera/zmienia panel klocków! Nie trzeba klikać.
-            onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
-            onClick={() => { setAddCategory(addCategory === cat.id ? null : cat.id); setLeftTab(null); }} 
-            title={cat.label}
-            className={`relative w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 z-10 ${addCategory === cat.id ? 'bg-gradient-to-tr from-blue-600 to-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] scale-110' : 'text-neutral-400 hover:bg-white/10 hover:text-white hover:scale-110'}`}
-          >
-            {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px]">T</span> : cat.icon}
-          </button>
-        ))}
+        {/* KATEGORIE Z UNIKALNYMI KOLORAMI */}
+        {categories.map(cat => {
+          const isActive = addCategory === cat.id;
+          return (
+            <button 
+              key={cat.id} 
+              onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
+              onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
+              title={cat.label}
+              className={`relative w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 z-10 ${isActive ? `bg-gradient-to-tr ${cat.color} text-white scale-110` : 'text-neutral-400 hover:bg-white/10 hover:text-white hover:scale-110'}`}
+              style={isActive ? { boxShadow: `0 0 20px ${cat.shadow}, inset 0 2px 4px rgba(255,255,255,0.3)` } : {}}
+            >
+              {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px]">T</span> : cat.icon}
+            </button>
+          );
+        })}
       </aside>
 
       <div className="relative z-40 h-full flex">
         
         {/* PANEL STRON */}
         {leftTab === 'pages' && (
-          <div className="w-64 bg-gradient-to-b from-[#121218]/90 to-[#09090b]/90 backdrop-blur-2xl border-r border-white/5 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-200 relative">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-400">Zarządzanie Stronami</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
+          <div className="w-64 bg-gradient-to-b from-[#121218]/95 to-[#09090b]/95 backdrop-blur-3xl border-r border-white/5 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-left-8 duration-200 relative">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-emerald-400">Zarządzanie Stronami</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button></div>
             <div className="flex-1 p-4 relative z-10">
-               <div className="p-3 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-lg border border-blue-500/20 flex justify-between items-center cursor-pointer shadow-inner">
-                 <span className="text-xs font-bold text-blue-400">/{pageSlug}</span>
-                 <span className="text-[9px] bg-blue-600 px-2 py-0.5 rounded text-white uppercase tracking-widest shadow-sm">Aktywna</span>
+               <div className="p-3 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg border border-emerald-500/30 flex justify-between items-center cursor-pointer shadow-inner">
+                 <span className="text-xs font-bold text-emerald-400">/{pageSlug}</span>
+                 <span className="text-[9px] bg-emerald-500 px-2 py-0.5 rounded text-white uppercase tracking-widest shadow-sm">Aktywna</span>
                </div>
-               <button className="w-full mt-3 p-2 border border-dashed border-white/10 hover:border-white/30 text-neutral-400 hover:text-white text-xs font-bold rounded-lg transition-all">+ Dodaj Podstronę</button>
+               <button className="w-full mt-3 p-2 border border-dashed border-white/10 hover:border-emerald-500/50 text-neutral-400 hover:text-emerald-400 text-xs font-bold rounded-lg transition-all">+ Dodaj Podstronę</button>
             </div>
           </div>
         )}
         
         {/* PANEL WARSTW */}
         {leftTab === 'layers' && (
-          <div className="w-64 bg-gradient-to-b from-[#121218]/90 to-[#09090b]/90 backdrop-blur-2xl border-r border-white/5 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-200 relative">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-400">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white">✕</button></div>
+          <div className="w-64 bg-gradient-to-b from-[#121218]/95 to-[#09090b]/95 backdrop-blur-3xl border-r border-white/5 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.6)] animate-in slide-in-from-left-8 duration-200 relative">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-purple-400">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button></div>
             <div className="flex-1 overflow-y-auto py-2 relative z-10">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
 
-        {/* PANELE KATEGORII Z ANIMACJĄ I LŻEJSZYM TŁEM */}
-        {addCategory && (
-          <div className="w-[320px] bg-gradient-to-b from-[#121218]/90 to-[#09090b]/90 backdrop-blur-3xl border-r border-white/5 h-full shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-30 flex flex-col animate-in slide-in-from-left-8 duration-200 relative">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+        {/* PANELE KATEGORII Z KOLOREM TYTUŁU DOPASOWANYM DO KATEGORII */}
+        {addCategory && activeCategoryData && (
+          <div className="w-[320px] bg-gradient-to-b from-[#121218]/95 to-[#09090b]/95 backdrop-blur-3xl border-r border-white/5 h-full shadow-[20px_0_50px_rgba(0,0,0,0.6)] z-30 flex flex-col animate-in slide-in-from-left-8 duration-200 relative">
+            {/* Dynamiczne oświetlenie górnej krawędzi */}
+            <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent`}></div>
+            
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
-              <h3 className="text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-2 drop-shadow-md">
-                <span className="text-blue-400">{categories.find(c => c.id === addCategory)?.icon}</span>
-                {categories.find(c => c.id === addCategory)?.label}
+              <h3 className={`text-[11px] font-bold text-transparent bg-clip-text bg-gradient-to-r ${activeCategoryData.color} uppercase tracking-widest flex items-center gap-2 drop-shadow-md`}>
+                <span className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">{activeCategoryData.icon}</span>
+                {activeCategoryData.label}
               </h3>
               <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none transition-colors">✕</button>
             </div>
+            
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide relative z-10">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
