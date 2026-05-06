@@ -20,13 +20,13 @@ export default function TextPanel({ handleAddBlock }: any) {
       
       <button className={btnWrapper} onClick={() => handleAddBlock('h1', '', 'Nagłówek H1')}>
         <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-xl">H1</span> Główny Tytuł</div>
+        <div className={titleClass}><span className="text-xl text-white">H1</span> Główny Tytuł</div>
         <div className={descClass}>Najważniejszy nagłówek na stronie (SEO).</div>
       </button>
 
       <button className={btnWrapper} onClick={() => handleAddBlock('h2', '', 'Nagłówek H2')}>
         <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-lg">H2</span> Tytuł Sekcji</div>
+        <div className={titleClass}><span className="text-lg text-white">H2</span> Tytuł Sekcji</div>
         <div className={descClass}>Nagłówek wspierający strukturę całej sekcji.</div>
       </button>
 
@@ -41,7 +41,7 @@ export default function TextPanel({ handleAddBlock }: any) {
       
       <button className={btnWrapper} onClick={() => handleAddBlock('p', '', 'Akapit')}>
         <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base font-serif">¶</span> Zwykły Tekst</div>
+        <div className={titleClass}><span className="text-base font-serif text-white">¶</span> Zwykły Tekst</div>
         <div className={descClass}>Podstawowy blok tekstu. Czytelny i lekki.</div>
       </button>
 
@@ -51,19 +51,31 @@ export default function TextPanel({ handleAddBlock }: any) {
         <div className={descClass}>Zwraca uwagę tłem przypominającym marker.</div>
       </button>
 
-      {/* ================= SEKCJA: ALERTY ================= */}
-      <div className="text-[10px] font-bold text-neutral-500 mb-1 mt-2 tracking-widest uppercase border-b border-white/5 pb-2">Komunikaty (Bannery)</div>
+      {/* ================= SEKCJA: ALERTY (PRZYWRÓCONY KOMPLET) ================= */}
+      <div className="text-[10px] font-bold text-neutral-500 mb-1 mt-2 tracking-widest uppercase border-b border-white/5 pb-2">Komunikaty i Alerty</div>
+
+      <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'info', 'Wskazówka (Tip)')}>
+        <div className={ambientGlow}></div><div className={neonEdge}></div>
+        <div className={titleClass}><span className="text-base drop-shadow-md">💡</span> Wskazówka (Tip)</div>
+        <div className={descClass}>Niebieska ramka z pomocną informacją lub tipem.</div>
+      </button>
 
       <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'success', 'Ramka Sukcesu')}>
         <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base">✅</span> Ramka Sukcesu</div>
-        <div className={descClass}>Zielony banner potwierdzający akcję / korzyść.</div>
+        <div className={titleClass}><span className="text-base drop-shadow-md">✅</span> Sukces (Success)</div>
+        <div className={descClass}>Zielony banner potwierdzający udaną akcję.</div>
       </button>
 
       <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'warning', 'Ramka Ostrzeżenia')}>
         <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base">⚠️</span> Ramka Ostrzeżenia</div>
+        <div className={titleClass}><span className="text-base drop-shadow-md">⚠️</span> Ostrzeżenie (Warning)</div>
         <div className={descClass}>Żółty banner dla ważnych uwag i notatek.</div>
+      </button>
+
+      <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'error', 'Ramka Błędu')}>
+        <div className={ambientGlow}></div><div className={neonEdge}></div>
+        <div className={titleClass}><span className="text-base drop-shadow-md">🚨</span> Alert (Krytyczny)</div>
+        <div className={descClass}>Czerwony banner sygnalizujący błąd lub problem.</div>
       </button>
 
       {/* ================= SEKCJA: DYNAMICZNE ================= */}
@@ -71,7 +83,7 @@ export default function TextPanel({ handleAddBlock }: any) {
 
       <button className={btnWrapper} onClick={() => handleAddBlock('marquee', '', 'Pasek Giełdowy')}>
         <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base">〰️</span> Pasek Giełdowy</div>
+        <div className={titleClass}><span className="text-base drop-shadow-md">〰️</span> Pasek Giełdowy</div>
         <div className={descClass}>Automatycznie przesuwający się poziomy tekst.</div>
       </button>
 
