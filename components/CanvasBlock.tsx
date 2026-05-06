@@ -47,7 +47,6 @@ export default function CanvasBlock({
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
     zIndex: isActive ? 9999 : (b.styles.zIndex || 1),
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
-    flexShrink: 0,
     minWidth: 0, minHeight: 0,
     overflow: isActive ? 'visible' : (b.styles.overflow || 'visible'),
     boxShadow: isDragOver ? 'inset 0 4px 0 0 #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3)' : (b.styles.boxShadow || 'none')
@@ -82,7 +81,7 @@ export default function CanvasBlock({
     const compStyle = el ? window.getComputedStyle(el) : null;
     setInteraction({ 
       type: 'resize', dir, 
-      startX: e.clientX, startY: e.clientY, 
+      startX: e.pageX, startY: e.pageY, 
       initialLeft: el?.offsetLeft || 0, initialTop: el?.offsetTop || 0, 
       initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0,
       initialMarginLeft: compStyle ? parseFloat(compStyle.marginLeft) || 0 : 0,
@@ -122,19 +121,16 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // FIX V18.35: ODBLOKOWUJEMY TŁO! Złap za środek zaznaczonej kobyły i leć!
         draggable={isActive && !isEditing && !isAbsolute}
         onDragStart={(e) => { 
           e.stopPropagation(); 
           if (setDraggedId) setDraggedId(b.id); 
-          
           const dragGhost = document.createElement('div');
           dragGhost.id = 'drag-ghost';
           dragGhost.textContent = `⠿ Przenosisz: ${b.name}`;
           dragGhost.style.cssText = 'background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; position: absolute; top: -1000px; z-index: 9999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); font-family: sans-serif; pointer-events: none; border: 1px solid rgba(255,255,255,0.2);';
           document.body.appendChild(dragGhost);
           e.dataTransfer.setDragImage(dragGhost, 15, 15);
-          
           setTimeout(() => { if (document.body.contains(dragGhost)) document.body.removeChild(dragGhost); }, 0);
         }}
         onDragEnd={() => { if (setDraggedId) setDraggedId(null); }}
@@ -157,7 +153,7 @@ export default function CanvasBlock({
           if (isAbsolute) {
             const el = document.getElementById(`block-${b.id}`);
             const currentLeft = el ? el.offsetLeft : 0; const currentTop = el ? el.offsetTop : 0;
-            setInteraction({ type: 'drag', startX: e.clientX, startY: e.clientY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
+            setInteraction({ type: 'drag', startX: e.pageX, startY: e.pageY, initialLeft: currentLeft, initialTop: currentTop, initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0 });
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
@@ -213,7 +209,8 @@ export default function CanvasBlock({
         )}
         
         {b.children && (
-          <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-hidden" style={{zIndex: 10, borderRadius: 'inherit'}}>
+          // FIX V18.41: Zmieniono overflow-hidden na overflow-visible, aby plakietki mogły swobodnie lewitować poza obrys rodzica!
+          <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-visible" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
              <div className="pointer-events-auto w-full h-full relative flex-1 flex flex-row flex-wrap content-start" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent }}>
                 {b.children.map((child: any) => {
@@ -260,7 +257,6 @@ export default function CanvasBlock({
             <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
             <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
             <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
-            
             <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
             <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
