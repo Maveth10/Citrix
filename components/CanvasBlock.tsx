@@ -25,7 +25,6 @@ export default function CanvasBlock({
   draggedId, setDraggedId, handleDrop, hiddenBlocks = []
 }: CanvasBlockProps) {
   
-  // FIX V18.55: Jeśli to ID znajduje się w tablicy ukrytych, w ogóle nie renderujemy klocka!
   if (hiddenBlocks.includes(b.id)) return null;
 
   const isActive = activeId === b.id;
@@ -94,14 +93,37 @@ export default function CanvasBlock({
   };
 
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements) => {
+    // Bazowe style dla tagu tekstowego
+    const textStyles: any = { 
+      fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, 
+      overflowY: b.styles.overflowY || 'hidden', overflowX: 'hidden', 
+      wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, 
+      width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, 
+      zIndex: 10, position: 'relative', flex: b.styles.flex || 'auto'
+    };
+
+    // FIX V18.57: Przechwytujemy style gradientu i wrzucamy je BEZPOŚREDNIO na tekst, wycinając je z kontenera!
+    if (b.styles.WebkitBackgroundClip === 'text') {
+      textStyles.backgroundImage = b.styles.backgroundImage;
+      textStyles.WebkitBackgroundClip = 'text';
+      textStyles.WebkitTextFillColor = 'transparent';
+      textStyles.color = 'transparent'; // Wymuszamy transparent żeby gradient był widoczny
+      
+      // Czyścimy kontener, żeby tło nie wyciekało poza tekst
+      containerStyles.backgroundImage = 'none';
+      containerStyles.WebkitBackgroundClip = 'unset';
+      containerStyles.WebkitTextFillColor = 'unset';
+    }
+
+    // To samo robimy dla tekstu Outline (Pusty w środku)
+    if (b.styles.WebkitTextStroke) {
+      textStyles.WebkitTextStroke = b.styles.WebkitTextStroke;
+      textStyles.color = b.styles.color || 'transparent'; 
+      containerStyles.WebkitTextStroke = 'unset';
+    }
+
     return (
-      <Tag style={{ 
-          fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, 
-          overflowY: b.styles.overflowY || 'hidden', overflowX: 'hidden', 
-          wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, 
-          width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, 
-          zIndex: 10, position: 'relative', flex: b.styles.flex || 'auto'
-        }}
+      <Tag style={textStyles}
         contentEditable={isActive && isEditing} suppressContentEditableWarning={true}
         onDoubleClick={(e: any) => { e.stopPropagation(); setIsEditing(true); }}
         onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }} dangerouslySetInnerHTML={{ __html: b.text || '' }}
@@ -231,7 +253,7 @@ export default function CanvasBlock({
                        setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                        parentId={b.id} parentActive={isActive} interaction={interaction}
                        draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                       hiddenBlocks={hiddenBlocks} // Przekazujemy tablicę dalej w dół drzewa!
+                       hiddenBlocks={hiddenBlocks}
                      />
                    );
                 })}
