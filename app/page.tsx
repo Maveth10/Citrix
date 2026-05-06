@@ -347,7 +347,7 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.76! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.80! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
@@ -483,29 +483,29 @@ export default function Home() {
 
   const activeBlock = findBlockById(blocks, activeId);
 
-  // FIX V18.76: Zwykłe, czyste i eleganckie kategorie bez odpustowych kolorów
+  // FIX V18.80: Żadnych tanich kolorów. Czyste akcenty i jasne etykiety.
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'T' }, 
-    { id: 'obraz', label: 'Obraz', icon: '🖼️' }, 
-    { id: 'przycisk', label: 'Przycisk', icon: '👆' }, 
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, 
-    { id: 'pola', label: 'Pola', icon: '📦' }, 
-    { id: 'wideo', label: 'Wideo', icon: '▶️' }, 
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, 
-    { id: 'menu', label: 'Menu', icon: '☰' }, 
-    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, 
-    { id: 'lista', label: 'Lista', icon: '📋' }, 
-    { id: 'social', label: 'Social Media', icon: '❤️' }, 
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' }
+    { id: 'tekst', label: 'Tekst', icon: 'T', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }, 
+    { id: 'obraz', label: 'Obraz', icon: '🖼️', glow: 'rgba(232,121,249,0.5)', border: 'border-fuchsia-400' }, 
+    { id: 'przycisk', label: 'Przycisk', icon: '👆', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }, 
+    { id: 'grafika', label: 'Grafika', icon: '⭐', glow: 'rgba(250,204,21,0.5)', border: 'border-yellow-400' }, 
+    { id: 'pola', label: 'Pola', icon: '📦', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }, 
+    { id: 'wideo', label: 'Wideo', icon: '▶️', glow: 'rgba(232,121,249,0.5)', border: 'border-fuchsia-400' }, 
+    { id: 'formularze', label: 'Formularze', icon: '📝', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }, 
+    { id: 'menu', label: 'Menu', icon: '☰', glow: 'rgba(232,121,249,0.5)', border: 'border-fuchsia-400' }, 
+    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }, 
+    { id: 'lista', label: 'Lista', icon: '📋', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }, 
+    { id: 'social', label: 'Social Media', icon: '❤️', glow: 'rgba(244,63,94,0.5)', border: 'border-rose-400' }, 
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗', glow: 'rgba(34,211,238,0.5)', border: 'border-cyan-400' }
   ];
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">
-        <div className={`flex items-center justify-between pr-2 transition ${activeId === b.id ? 'bg-blue-500/20 border-l-2 border-blue-500' : 'hover:bg-white/5 border-l-2 border-transparent'}`}>
+        <div className={`flex items-center justify-between pr-2 transition ${activeId === b.id ? 'bg-cyan-500/20 border-l-2 border-cyan-400' : 'hover:bg-white/5 border-l-2 border-transparent'}`}>
           <button 
             onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} 
-            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-blue-400 font-bold' : 'text-neutral-400 hover:text-white'}`} 
+            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-cyan-400 font-bold' : 'text-neutral-400 hover:text-white'}`} 
             style={{ paddingLeft: `${(depth * 12) + 8}px` }}
           >
             <span className={hiddenBlocks.includes(b.id) ? 'opacity-30 line-through' : ''}>
@@ -530,27 +530,38 @@ export default function Home() {
   const activeCategoryData = categories.find(c => c.id === addCategory);
 
   return (
-    <div className="flex h-screen w-screen bg-[#09090b] text-white font-sans overflow-hidden relative selection:bg-white/20">
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+    // FIX V18.80: Cyberpunk Pulse Background
+    <div className="flex h-screen w-screen bg-[#050508] text-white font-sans overflow-hidden relative selection:bg-cyan-500/30">
       
-      {/* Subtelny Ambient Glow */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[180px] rounded-full pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 blur-[180px] rounded-full pointer-events-none z-0"></div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.05); }
+        }
+        .bg-orb { animation: pulse-slow 8s infinite alternate; }
+        .glass-panel { background: rgba(26, 26, 36, 0.65); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+      `}} />
 
-      {/* FIX V18.76: CZYSTY, SZKLANY LEWY PASEK */}
-      <aside className="w-16 bg-black/20 backdrop-blur-xl border-r border-white/10 flex flex-col items-center py-4 gap-3 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-2xl relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none z-0"></div>
+      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+      
+      {/* Żyjące, pulsujące kule w tle */}
+      <div className="bg-orb absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] bg-cyan-600/20 blur-[150px] rounded-full pointer-events-none z-0"></div>
+      <div className="bg-orb absolute bottom-[-15%] right-[-10%] w-[50vw] h-[50vw] bg-purple-600/20 blur-[150px] rounded-full pointer-events-none z-0" style={{ animationDelay: '4s' }}></div>
+
+      {/* LEWY PASEK PREMIUM (JAZDA BEZ TRZYMANKI) */}
+      <aside className="glass-panel w-16 border-r border-white/10 flex flex-col items-center py-4 gap-3 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-[10px_0_40px_rgba(0,0,0,0.5)] relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent pointer-events-none z-0"></div>
         
         <button 
           onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
-          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'pages' ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] border border-white/10 scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
+          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 ease-out z-10 ${leftTab === 'pages' ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)] scale-110' : 'bg-white/5 border border-transparent text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]'}`} 
           title="Zarządzanie Stronami"
         >
           +
         </button>
         <button 
           onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
-          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'layers' ? 'bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] border border-white/10 scale-110' : 'bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 hover:scale-105'}`} 
+          className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300 ease-out z-10 ${leftTab === 'layers' ? 'bg-fuchsia-500/20 border border-fuchsia-400 text-fuchsia-400 shadow-[0_0_20px_rgba(232,121,249,0.4)] scale-110' : 'bg-white/5 border border-transparent text-neutral-400 hover:text-white hover:bg-white/10 hover:border-white/20 hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]'}`} 
           title="Nawigator DOM"
         >
           ☰
@@ -558,6 +569,7 @@ export default function Home() {
         
         <div className="w-8 h-px bg-white/10 my-2 z-10"></div>
         
+        {/* KATEGORIE Z NEONOWYM KOPNIĘCIEM NA HOVER */}
         {categories.map(cat => {
           const isActive = addCategory === cat.id;
           return (
@@ -566,7 +578,8 @@ export default function Home() {
               onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
               onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
               title={cat.label}
-              className={`relative w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 z-10 ${isActive ? 'bg-white/15 text-white shadow-[0_4px_12px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.2)] border border-white/10 scale-110' : 'text-neutral-400 hover:bg-white/5 hover:text-white hover:scale-110'}`}
+              className={`relative w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 ease-out z-10 ${isActive ? `bg-white/10 border ${cat.border} text-white scale-110` : 'border border-transparent text-neutral-400 hover:bg-white/10 hover:border-white/30 hover:text-white hover:scale-110'}`}
+              style={isActive ? { boxShadow: `0 0 20px ${cat.glow}, inset 0 0 10px ${cat.glow}` } : {}}
             >
               {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px]">T</span> : cat.icon}
             </button>
@@ -578,41 +591,44 @@ export default function Home() {
         
         {/* PANEL STRON */}
         {leftTab === 'pages' && (
-          <div className="w-64 bg-black/30 backdrop-blur-2xl border-r border-white/10 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-200 relative">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-300">Zarządzanie Stronami</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button></div>
+          <div className="glass-panel w-64 border-r border-white/10 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-300 ease-out relative">
+            <div className="absolute top-0 left-0 w-[2px] h-full bg-gradient-to-b from-cyan-400 via-transparent to-transparent opacity-80"></div>
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">Zarządzanie Stronami</h2><button onClick={() => setLeftTab(null)} className="text-neutral-400 hover:text-white transition-colors">✕</button></div>
             <div className="flex-1 p-4 relative z-10">
-               <div className="p-3 bg-white/5 rounded-lg border border-white/10 flex justify-between items-center cursor-pointer shadow-inner">
+               <div className="p-3 bg-white/5 rounded-lg border border-white/10 flex justify-between items-center cursor-pointer hover:border-cyan-400/50 transition-all">
                  <span className="text-xs font-bold text-white">/{pageSlug}</span>
-                 <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded text-white uppercase tracking-widest shadow-sm">Aktywna</span>
+                 <span className="text-[9px] bg-cyan-500/20 text-cyan-400 border border-cyan-400/30 px-2 py-0.5 rounded uppercase tracking-widest">Aktywna</span>
                </div>
-               <button className="w-full mt-3 p-2 border border-dashed border-white/10 hover:border-white/30 text-neutral-400 hover:text-white text-xs font-bold rounded-lg transition-all">+ Dodaj Podstronę</button>
+               <button className="w-full mt-3 p-2 border border-dashed border-white/20 hover:border-cyan-400/50 text-neutral-400 hover:text-cyan-400 text-xs font-bold rounded-lg transition-all">+ Dodaj Podstronę</button>
             </div>
           </div>
         )}
         
         {/* PANEL WARSTW */}
         {leftTab === 'layers' && (
-          <div className="w-64 bg-black/30 backdrop-blur-2xl border-r border-white/10 h-full flex flex-col shadow-[20px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-200 relative">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-neutral-300">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button></div>
+          <div className="glass-panel w-64 border-r border-white/10 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-left-8 duration-300 ease-out relative">
+            <div className="absolute top-0 left-0 w-[2px] h-full bg-gradient-to-b from-fuchsia-400 via-transparent to-transparent opacity-80"></div>
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10"><h2 className="font-bold text-[10px] uppercase tracking-widest text-fuchsia-400 drop-shadow-[0_0_5px_rgba(232,121,249,0.5)]">Nawigator DOM</h2><button onClick={() => setLeftTab(null)} className="text-neutral-400 hover:text-white transition-colors">✕</button></div>
             <div className="flex-1 overflow-y-auto py-2 relative z-10">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
 
-        {/* PANELE KATEGORII Z CZYSTYM, BIAŁYM TEKSTEM */}
+        {/* PANELE KATEGORII (JASNE, CZYSTE, Z LASEROWĄ KRAWĘDZIĄ) */}
         {addCategory && activeCategoryData && (
-          <div className="w-[320px] bg-black/30 backdrop-blur-3xl border-r border-white/10 h-full shadow-[20px_0_50px_rgba(0,0,0,0.5)] z-30 flex flex-col animate-in slide-in-from-left-8 duration-200 relative">
-            <div className={`absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent`}></div>
+          <div className="glass-panel w-[340px] border-r border-white/10 h-full shadow-[30px_0_50px_rgba(0,0,0,0.6)] z-30 flex flex-col animate-in slide-in-from-left-8 duration-300 ease-out relative">
+            
+            {/* Laser Edge na podstawie koloru kategorii */}
+            <div className={`absolute top-0 left-0 w-[2px] h-full opacity-80`} style={{ background: `linear-gradient(to bottom, ${activeCategoryData.border.replace('border-', '')}, transparent)` }}></div>
             
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
-              <h3 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-2 drop-shadow-md">
-                <span className="text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">{activeCategoryData.icon}</span>
-                {activeCategoryData.label}
+              <h3 className="text-[11px] font-bold text-white uppercase tracking-widest flex items-center gap-3 drop-shadow-md">
+                <span className="text-xl drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">{activeCategoryData.icon}</span>
+                <span style={{ textShadow: `0 0 10px ${activeCategoryData.glow}` }}>{activeCategoryData.label}</span>
               </h3>
-              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white text-lg leading-none transition-colors">✕</button>
+              <button onClick={() => setAddCategory(null)} className="text-neutral-400 hover:text-white text-lg leading-none transition-colors">✕</button>
             </div>
             
+            {/* Tutaj są nasze komponenty, które naturalnie wtapiają się w jasne szkło */}
             <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-2 scrollbar-hide relative z-10">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
@@ -645,7 +661,7 @@ export default function Home() {
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-xl relative flex flex-row flex-wrap content-start items-start pb-40">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_30px_60px_rgba(0,0,0,0.8)] rounded-b-xl relative flex flex-row flex-wrap content-start items-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500 h-full"></div>)}</div>}
              
@@ -669,9 +685,9 @@ export default function Home() {
                       <div 
                         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if(setDraggedId) setDraggedId(null); }}
-                        className="flex-1 min-h-[100px] border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-blue-500/20 hover:scale-[1.02] transition-all cursor-pointer shadow-inner"
+                        className="flex-1 min-h-[100px] border-2 border-dashed border-cyan-400 bg-cyan-500/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-cyan-500/20 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all cursor-pointer"
                       >
-                        <span className="text-blue-500 font-bold text-[10px] uppercase tracking-widest">+ Wstaw Obok</span>
+                        <span className="text-cyan-400 font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]">+ Wstaw Obok</span>
                       </div>
                     )}
 
@@ -683,7 +699,7 @@ export default function Home() {
              <div 
                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggedId && handleDrop) handleDrop(draggedId, -1, 'bottom'); if(setDraggedId) setDraggedId(null); }}
-               className="w-full h-32 mt-4 border-2 border-transparent hover:border-blue-500/50 hover:bg-blue-500/10 rounded-xl transition-all flex items-center justify-center text-transparent hover:text-blue-400 font-bold tracking-widest uppercase text-[10px]"
+               className="w-full h-32 mt-4 border-2 border-transparent hover:border-cyan-500/50 hover:bg-cyan-500/10 rounded-xl transition-all flex items-center justify-center text-transparent hover:text-cyan-400 font-bold tracking-widest uppercase text-[10px]"
              >
                Upuść tutaj (Na koniec)
              </div>
