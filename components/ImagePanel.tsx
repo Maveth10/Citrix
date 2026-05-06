@@ -1,49 +1,104 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ImagePanelProps {
   handleAddBlock: (type: string, variant: string, label: string) => void;
 }
 
 export default function ImagePanel({ handleAddBlock }: ImagePanelProps) {
-  return (
-    <div className="flex flex-col gap-2 pb-10">
-      
-      {/* --- POJEDYNCZE OBRAZY --- */}
-      <div className="mt-2 mb-1 px-1">
-        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest">Pojedyncze Media</span>
-      </div>
-      
-      <button onClick={() => handleAddBlock('img', 'photo', 'Zdjęcie')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg text-left transition border border-neutral-700 hover:border-blue-500 group flex items-center gap-3">
-        <div className="w-10 h-10 bg-neutral-800 rounded flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🖼️</div>
-        <div>
-          <span className="text-sm font-bold text-white block">Zdjęcie klasyczne</span>
-          <span className="text-[9px] text-neutral-400">Z obramowaniem i cieniem</span>
-        </div>
-      </button>
-      
-      <button onClick={() => handleAddBlock('img', 'transparent', 'Grafika PNG')} className="p-3 bg-[#222] hover:bg-[#2A2A2A] rounded-lg text-left transition border border-neutral-700 hover:border-blue-500 group flex items-center gap-3">
-        {/* Szachownica symulująca przezroczystość (typowa dla programów graficznych) */}
-        <div className="w-10 h-10 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABZJREFUeNpi2rVrf2QIAv///wPikEAAMgwBDKkH0A7d3OAAAAAASUVORK5CYII=')] rounded flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-inner">✨</div>
-        <div>
-          <span className="text-sm font-bold text-white block">Grafika (PNG)</span>
-          <span className="text-[9px] text-neutral-400">Wycięte logo lub wektor</span>
-        </div>
-      </button>
+  const [activeTab, setActiveTab] = useState<'single' | 'galleries'>('single');
 
-      {/* --- ZŁOŻONE GALERIE --- */}
-      <div className="mt-4 mb-1 px-1">
-        <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Kolekcje i Galerie</span>
+  // Funkcja pomocnicza do rysowania pięknych, mrocznych kart z ikoną
+  const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, icon: string, onClick: () => void }) => (
+    <button 
+      onClick={onClick} 
+      className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-blue-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm"
+    >
+      <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-blue-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5">
+        {icon}
       </div>
+      <div className="flex-1">
+        <span className="text-xs font-bold text-neutral-200 block mb-0.5">{title}</span>
+        <span className="text-[9px] text-neutral-500 block leading-tight">{desc}</span>
+      </div>
+    </button>
+  );
+
+  return (
+    <div className="flex flex-col gap-3 pb-10">
       
-      <button onClick={() => handleAddBlock('grid', 'gallery-grid', 'Siatka Pro')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg text-left transition border border-neutral-700 hover:border-emerald-500 group">
-        <span className="text-sm font-bold text-white block mb-1">✨ Siatka z Zoomem</span>
-        <span className="text-[10px] text-neutral-500 block leading-tight">Automatyczny układ kafelkowy z efektem powiększania po najechaniu myszką.</span>
-      </button>
-      
-      <button onClick={() => handleAddBlock('carousel', '', 'Karuzela')} className="p-4 bg-[#222] hover:bg-[#2A2A2A] rounded-lg text-left transition border border-neutral-700 hover:border-emerald-500 group">
-        <span className="text-sm font-bold text-white block mb-1">🎠 Karuzela (Slider)</span>
-        <span className="text-[10px] text-neutral-500 block leading-tight">Przesuwany w poziomie pasek wielu zdjęć połączony z Menedżerem Mediów.</span>
-      </button>
+      {/* KATEGORIA 1: POJEDYNCZE MEDIA */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'single' ? '' as any : 'single')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'single' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Pojedyncze Media</span>
+          <span className="text-lg leading-none">{activeTab === 'single' ? '▾' : '▸'}</span>
+        </button>
+        
+        {activeTab === 'single' && (
+          <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
+             <UICard 
+               icon="🖼️" 
+               title="Uniwersalny Obraz" 
+               desc="Pełna obsługa JPG, PNG, WebP oraz animowanych GIF." 
+               onClick={() => handleAddBlock('img', 'classic', 'Obraz')} 
+             />
+             <UICard 
+               icon="✨" 
+               title="Zdjęcie Soft (Premium)" 
+               desc="Eleganckie zaokrąglenia (24px) i nowoczesny, miękki cień." 
+               onClick={() => handleAddBlock('img', 'rounded', 'Obraz Soft')} 
+             />
+             <UICard 
+               icon="👤" 
+               title="Avatar (Okrągły)" 
+               desc="Proporcja 1:1. Idealny do profili, opinii i cytatów." 
+               onClick={() => handleAddBlock('img', 'avatar', 'Avatar')} 
+             />
+             <UICard 
+               icon="📸" 
+               title="Retro Polaroid" 
+               desc="Stylizowana, biała ramka przypominająca odbitkę." 
+               onClick={() => handleAddBlock('img', 'polaroid', 'Polaroid')} 
+             />
+          </div>
+        )}
+      </div>
+
+      {/* KATEGORIA 2: KOLEKCJE I GALERIE */}
+      <div className="flex flex-col">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'galleries' ? '' as any : 'galleries')}
+          className={`flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${activeTab === 'galleries' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-b-none' : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'}`}
+        >
+          <span>Kolekcje i Galerie</span>
+          <span className="text-lg leading-none">{activeTab === 'galleries' ? '▾' : '▸'}</span>
+        </button>
+        
+        {activeTab === 'galleries' && (
+          <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
+             <UICard 
+               icon="🔲" 
+               title="Klasyczna Siatka (3 kol)" 
+               desc="Równy, 3-kolumnowy układ idealny na zdjęcia produktów." 
+               onClick={() => handleAddBlock('grid', 'gallery-grid', 'Siatka')} 
+             />
+             <UICard 
+               icon="🍱" 
+               title="Bento Grid (Asymetria)" 
+               desc="Nowoczesny układ z jednym dużym zdjęciem i mniejszymi obok." 
+               onClick={() => handleAddBlock('container', 'gallery-bento', 'Bento Grid')} 
+             />
+             <UICard 
+               icon="🎠" 
+               title="Przewijana Karuzela" 
+               desc="Poziomy slider obrazów na natywnym przewijaniu (Scroll)." 
+               onClick={() => handleAddBlock('container', 'gallery-slider', 'Karuzela')} 
+             />
+          </div>
+        )}
+      </div>
 
     </div>
   );
