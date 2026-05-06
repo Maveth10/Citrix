@@ -1,91 +1,62 @@
-import React from 'react';
+import React, { useState } from 'react';
+import HeadingsPanel from './text-panels/HeadingsPanel';
+import ParagraphsPanel from './text-panels/ParagraphsPanel';
+import InsertsPanel from './text-panels/InsertsPanel';
 
-export default function TextPanel({ handleAddBlock }: any) {
-  // Baza przycisku: Szronione szkło, wyraźnie odcinające się od ciemnego tła
-  const btnWrapper = "group relative w-full text-left rounded-xl p-4 transition-all duration-300 bg-gradient-to-br from-white/[0.04] to-transparent border border-white/5 hover:bg-white/[0.08] hover:border-white/10 hover:shadow-lg overflow-hidden";
-  
-  // Efekt oświetlenia z prawej strony (Neon Edge) + miękka poświata wchodząca do środka
-  const neonEdge = "absolute right-0 top-0 bottom-0 w-[3px] bg-[var(--theme-color)] shadow-[0_0_15px_var(--theme-color)] opacity-0 group-hover:opacity-100 transition-all duration-300 z-20";
-  const ambientGlow = "absolute right-0 top-1/2 -translate-y-1/2 w-32 h-full bg-[var(--theme-color)] blur-[40px] opacity-0 group-hover:opacity-20 transition-all duration-500 z-0 pointer-events-none";
-  
-  // Teksty
-  const titleClass = "relative text-[12px] font-bold text-neutral-300 transition-colors duration-300 group-hover:text-white flex items-center gap-2 mb-1 z-10";
-  const descClass = "relative text-[10px] text-neutral-500 group-hover:text-neutral-400 transition-colors z-10";
+interface TextPanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
+
+export default function TextPanel({ handleAddBlock }: TextPanelProps) {
+  const [activeTab, setActiveTab] = useState<'headings' | 'paragraphs' | 'inserts'>('headings');
+
+  const getTabBtnStyle = (tabName: string) => {
+    const isActive = activeTab === tabName;
+    return `flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest border relative overflow-hidden z-10 ${
+      isActive 
+        ? 'bg-[color:var(--theme-color)]/10 text-[color:var(--theme-color)] border-[color:var(--theme-color)]/40 rounded-b-none shadow-[inset_0_0_15px_var(--theme-shadow)]' 
+        : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border-white/5 hover:border-white/20'
+    }`;
+  };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pb-10 relative z-10">
       
-      {/* ================= SEKCJA: NAGŁÓWKI ================= */}
-      <div className="text-[10px] font-bold text-neutral-500 mb-1 tracking-widest uppercase border-b border-white/5 pb-2">Nagłówki</div>
-      
-      <button className={btnWrapper} onClick={() => handleAddBlock('h1', '', 'Nagłówek H1')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-xl text-white">H1</span> Główny Tytuł</div>
-        <div className={descClass}>Najważniejszy nagłówek na stronie (SEO).</div>
-      </button>
+      {/* KATEGORIA 1: NAGŁÓWKI */}
+      <div className="flex flex-col drop-shadow-lg">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'headings' ? '' as any : 'headings')}
+          className={getTabBtnStyle('headings')}
+        >
+          <span>Tytuły Główne (H1 & H2)</span>
+          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'headings' ? 'rotate(90deg)' : 'rotate(0deg)' }}>▸</span>
+        </button>
+        {activeTab === 'headings' && <HeadingsPanel handleAddBlock={handleAddBlock} />}
+      </div>
 
-      <button className={btnWrapper} onClick={() => handleAddBlock('h2', '', 'Nagłówek H2')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-lg text-white">H2</span> Tytuł Sekcji</div>
-        <div className={descClass}>Nagłówek wspierający strukturę całej sekcji.</div>
-      </button>
+      {/* KATEGORIA 2: AKAPITY */}
+      <div className="flex flex-col drop-shadow-lg">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'paragraphs' ? '' as any : 'paragraphs')}
+          className={getTabBtnStyle('paragraphs')}
+        >
+          <span>Akapity i Treść (P)</span>
+          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'paragraphs' ? 'rotate(90deg)' : 'rotate(0deg)' }}>▸</span>
+        </button>
+        {activeTab === 'paragraphs' && <ParagraphsPanel handleAddBlock={handleAddBlock} />}
+      </div>
 
-      <button className={btnWrapper} onClick={() => handleAddBlock('h3', 'gradient', 'Magiczny Gradient')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">✨</span> Magiczny Gradient</div>
-        <div className={descClass}>Wielokolorowy, wyróżniający się tekst nagłówka.</div>
-      </button>
-
-      {/* ================= SEKCJA: TREŚĆ ================= */}
-      <div className="text-[10px] font-bold text-neutral-500 mb-1 mt-2 tracking-widest uppercase border-b border-white/5 pb-2">Akapity i Wyróżnienia</div>
-      
-      <button className={btnWrapper} onClick={() => handleAddBlock('p', '', 'Akapit')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base font-serif text-white">¶</span> Zwykły Tekst</div>
-        <div className={descClass}>Podstawowy blok tekstu. Czytelny i lekki.</div>
-      </button>
-
-      <button className={btnWrapper} onClick={() => handleAddBlock('p', 'highlight', 'Wyróżniony Tekst')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base">🖍️</span> Podświetlony Tekst</div>
-        <div className={descClass}>Zwraca uwagę tłem przypominającym marker.</div>
-      </button>
-
-      {/* ================= SEKCJA: ALERTY (PRZYWRÓCONY KOMPLET) ================= */}
-      <div className="text-[10px] font-bold text-neutral-500 mb-1 mt-2 tracking-widest uppercase border-b border-white/5 pb-2">Komunikaty i Alerty</div>
-
-      <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'info', 'Wskazówka (Tip)')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base drop-shadow-md">💡</span> Wskazówka (Tip)</div>
-        <div className={descClass}>Niebieska ramka z pomocną informacją lub tipem.</div>
-      </button>
-
-      <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'success', 'Ramka Sukcesu')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base drop-shadow-md">✅</span> Sukces (Success)</div>
-        <div className={descClass}>Zielony banner potwierdzający udaną akcję.</div>
-      </button>
-
-      <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'warning', 'Ramka Ostrzeżenia')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base drop-shadow-md">⚠️</span> Ostrzeżenie (Warning)</div>
-        <div className={descClass}>Żółty banner dla ważnych uwag i notatek.</div>
-      </button>
-
-      <button className={btnWrapper} onClick={() => handleAddBlock('alert', 'error', 'Ramka Błędu')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base drop-shadow-md">🚨</span> Alert (Krytyczny)</div>
-        <div className={descClass}>Czerwony banner sygnalizujący błąd lub problem.</div>
-      </button>
-
-      {/* ================= SEKCJA: DYNAMICZNE ================= */}
-      <div className="text-[10px] font-bold text-neutral-500 mb-1 mt-2 tracking-widest uppercase border-b border-white/5 pb-2">Dynamiczne</div>
-
-      <button className={btnWrapper} onClick={() => handleAddBlock('marquee', '', 'Pasek Giełdowy')}>
-        <div className={ambientGlow}></div><div className={neonEdge}></div>
-        <div className={titleClass}><span className="text-base drop-shadow-md">〰️</span> Pasek Giełdowy</div>
-        <div className={descClass}>Automatycznie przesuwający się poziomy tekst.</div>
-      </button>
+      {/* KATEGORIA 3: WSTAWKI */}
+      <div className="flex flex-col drop-shadow-lg">
+        <button 
+          onClick={() => setActiveTab(activeTab === 'inserts' ? '' as any : 'inserts')}
+          className={getTabBtnStyle('inserts')}
+        >
+          <span>Złożone Wstawki (Alerty)</span>
+          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'inserts' ? 'rotate(90deg)' : 'rotate(0deg)' }}>▸</span>
+        </button>
+        {activeTab === 'inserts' && <InsertsPanel handleAddBlock={handleAddBlock} />}
+      </div>
 
     </div>
   );
