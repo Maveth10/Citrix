@@ -111,6 +111,12 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
+  const checkIsChild = (parent: Block, childId: number): boolean => {
+    if (!parent.children) return false;
+    if (parent.children.some(c => c.id === childId)) return true;
+    return parent.children.some(c => checkIsChild(c, childId));
+  };
+
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
@@ -212,40 +218,38 @@ export default function Home() {
   };
 
   // =========================================================================
-  // FIX V18.60: RZEŹNIK LINIOWY (THE BUTCHER LOGIC)
+  // FIX V18.61: RZEŹNIK LINIOWY (THE BUTCHER CLEANUP)
   // =========================================================================
-  const fixNeighborsOnRemove = (arr: Block[], index: number): Block[] => {
-    const newArr = [...arr];
-    const removedBlock = arr[index];
-    newArr.splice(index, 1);
+  const cleanupRows = (arr: Block[]): Block[] => {
+    const res = [...arr];
+    for (let i = 0; i < res.length; i++) {
+      let block = res[i];
+      const isLast = i === res.length - 1;
+      const prevClear = i === 0 || res[i - 1].styles.clearRow !== false;
+      let currentClear = block.styles.clearRow !== false;
+      let currentWidth = block.styles.width || '100%';
 
-    // 1. Zabiliśmy element z prawej (zamykający linię). Oddajemy zaszczyt poprzednikowi!
-    if (index > 0 && arr[index - 1].styles.clearRow === false && removedBlock.styles.clearRow !== false) {
-       newArr[index - 1] = { ...newArr[index - 1], styles: { ...newArr[index - 1].styles, clearRow: true } };
-       if (['48%', '40%', '50%'].includes(newArr[index - 1].styles.width)) {
-          newArr[index - 1].styles.width = '100%';
-       }
-    }
-    
-    // 2. Zabiliśmy element z lewej (otwierający). Drugi element staje się sierotą.
-    if (removedBlock.styles.clearRow === false && index < arr.length - 1) {
-       // Jeśli element, który wpadł na miejsce usuniętego jest zamykający... to znaczy, że jest teraz sam!
-       if (newArr[index] && newArr[index].styles.clearRow !== false) {
-          if (['48%', '40%', '50%'].includes(newArr[index].styles.width)) {
-             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, width: '100%' } };
-          }
-       }
-    }
+      let needsUpdate = false;
+      let newStyles = { ...block.styles };
 
-    // Bezpiecznik: Ostatni skurczybyk na całej liście zawszemusi blokować linię!
-    if (newArr.length > 0 && newArr[newArr.length - 1].styles.clearRow === false) {
-       newArr[newArr.length - 1] = { ...newArr[newArr.length - 1], styles: { ...newArr[newArr.length - 1].styles, clearRow: true } };
-       if (['48%', '40%', '50%'].includes(newArr[newArr.length - 1].styles.width)) {
-          newArr[newArr.length - 1].styles.width = '100%';
-       }
-    }
+      // 1. Ostatni musi bezwzględnie zamykać wiersz
+      if (isLast && !currentClear) {
+        newStyles.clearRow = true;
+        currentClear = true;
+        needsUpdate = true;
+      }
 
-    return newArr;
+      // 2. Jeśli został sam jak palec i jest zwężony (48%) -> rozciągnij go
+      if (prevClear && currentClear && ['48%', '40%', '50%'].includes(currentWidth)) {
+        newStyles.width = '100%';
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        res[i] = { ...block, styles: newStyles };
+      }
+    }
+    return res;
   };
 
   const removeActiveBlock = () => {
@@ -258,7 +262,9 @@ export default function Home() {
             newArr[index] = createBlock('container', 'empty', 'Puste Pole');
             return newArr;
           }
-          return fixNeighborsOnRemove(arr, index); // Uruchamiamy rzeźnika
+          const newArr = [...arr];
+          newArr.splice(index, 1);
+          return cleanupRows(newArr); // Oi! Sprzątamy!
         }
         return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
       };
@@ -269,14 +275,24 @@ export default function Home() {
 
   const handleDrop = (sourceId: number, targetId: number, dropType: 'before' | 'inline' = 'before') => {
     if (sourceId === targetId) return;
+    
     setBlocks(prevBlocks => {
+      const sourceBlockNode = findBlockById(prevBlocks, sourceId);
+      
+      // ANTI-BLACKHOLE PROTOCOL: Zabezpieczenie przed wrzuceniem rodzica do dziecka
+      if (sourceBlockNode && checkIsChild(sourceBlockNode, targetId)) {
+         return prevBlocks; 
+      }
+
       let sourceBlock: Block | null = null;
       
       const removeSource = (arr: Block[]): Block[] => {
         const index = arr.findIndex(b => b.id === sourceId);
         if (index > -1) {
           sourceBlock = arr[index];
-          return fixNeighborsOnRemove(arr, index); // Uruchamiamy rzeźnika
+          const newArr = [...arr];
+          newArr.splice(index, 1);
+          return cleanupRows(newArr); // Oi! Sprzątamy linię po wyciągniętym klocku!
         }
         return arr.map(b => ({ ...b, children: b.children ? removeSource(b.children) : undefined }));
       };
@@ -291,19 +307,16 @@ export default function Home() {
             const newArr = [...arr];
             let targetWidth = newArr[index].styles.width;
             if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; 
-            // Cel przestaje blokować linię
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false, width: targetWidth } };
             
             let safeWidth = sourceBlock!.styles.width;
             if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; 
             
-            // Źródło wchodzi obok i zamyka linię
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
             return [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
           } else {
-            // Normalne zrzucenie: klocek musi wrócić do formy i zablokować wiersz
             let restoredWidth = sourceBlock!.styles.width;
-            if (restoredWidth === '48%' || restoredWidth === '40%') restoredWidth = '100%';
+            if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
             
             const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
             return [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
@@ -311,13 +324,14 @@ export default function Home() {
         }
         return arr.map(b => ({ ...b, children: b.children ? insertBlock(b.children) : undefined }));
       };
+      
       return insertBlock(intermediate);
     });
   };
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.60! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano V18.61! Link: /live/${pageSlug}`);
   };
 
   useEffect(() => {
