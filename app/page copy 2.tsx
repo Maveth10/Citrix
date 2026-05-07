@@ -29,18 +29,15 @@ interface Block {
   images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string, styles?: any }[]; styles: any;
 }
 
-// ======== ANATOMIA KOSMICZNEGO NIEBA V18.NEXT ========
+// ======== ANATOMIA KOSMICZNEGO NIEBA V18 ========
 interface AuroraOrb {
   id: number;
   x: number;          
-  y: number;
-  tx: number; // Cel lotu na osi X (target X)
-  ty: number; // Cel lotu na osi Y (target Y)
+  y: number;          
   size: number;       
   blur: number;       
   hue: number;        
-  duration: number;
-  opacity: number; // Indywidualna jasność
+  duration: number;   
 }
 
 interface ShootingStar {
@@ -406,7 +403,7 @@ export default function Home() {
     if (error) alert(error.message); else alert(`Opublikowano V18.NEXT! Link: /live/${pageSlug}`);
   };
 
-  // ======== MAGIA: GENERYCZNE NIEBO & CZARNA DZIURA V18.NEXT ========
+  // ======== MAGIA: GENERYCZNE NIEBO & CZARNA DZIURA V18 ========
   const [auroraOrbs, setAuroraOrbs] = useState<AuroraOrb[]>([]);
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
   const [blackHole, setBlackHole] = useState<BlackHole | null>(null);
@@ -423,15 +420,12 @@ export default function Home() {
     const spawnOrb = () => {
       const newOrb: AuroraOrb = {
         id: Date.now() + Math.floor(Math.random() * 100000),
-        x: Math.random() * 140 - 20,   // Szeroki rozrzut narodzin (-20% do 120%)
-        y: Math.random() * 140 - 20,   
-        tx: (Math.random() - 0.5) * 80, // Wektor ruchu na osi X (od -40vw do +40vw)
-        ty: (Math.random() - 0.5) * 80, // Wektor ruchu na osi Y (od -40vh do +40vh)
-        size: Math.random() * 800 + 500, // Ogromne kule światła (500-1300px)
-        blur: Math.random() * 40 + 80,  // Mniejszy blur dla intensywniejszego koloru (80-120px)
-        hue: Math.random() * 140 + 150, // Piękne kosmiczne palety (150-290 - błękit, fiolet, róż)
-        duration: Math.random() * 20 + 20, // Animacja trajektorii: 20-40 sekund
-        opacity: Math.random() * 0.25 + 0.15, // Indywidualna moc światła dla każdej kuli (0.15-0.40)
+        x: Math.random() * 120 - 10,   
+        y: Math.random() * 120 - 10,   
+        size: Math.random() * 600 + 400, 
+        blur: Math.random() * 80 + 120,  
+        hue: Math.random() * 120 + 160, 
+        duration: Math.random() * 20 + 30, 
       };
       setAuroraOrbs(prev => [...prev, newOrb]);
       setTimeout(() => {
@@ -472,10 +466,8 @@ export default function Home() {
       }, nextEventTime);
     };
 
-    // KLUCZOWE: Zagęszczamy kosmos na start
-    for (let i = 0; i < 12; i++) spawnOrb();
-    // KLUCZOWE: Przyspieszamy rodzenie się nowych kul z 5 do 3 sekund
-    const spawnAuroraInterval = setInterval(spawnOrb, 3000); 
+    for (let i = 0; i < 6; i++) spawnOrb();
+    const spawnAuroraInterval = setInterval(spawnOrb, 5000); 
     const spawnStarInterval = setInterval(() => {
        if (Math.random() > 0.4) spawnShootingStar(); 
     }, 4000); 
@@ -555,6 +547,7 @@ export default function Home() {
             updates.height = `${newHeightPx}px`;
             updates.minHeight = `${newHeightPx}px`;
           } else {
+            // SZTYWNE PIKSELE, ZABEZPIECZENIE PRZED ROZLEWANIEM Z WYKORZYSTANIEM MIN-CONTENT
             updates.height = `${newHeightPx}px`;
             updates.minHeight = `min-content`;
           }
@@ -706,7 +699,7 @@ export default function Home() {
       {/* MAGIA ANIMACJI: SYSTEM NIEBA, ZAPADANIE SIĘ ŚWIATŁA I MROCZNE SZKŁO */}
       <style dangerouslySetInnerHTML={{__html: `
         
-        /* KOSMICZNE SUWAKI */
+        /* KOSMICZNE SUWAKI (Zabijamy brzydkie szare paski Windowsa) */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
@@ -718,12 +711,11 @@ export default function Home() {
           100% { filter: hue-rotate(360deg); }
         }
 
-        /* NOWA ZORZA: Losowe trajektorie i miękkie przenikanie */
         @keyframes aurora-flow {
-          0% { opacity: 0; transform: translate(0, 0) scale(0.8); }
-          25% { opacity: var(--max-opacity, 0.35); transform: translate(calc(var(--tx) * 0.33), calc(var(--ty) * 0.33)) scale(1.1); }
-          75% { opacity: var(--max-opacity, 0.35); transform: translate(calc(var(--tx) * 0.66), calc(var(--ty) * 0.66)) scale(1.2); }
-          100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.9); }
+          0% { opacity: 0; transform: translate(0%, 0%) scale(0.9); }
+          10% { opacity: 0.15; transform: translate(10%, 10%) scale(1); }
+          90% { opacity: 0.15; transform: translate(90%, -90%) scale(1.1); }
+          100% { opacity: 0; transform: translate(100%, -100%) scale(1.2); }
         }
 
         @keyframes shooting-star-dash {
@@ -764,6 +756,7 @@ export default function Home() {
           transition: opacity 5s ease-in, transform 8s ease-in;
         }
 
+        /* Wolniejsze oddychanie neonów (8 sekund) */
         @keyframes neon-breathe {
           0%, 100% { box-shadow: 0 0 10px -2px var(--theme-color), inset 0 0 5px -2px var(--theme-color); }
           50% { box-shadow: 0 0 20px 2px var(--theme-color), inset 0 0 10px 1px var(--theme-color); }
@@ -843,10 +836,7 @@ export default function Home() {
               backgroundColor: `hsl(${orb.hue}, 100%, 55%)`,
               filter: `blur(${orb.blur}px)`,
               animationDuration: `${orb.duration}s`,
-              '--tx': `${orb.tx}vw`,
-              '--ty': `${orb.ty}vh`,
-              '--max-opacity': orb.opacity
-            } as React.CSSProperties}
+            }}
           />
         ))}
 
@@ -993,7 +983,7 @@ export default function Home() {
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-[#ff4500] h-full"></div>)}</div>}
              
@@ -1039,7 +1029,8 @@ export default function Home() {
           </div>
         </main>
         
-        <div className="relative z-50">
+        {/* KLUCZOWA ZMIANA: Cyber-Szkło dla dolnego panelu */}
+        <div className="relative z-50 bg-[rgba(8,8,12,0.6)] backdrop-blur-[24px] saturate-[150%] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
         </div>
       </div>

@@ -28,14 +28,12 @@ export default function TopHeader({
   const [showBgMenu, setShowBgMenu] = useState(false);
   const [showAddSectionMenu, setShowAddSectionMenu] = useState(false);
 
-  // FIX V18.13: Używamy string, żeby inputy nie wariowały przy kasowaniu backspace'em
   const [customCols, setCustomCols] = useState<string>('3');
   const [customRows, setCustomRows] = useState<string>('2');
 
   const onApplyLayout = (type: string) => { handleChangeLayout(type); setShowLayoutMenu(false); };
   const onAddSection = (type: string) => { handleAddSection(type); setShowAddSectionMenu(false); };
 
-  // Funkcja aplikująca własną siatkę z zabezpieczeniem matematycznym
   const handleCustomGrid = (action: 'add' | 'change') => {
     const cols = Math.max(1, parseInt(customCols) || 1);
     const rows = Math.max(1, parseInt(customRows) || 1);
@@ -47,7 +45,8 @@ export default function TopHeader({
   const isContainer = activeBlock && ['container', 'section', 'form', 'grid'].includes(activeBlock.type);
 
   return (
-    <header className="h-16 bg-[#09090b]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 z-[300]">
+    // Bez obramowania, czyste szkło!
+    <header className="h-16 relative z-[300] flex items-center justify-between px-6 bg-[rgba(8,8,12,0.6)] backdrop-blur-[24px] saturate-[150%] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
       
       <div className="flex items-center">
         <div className="flex items-center bg-white/5 p-1 rounded-full border border-white/5 shadow-inner">
