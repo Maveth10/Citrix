@@ -26,27 +26,33 @@ import AICopilot from '../components/AICopilot';
 
 interface Block {
   id: number; type: string; name: string; text?: string; src?: string; videoId?: string; children?: Block[];
-  images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string }[]; styles: any;
+  images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string, styles?: any }[]; styles: any;
 }
 
 // ======== ANATOMIA KOSMICZNEGO NIEBA V18 ========
 interface AuroraOrb {
   id: number;
-  x: number;          // Pozycja X (%)
-  y: number;          // Pozycja Y (%)
-  size: number;       // Wielkość (px)
-  blur: number;       // Stopień rozmycia (px)
-  hue: number;        // Bazowy kolor HSL (0-360)
-  duration: number;   // Czas życia / prędkość płynięcia (s)
+  x: number;          
+  y: number;          
+  size: number;       
+  blur: number;       
+  hue: number;        
+  duration: number;   
 }
 
 interface ShootingStar {
   id: number;
-  startX: number;     // Początek X (%)
-  startY: number;     // Początek Y (%)
-  length: number;     // Długość ogona (px)
-  speed: number;      // Prędkość przelotu (s)
-  angle: number;      // Losowy Kąt Opadania (deg)
+  startX: number;     
+  startY: number;     
+  length: number;     
+  speed: number;      
+  angle: number;      
+}
+
+interface BlackHole {
+  active: boolean;
+  x: number;
+  y: number;
 }
 // ==========================================================
 
@@ -168,7 +174,11 @@ export default function Home() {
           let newChildren = [...b.children];
           if (layout !== 'flex-col' && newChildren.length < childCount) {
             const missingSlots = childCount - newChildren.length;
-            for (let i = 0; i < missingSlots; i++) { newChildren.push(createBlock('container', 'empty', 'Puste Pole')); }
+            for (let i = 0; i < missingSlots; i++) { 
+              const emptyField = createBlock('container', 'empty', 'Puste Pole');
+              emptyField.id = Date.now() + Math.random();
+              newChildren.push(emptyField); 
+            }
           }
           return { ...b, styles: newStyles, children: newChildren };
         }
@@ -198,7 +208,11 @@ export default function Home() {
     else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
     else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; childCount = 4; }
 
-    newSection.children = Array.from({ length: childCount }).map((_, i) => createBlock('container', 'empty', `Pole ${i + 1}`));
+    newSection.children = Array.from({ length: childCount }).map((_, i) => {
+      const emptyField = createBlock('container', 'empty', `Pole ${i + 1}`);
+      emptyField.id = Date.now() + Math.random();
+      return emptyField;
+    });
     setBlocks(prev => [...prev, newSection]);
     setActiveId(newSection.id);
   };
@@ -209,64 +223,18 @@ export default function Home() {
   };
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
-    
-    // ======== MAGIA: BUDOWANIE ZŁOŻONEGO ALERTU (SECURITY NOTICE) ========
-    let newBlock: Block;
-    if (type === 'container' && variant === 'notice-box') {
-      newBlock = createBlock('container', 'notice-box', 'Security Alert');
-      newBlock.styles = { 
-        ...newBlock.styles, 
-        border: '2px solid #ff0033', 
-        backgroundColor: 'rgba(255, 0, 51, 0.05)', 
-        padding: '30px 24px 24px 24px', 
-        borderRadius: '8px', 
-        position: 'relative', 
-        boxShadow: '0 0 20px rgba(255, 0, 51, 0.1), inset 0 0 10px rgba(255, 0, 51, 0.05)', 
-        marginTop: '24px' 
-      };
-      
-      const badge = createBlock('p', '', 'Plakietka');
-      badge.text = 'SECURITY & SAFETY NOTICE';
-      badge.styles = { 
-        ...badge.styles, 
-        backgroundColor: '#ff0033', 
-        color: '#ffffff', 
-        padding: '6px 16px', 
-        fontSize: '11px', 
-        fontWeight: 'bold', 
-        textTransform: 'uppercase', 
-        position: 'absolute', 
-        top: '0', 
-        transform: 'translateY(-50%)', 
-        left: '24px', 
-        borderRadius: '4px', 
-        letterSpacing: '1px',
-        margin: '0',
-        width: 'max-content',
-        zIndex: 10
-      };
-
-      const text = createBlock('p', '', 'Treść Alertu');
-      text.text = 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.';
-      text.styles = { 
-        ...text.styles, 
-        color: '#ff0033', 
-        fontSize: '14px', 
-        fontWeight: '500', 
-        margin: '0',
-        lineHeight: '1.5'
-      };
-
-      newBlock.children = [badge, text];
-    } else {
-      newBlock = createBlock(type, variant, label);
-    }
-    // =====================================================================
+    // ======== CZYSTA ARCHITEKTURA ========
+    // Prosimy BlockFactory o gotowy klocek
+    const newBlock = createBlock(type, variant, label);
+    // Zabezpieczamy unikalne ID przed kolizją przy szybkim klikaniu
+    newBlock.id = Date.now() + Math.random(); 
+    // =====================================
 
     setBlocks(prevBlocks => {
       if (!activeId) {
         if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
+           autoWrapper.id = Date.now() + Math.random();
            autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
@@ -330,7 +298,9 @@ export default function Home() {
         if (index > -1) {
           if (parentIsGrid) {
             const newArr = [...arr];
-            newArr[index] = createBlock('container', 'empty', 'Puste Pole');
+            const emptyContainer = createBlock('container', 'empty', 'Puste Pole');
+            emptyContainer.id = Date.now() + Math.random();
+            newArr[index] = emptyContainer;
             return newArr;
           }
           const removedBlock = arr[index];
@@ -424,12 +394,12 @@ export default function Home() {
     if (error) alert(error.message); else alert(`Opublikowano V18.NEXT! Link: /live/${pageSlug}`);
   };
 
-  // ======== MAGIA: GENERYCZNE NIEBO V18 (Zorze i Spadające Gwiazdy) ========
+  // ======== MAGIA: GENERYCZNE NIEBO & CZARNA DZIURA V18 ========
   const [auroraOrbs, setAuroraOrbs] = useState<AuroraOrb[]>([]);
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
+  const [blackHole, setBlackHole] = useState<BlackHole | null>(null);
 
   useEffect(() => {
-    // A. Pełne Spektrum dla Interfejsu ( requestAnimationFrame )
     let frameId: number;
     const updateDynamicColor = (time: number) => {
       const hue = (time / 30) % 360; 
@@ -438,52 +408,62 @@ export default function Home() {
     };
     frameId = requestAnimationFrame(updateDynamicColor);
 
-    // B. System Płynącej Zorzy ( Generator Orbsów )
     const spawnOrb = () => {
       const newOrb: AuroraOrb = {
         id: Date.now(),
-        // Rodzi się na losowej krawędzi, płynie przez ekran
-        x: Math.random() * 120 - 10,   // Losowo od -10% do 110% szerokości
-        y: Math.random() * 120 - 10,   // Losowo od -10% do 110% wysokości
-        size: Math.random() * 600 + 400, // Wielkość losowa duża 400px - 1000px
-        blur: Math.random() * 80 + 120,  // Rozmycie losowe bardzo duże 120px - 200px
-        hue: Math.random() * 120 + 160, // Cyjany, fiolety, magenty, zielenie (160-280)
-        duration: Math.random() * 20 + 30, // Płynie powoli przez 30-50s
+        x: Math.random() * 120 - 10,   
+        y: Math.random() * 120 - 10,   
+        size: Math.random() * 600 + 400, 
+        blur: Math.random() * 80 + 120,  
+        hue: Math.random() * 120 + 160, 
+        duration: Math.random() * 20 + 30, 
       };
       setAuroraOrbs(prev => [...prev, newOrb]);
-
-      // Automatyczne usuwanie orba po zakończeniu płynięcia
       setTimeout(() => {
         setAuroraOrbs(prev => prev.filter(orb => orb.id !== newOrb.id));
       }, newOrb.duration * 1000);
     };
 
-    // C. System Spadających Gwiazd ( Generator Shooting Stars pod różnymi kątami )
     const spawnShootingStar = () => {
       const newStar: ShootingStar = {
         id: Date.now() + Math.random(),
-        startX: Math.random() * 100,      // Pojawia się losowo na całej szerokości
-        startY: Math.random() * 50 - 20,  // Pojawia się gdzieś nad płótnem
-        length: Math.random() * 200 + 100, // Długość losowa 100px - 300px
-        speed: Math.random() * 1.5 + 0.5, // Prędkość przelotu szybka 0.5s - 2.0s
-        angle: Math.random() * 60 + 20,   // LOSOWY KĄT: Od 20 do 80 stopni! (Naturalne opadanie)
+        startX: Math.random() * 100,      
+        startY: Math.random() * 50 - 20,  
+        length: Math.random() * 200 + 100, 
+        speed: Math.random() * 1.5 + 0.5, 
+        angle: Math.random() * 60 + 20,   
       };
       setShootingStars(prev => [...prev, newStar]);
-
-      // Usuń spadającą gwiazdę natychmiast po przelocie (z zapasem bezpieczeństwa na animację)
       setTimeout(() => {
         setShootingStars(prev => prev.filter(star => star.id !== newStar.id));
       }, newStar.speed * 1000 + 100);
     };
 
-    // Inicjalizacja Zorzy
+    const scheduleBlackHole = () => {
+      const nextEventTime = Math.random() * (15 * 60000 - 5 * 60000) + 5 * 60000; 
+      
+      setTimeout(() => {
+        setBlackHole({
+          active: true,
+          x: Math.random() * 60 + 20,
+          y: Math.random() * 60 + 20
+        });
+
+        setTimeout(() => {
+          setBlackHole(null);
+          scheduleBlackHole(); 
+        }, 15000);
+
+      }, nextEventTime);
+    };
+
     for (let i = 0; i < 6; i++) spawnOrb();
     const spawnAuroraInterval = setInterval(spawnOrb, 5000); 
-
-    // Inicjalizacja Spadających Gwiazd
     const spawnStarInterval = setInterval(() => {
-       if (Math.random() > 0.4) spawnShootingStar(); // Losowe pojawianie się (nie zawsze)
+       if (Math.random() > 0.4) spawnShootingStar(); 
     }, 4000); 
+    
+    scheduleBlackHole();
 
     return () => {
       cancelAnimationFrame(frameId);
@@ -627,19 +607,38 @@ export default function Home() {
   const activeBlock = findBlockById(blocks, activeId);
 
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'H1' }, 
-    { id: 'obraz', label: 'Obraz', icon: '🖼️' }, 
-    { id: 'przycisk', label: 'Przycisk', icon: '👆' }, 
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, 
-    { id: 'pola', label: 'Pola', icon: '📦' }, 
-    { id: 'wideo', label: 'Wideo', icon: '▶️' }, 
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, 
-    { id: 'menu', label: 'Menu', icon: '☰' },
-    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, 
-    { id: 'lista', label: 'Lista', icon: '📋' }, 
-    { id: 'social', label: 'Social Media', icon: '❤️' },
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' },
+    { id: 'tekst', label: 'Tekst' }, 
+    { id: 'obraz', label: 'Obraz' }, 
+    { id: 'przycisk', label: 'Przycisk' }, 
+    { id: 'grafika', label: 'Grafika' }, 
+    { id: 'pola', label: 'Pola' }, 
+    { id: 'wideo', label: 'Wideo' }, 
+    { id: 'formularze', label: 'Formularze' }, 
+    { id: 'menu', label: 'Menu' },
+    { id: 'wyskakujace', label: 'Wyskakujące' }, 
+    { id: 'lista', label: 'Lista' }, 
+    { id: 'social', label: 'Social' },
+    { id: 'osadzona', label: 'Osadzona' },
   ];
+
+  const renderCategoryIcon = (id: string) => {
+    const iconProps = { width: 32, height: 32, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+    switch(id) {
+      case 'tekst': return <svg {...iconProps}><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>;
+      case 'obraz': return <svg {...iconProps}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>;
+      case 'przycisk': return <svg {...iconProps}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
+      case 'grafika': return <svg {...iconProps}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>;
+      case 'pola': return <svg {...iconProps}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>;
+      case 'wideo': return <svg {...iconProps}><rect x="2" y="6" width="20" height="12" rx="2" ry="2"/><polygon points="10 9 15 12 10 15 10 9"/></svg>;
+      case 'formularze': return <svg {...iconProps}><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>;
+      case 'menu': return <svg {...iconProps}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+      case 'wyskakujace': return <svg {...iconProps}><rect x="3" y="3" width="12" height="12" rx="2" ry="2"/><rect x="9" y="9" width="12" height="12" rx="2" ry="2"/></svg>;
+      case 'lista': return <svg {...iconProps}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>;
+      case 'social': return <svg {...iconProps}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+      case 'osadzona': return <svg {...iconProps}><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>;
+      default: return <svg {...iconProps}><circle cx="12" cy="12" r="10"/></svg>;
+    }
+  };
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
@@ -647,15 +646,24 @@ export default function Home() {
         <div className={`flex items-center justify-between pr-2 transition ${activeId === b.id ? 'bg-[#ff4500]/20 border-l-2 border-[#ff4500]' : 'hover:bg-white/10 border-l-2 border-transparent'}`}>
           <button 
             onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} 
-            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-[#ff4500] font-bold drop-shadow-[0_0_8px_rgba(255,69,0,0.8)]' : 'text-neutral-700 hover:text-white'}`} 
+            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-[#ff4500] font-bold drop-shadow-[0_0_8px_rgba(255,69,0,0.8)]' : 'text-neutral-400 hover:text-white'}`} 
             style={{ paddingLeft: `${(depth * 12) + 8}px` }}
           >
-            <span className={hiddenBlocks.includes(b.id) ? 'opacity-30 line-through' : ''}>
-              {b.children ? '📂' : '📄'} {b.name}
+            <span className={`flex items-center gap-1.5 ${hiddenBlocks.includes(b.id) ? 'opacity-30 line-through' : ''}`}>
+              {b.children ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              )} 
+              {b.name}
             </span>
           </button>
-          <button onClick={(e) => toggleBlockVisibility(e, b.id)} className={`text-xs px-1 ${hiddenBlocks.includes(b.id) ? 'text-red-500 hover:text-red-400' : 'text-neutral-400 hover:text-white'}`}>
-            {hiddenBlocks.includes(b.id) ? '🙈' : '👁️'}
+          <button onClick={(e) => toggleBlockVisibility(e, b.id)} className={`text-xs px-1 ${hiddenBlocks.includes(b.id) ? 'text-red-500 hover:text-red-400' : 'text-neutral-500 hover:text-white'}`}>
+            {hiddenBlocks.includes(b.id) ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            )}
           </button>
         </div>
         {b.children && renderLayerTree(b.children, depth + 1)}
@@ -668,55 +676,79 @@ export default function Home() {
   return (
     <div className="flex h-screen w-screen bg-[#000] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30 z-0">
       
-      {/* MAGIA ANIMACJI: SYSTEM NIEBA V18 & MROCZNE SZKŁO */}
+      {/* MAGIA ANIMACJI: SYSTEM NIEBA, ZAPADANIE SIĘ ŚWIATŁA I MROCZNE SZKŁO */}
       <style dangerouslySetInnerHTML={{__html: `
-        /* A. Pełne Spektrum dla tła nieba (subtelny hue shift) */
         @keyframes full-spectrum-shift {
           0% { filter: hue-rotate(0deg); }
           100% { filter: hue-rotate(360deg); }
         }
 
-        /* B. Płynięcie pojedynczej zorzy diagonalnie przez ekran */
         @keyframes aurora-flow {
           0% { opacity: 0; transform: translate(0%, 0%) scale(0.9); }
           10% { opacity: 0.15; transform: translate(10%, 10%) scale(1); }
-          /* Płynne przemieszczanie się w górę i w prawo */
           90% { opacity: 0.15; transform: translate(90%, -90%) scale(1.1); }
           100% { opacity: 0; transform: translate(100%, -100%) scale(1.2); }
         }
 
-        /* C. Błyskawiczny przelot spadającej gwiazdy Z UWZGLĘDNIENIEM KĄTA ROTACJI */
         @keyframes shooting-star-dash {
           0% { opacity: 0; transform: rotate(var(--star-angle)) translateX(0) scaleX(1); }
           5% { opacity: 1; transform: rotate(var(--star-angle)) translateX(100%) scaleX(1.3); }
-          /* Gwiazda przelatuje bardzo głęboko wzdłuż swojej osi X, zależnie od długości */
           90% { opacity: 1; transform: rotate(var(--star-angle)) translateX(2000%) scaleX(1.5); }
           100% { opacity: 0; transform: rotate(var(--star-angle)) translateX(2500%) scaleX(0.8); }
         }
+        
+        @keyframes black-hole-suck {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; filter: blur(20px); }
+          20% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: blur(50px); }
+          80% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; filter: blur(80px); }
+          100% { transform: translate(-50%, -50%) scale(0); opacity: 0; filter: blur(10px); }
+        }
 
-        /* D. Blask aktywnych kafelków interfejsu */
+        .black-hole-event {
+          position: absolute;
+          border-radius: 50%;
+          background: radial-gradient(circle, #000000 20%, rgba(0,0,0,0.9) 50%, transparent 80%);
+          box-shadow: 0 0 100px 50px #000;
+          width: 800px;
+          height: 800px;
+          z-index: 15;
+          animation: black-hole-suck 15s ease-in-out forwards;
+          pointer-events: none;
+        }
+
+        .aurora-container-normal {
+          opacity: 0.9;
+          transform: scale(1);
+          transition: opacity 4s ease, transform 6s ease;
+        }
+
+        .aurora-container-dimmed {
+          opacity: 0.02 !important; 
+          transform: scale(0.5); 
+          transition: opacity 5s ease-in, transform 8s ease-in;
+        }
+
+        /* Wolniejsze oddychanie neonów (8 sekund) */
         @keyframes neon-breathe {
           0%, 100% { box-shadow: 0 0 10px -2px var(--theme-color), inset 0 0 5px -2px var(--theme-color); }
           50% { box-shadow: 0 0 20px 2px var(--theme-color), inset 0 0 10px 1px var(--theme-color); }
         }
 
-        /* E. Styl dla generowanej Zorzy (Płynący Orb) */
         .aurora-flowing-orb {
           position: absolute;
           border-radius: 50%;
-          filter: blur(150px); /* Baza blur nadpisywana w JS */
+          filter: blur(150px);
           pointer-events: none;
-          mix-blend-mode: plus-lighter; /* Lepsze świecenie w mroku */
+          mix-blend-mode: plus-lighter;
           animation-name: aurora-flow;
           animation-timing-function: ease-in-out;
           animation-fill-mode: forwards;
           opacity: 0;
         }
 
-        /* F. Styl dla Spadającej Gwiazdy (Dash & Tail pod kątem) */
         .shooting-star {
           position: absolute;
-          height: 1.5px; /* Bardzo cienki neon */
+          height: 1.5px;
           background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 20%, rgba(255, 255, 255, 1) 30%, var(--theme-color) 80%, rgba(0, 229, 255, 0) 100%);
           pointer-events: none;
           mix-blend-mode: screen;
@@ -724,11 +756,9 @@ export default function Home() {
           animation-name: shooting-star-dash;
           animation-timing-function: linear;
           animation-fill-mode: forwards;
-          /* Rotacja z CSS Variable ustawianej w React */
           transform-origin: left center;
         }
 
-        /* Mroczne Szkło Cyber Premium */
         .cyber-glass-panel {
           background: rgba(8, 8, 12, 0.75) !important; 
           backdrop-filter: blur(30px) saturate(150%) !important;
@@ -737,7 +767,6 @@ export default function Home() {
           box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
         }
 
-        /* Szklany Kafel CyberTech */
         .cyber-kafel {
           background: rgba(255, 255, 255, 0.015);
           border: 1px solid rgba(255, 255, 255, 0.04);
@@ -754,19 +783,19 @@ export default function Home() {
         .cyber-kafel.active {
           background: rgba(255, 255, 255, 0.07);
           border-color: var(--theme-color);
-          animation: neon-breathe 2s infinite ease-in-out;
+          animation: neon-breathe 8s infinite ease-in-out;
           color: #fff;
         }
       `}} />
 
-      {/* == GENERYCZNE NIEBO V18 (Zorze i Spadające Gwiazdy) == */}
-      {/* z-10 dla zorzy, z-20 dla gwiazd, z-30 dla płótna */}
-      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden opacity-90 animate-[full-spectrum-shift_60s_linear_infinite]">
-        
-        {/* Subtelna kropkowana głębia kosmosu */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#070709]"></div>
+
+      <div 
+        className={`absolute inset-0 pointer-events-none z-10 overflow-hidden animate-[full-spectrum-shift_60s_linear_infinite] ${blackHole?.active ? 'aurora-container-dimmed' : 'aurora-container-normal'}`}
+        style={{ transformOrigin: blackHole ? `${blackHole.x}% ${blackHole.y}%` : '50% 50%' }}
+      >
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '48px 48px' }}></div>
 
-        {/* 1. Generowane, Płynące Zorze Polarne */}
         {auroraOrbs.map(orb => (
           <div 
             key={orb.id}
@@ -776,17 +805,13 @@ export default function Home() {
               height: `${orb.size}px`,
               left: `${orb.x}%`,
               top: `${orb.y}%`,
-              // Unikalny kolor HSL
               backgroundColor: `hsl(${orb.hue}, 100%, 55%)`,
-              // Unikalne rozmycie
               filter: `blur(${orb.blur}px)`,
-              // Prędkość diagonalnego płynięcia
               animationDuration: `${orb.duration}s`,
             }}
           />
         ))}
 
-        {/* 2. Błyskawiczne Spadające Gwiazdy (Z ROŻNYMI KĄTAMI OPADANIA) */}
         {shootingStars.map(star => (
           <div 
             key={star.id}
@@ -796,122 +821,125 @@ export default function Home() {
               left: `${star.startX}%`,
               top: `${star.startY}%`,
               animationDuration: `${star.speed}s`,
-              // Kąt wstrzykiwany jako zmienna CSS
               '--star-angle': `${star.angle}deg`,
             } as React.CSSProperties}
           />
         ))}
-
       </div>
 
-      {/* LEWY PASEK TERMINALA V18 - MROCZNE SZKŁO (z-50) */}
-      <aside className="cyber-glass-panel w-[110px] flex flex-col items-center py-6 gap-4 z-50 shrink-0 overflow-y-auto scrollbar-hide relative border-r border-white/5">
-        
-        <button 
-          onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
-          className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-xl transition-all duration-300 z-30 font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] hover:scale-105"
-        >
-          +
-        </button>
-        <button 
-          onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
-          className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-xl transition-all duration-300 z-30 bg-white/5 text-neutral-400 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
-        >
-          ☰
-        </button>
-        
-        <div className="w-12 h-px bg-white/10 my-1 z-30"></div>
-        
-        {/* KATEGORIE - SZKLANE KAFLE (MROCZNE) */}
-        {categories.map(cat => {
-          const isActive = addCategory === cat.id;
-          return (
-            <button 
-              key={cat.id} 
-              onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
-              onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
-              className={`cyber-kafel w-[76px] h-[76px] flex items-center justify-center transition-all duration-300 z-30 ${isActive ? 'active scale-105' : 'hover:scale-105'}`}
-            >
-              <span 
-                className={`text-[32px] drop-shadow-md transition-all ${isActive ? 'scale-110' : ''}`}
-                style={isActive && cat.icon !== 'H1' ? { color: 'var(--theme-color)', filter: 'drop-shadow(0 0 8px var(--theme-color))' } : {}}
-              >
-                {cat.icon === 'H1' ? (
-                   <span className={`font-bold text-[28px] transition-colors ${isActive ? '' : 'text-neutral-500'}`} style={isActive ? { color: 'var(--theme-color)', textShadow: '0 0 8px var(--theme-color)' } : {}}>H1</span>
-                ) : cat.icon}
-              </span>
-            </button>
-          );
-        })}
-      </aside>
+      {blackHole?.active && (
+        <div 
+          className="black-hole-event" 
+          style={{ left: `${blackHole.x}%`, top: `${blackHole.y}%` }}
+        />
+      )}
 
-      <div className="relative z-40 h-full flex">
-        
-        {/* PANEL STRON */}
-        {leftTab === 'pages' && (
-          <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-            <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
-              <h2 className="font-bold text-[11px] uppercase tracking-widest text-white">Strony</h2>
-              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
-            </div>
-            <div className="flex-1 p-4 relative z-10 bg-transparent">
-               <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-all shadow-sm">
-                 <span className="text-xs font-bold text-white">/{pageSlug}</span>
-               </div>
-            </div>
-          </div>
-        )}
-        
-        {/* PANEL WARSTW */}
-        {leftTab === 'layers' && (
-          <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-            <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
-              <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-300">DOM Navigator</h2>
-              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
-            </div>
-            <div className="flex-1 overflow-y-auto py-2 relative z-10 bg-transparent">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-500 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
-          </div>
-        )}
-
-        {/* PANELE KATEGORII (MROCZNE SZKŁO Z DYNAMICZNYMI LINIAMI SPEKTRUM) */}
-        {addCategory && activeCategoryData && (
-          <div 
-            className="cyber-glass-panel w-[340px] h-full z-30 flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5" 
+      {/* =========================================================================
+         KONTENER ZAMYKAJĄCY SUB-PANELE NA MOUSE-LEAVE
+         ========================================================================= */}
+      <div 
+        className="flex h-full relative z-50"
+        onMouseLeave={() => setAddCategory(null)}
+      >
+        {/* LEWY PASEK TERMINALA V18 */}
+        <aside className="cyber-glass-panel w-[110px] flex flex-col items-center py-6 gap-4 shrink-0 overflow-y-auto scrollbar-hide relative border-r border-white/5">
+          
+          <button 
+            onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
+            className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-neutral-400 transition-all duration-300 z-30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
           >
-            {/* Cienka linia akcentująca na górze i z lewej - płynnie zmienia kolory globalną zmienną HSL */}
-            <div className="absolute top-0 left-0 w-full h-[1px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 10px var(--theme-color)' }}></div>
-            <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: 'var(--theme-color)', opacity: 0.5 }}></div>
-            
-            {/* Header */}
-            <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
-              <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.2em] drop-shadow-sm">
-                {activeCategoryData.label}
-              </h3>
-              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </button>
+          <button 
+            onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
+            className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-neutral-400 transition-all duration-300 z-30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          </button>
+          
+          <div className="w-12 h-px bg-white/10 my-1 z-30"></div>
+          
+          {/* KATEGORIE - WEKTOROWE MINIMALISTYCZNE IKONY SVG */}
+          {categories.map(cat => {
+            const isActive = addCategory === cat.id;
+            return (
+              <button 
+                key={cat.id} 
+                onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
+                onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
+                className={`cyber-kafel w-[76px] h-[76px] flex items-center justify-center transition-all duration-300 z-30 ${isActive ? 'active scale-105 text-white' : 'text-neutral-500 hover:text-white hover:scale-105'}`}
+              >
+                <div 
+                  className={`transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+                  style={isActive ? { color: 'var(--theme-color)', filter: 'drop-shadow(0 0 8px var(--theme-color))' } : {}}
+                >
+                  {renderCategoryIcon(cat.id)}
+                </div>
+              </button>
+            );
+          })}
+        </aside>
+
+        {/* PANELE WYSZUKIWANE Z LEWEJ (Strony, Warstwy, Kategorie) */}
+        <div className="relative z-40 h-full flex">
+          
+          {leftTab === 'pages' && (
+            <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
+              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
+              <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
+                <h2 className="font-bold text-[11px] uppercase tracking-widest text-white">Strony</h2>
+                <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+              </div>
+              <div className="flex-1 p-4 relative z-10 bg-transparent">
+                 <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-all shadow-sm">
+                   <span className="text-xs font-bold text-white">/{pageSlug}</span>
+                 </div>
+              </div>
             </div>
-            
-            {/* Wnętrze - Transparentne */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 scrollbar-hide relative z-10 bg-transparent">
-              {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'grafika' && <GraphicsPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'pola' && <LayoutPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'wideo' && <VideoPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'formularze' && <FormPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'menu' && <MenuPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'wyskakujace' && <PopupPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'lista' && <ListPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'social' && <SocialPanel handleAddBlock={handleAddBlock} />}
-              {addCategory === 'osadzona' && <EmbedPanel handleAddBlock={handleAddBlock} />}
+          )}
+          
+          {leftTab === 'layers' && (
+            <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
+              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
+              <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
+                <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-300">DOM Navigator</h2>
+                <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+              </div>
+              <div className="flex-1 overflow-y-auto py-2 relative z-10 bg-transparent">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-500 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
             </div>
-          </div>
-        )}
+          )}
+
+          {addCategory && activeCategoryData && (
+            <div className="cyber-glass-panel w-[340px] h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
+              <div className="absolute top-0 left-0 w-full h-[1px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 10px var(--theme-color)' }}></div>
+              <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: 'var(--theme-color)', opacity: 0.5 }}></div>
+              
+              <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
+                <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.2em] drop-shadow-sm">
+                  {activeCategoryData.label}
+                </h3>
+                <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 scrollbar-hide relative z-10 bg-transparent">
+                {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'grafika' && <GraphicsPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'pola' && <LayoutPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'wideo' && <VideoPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'formularze' && <FormPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'menu' && <MenuPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'wyskakujace' && <PopupPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'lista' && <ListPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'social' && <SocialPanel handleAddBlock={handleAddBlock} />}
+                {addCategory === 'osadzona' && <EmbedPanel handleAddBlock={handleAddBlock} />}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Main Canvas Area - TŁO WRAPPERA JEST TRANSPARENTNE, BY ŚWIATŁO SWOBODNIE PŁYNĘŁO POD SPODEM */}
       <div className="flex-1 flex flex-col relative z-30 bg-transparent">
         <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} />
         
@@ -926,8 +954,6 @@ export default function Home() {
         
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           
-          {/* == PŁÓTNO BIAŁE TEXT-BLACK (ORYGINAŁ) == */}
-          {/* Ustawiony wyższy z-index 30, aby płótno było nad niebem */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
                className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5">
              
@@ -975,7 +1001,6 @@ export default function Home() {
           </div>
         </main>
         
-        {/* DOLNY BAR (MROCZNY CYBERTECH) - z-50 */}
         <div className="relative z-50 bg-[#070709] border-t border-white/5">
           <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
         </div>
