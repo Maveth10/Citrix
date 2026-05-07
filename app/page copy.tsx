@@ -29,26 +29,6 @@ interface Block {
   images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string }[]; styles: any;
 }
 
-// ======== ANATOMIA KOSMICZNEGO NIEBA V18 ========
-interface AuroraOrb {
-  id: number;
-  x: number;          // Pozycja X (%)
-  y: number;          // Pozycja Y (%)
-  size: number;       // Wielkość (px)
-  blur: number;       // Stopień rozmycia (px)
-  hue: number;        // Bazowy kolor HSL (0-360)
-  duration: number;   // Czas życia / prędkość płynięcia (s)
-}
-
-interface ShootingStar {
-  id: number;
-  startX: number;     // Początek X (%)
-  startY: number;     // Początek Y (%)
-  length: number;     // Długość ogona (px)
-  speed: number;      // Prędkość przelotu (s)
-}
-// ==========================================================
-
 export default function Home() {
   const [internalBlocks, setInternalBlocks] = useState<Block[]>([]);
   const [past, setPast] = useState<Block[][]>([]);
@@ -82,7 +62,7 @@ export default function Home() {
   };
 
   const [activeId, setActiveId] = useState<number | null>(null);
-  const [leftTab, setLeftTab] = useState<'tekst' | 'obraz' | 'przycisk' | 'grafika' | 'pola' | 'wideo' | 'formularze' | 'wyskakujace' | 'lista' | 'social' | 'osadzona' | null>(null);
+  const [leftTab, setLeftTab] = useState<'pages' | 'layers' | null>(null);
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
   const [pageSlug, setPageSlug] = useState('titan-v18-architekt');
@@ -208,60 +188,7 @@ export default function Home() {
   };
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
-    
-    // ======== MAGIA: BUDOWANIE ZŁOŻONEGO ALERTU (SECURITY NOTICE) ========
-    let newBlock: Block;
-    if (type === 'container' && variant === 'notice-box') {
-      newBlock = createBlock('container', 'notice-box', 'Security Alert');
-      newBlock.styles = { 
-        ...newBlock.styles, 
-        border: '2px solid #ff0033', 
-        backgroundColor: 'rgba(255, 0, 51, 0.05)', 
-        padding: '30px 24px 24px 24px', 
-        borderRadius: '8px', 
-        position: 'relative', 
-        boxShadow: '0 0 20px rgba(255, 0, 51, 0.1), inset 0 0 10px rgba(255, 0, 51, 0.05)', 
-        marginTop: '24px' 
-      };
-      
-      const badge = createBlock('p', '', 'Plakietka');
-      badge.text = 'SECURITY & SAFETY NOTICE';
-      badge.styles = { 
-        ...badge.styles, 
-        backgroundColor: '#ff0033', 
-        color: '#ffffff', 
-        padding: '6px 16px', 
-        fontSize: '11px', 
-        fontWeight: 'bold', 
-        textTransform: 'uppercase', 
-        position: 'absolute', 
-        top: '0', 
-        transform: 'translateY(-50%)', 
-        left: '24px', 
-        borderRadius: '4px', 
-        letterSpacing: '1px',
-        margin: '0',
-        width: 'max-content',
-        zIndex: 10
-      };
-
-      const text = createBlock('p', '', 'Treść Alertu');
-      text.text = 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.';
-      text.styles = { 
-        ...text.styles, 
-        color: '#ff0033', 
-        fontSize: '14px', 
-        fontWeight: '500', 
-        margin: '0',
-        lineHeight: '1.5'
-      };
-
-      newBlock.children = [badge, text];
-    } else {
-      newBlock = createBlock(type, variant, label);
-    }
-    // =====================================================================
-
+    const newBlock = createBlock(type, variant, label);
     setBlocks(prevBlocks => {
       if (!activeId) {
         if (type !== 'section' && type !== 'popup') {
@@ -423,74 +350,6 @@ export default function Home() {
     if (error) alert(error.message); else alert(`Opublikowano V18.NEXT! Link: /live/${pageSlug}`);
   };
 
-  // ======== MAGIA: GENERYCZNE NIEBO V18 (Zorze i Spadające Gwiazdy) ========
-  const [auroraOrbs, setAuroraOrbs] = useState<AuroraOrb[]>([]);
-  const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
-
-  useEffect(() => {
-    // A. Pełne Spektrum dla Interfejsu ( requestAnimationFrame )
-    let frameId: number;
-    const updateDynamicColor = (time: number) => {
-      const hue = (time / 30) % 360; 
-      document.documentElement.style.setProperty('--theme-color', `hsl(${hue}, 100%, 55%)`);
-      frameId = requestAnimationFrame(updateDynamicColor);
-    };
-    frameId = requestAnimationFrame(updateDynamicColor);
-
-    // B. System Płynącej Zorzy ( Generator Orbsów )
-    const spawnOrb = () => {
-      const newOrb: AuroraOrb = {
-        id: Date.now(),
-        // Rodzi się na losowej krawędzi, płynie przez ekran
-        x: Math.random() * 120 - 10,   // Losowo od -10% do 110% szerokości
-        y: Math.random() * 120 - 10,   // Losowo od -10% do 110% wysokości
-        size: Math.random() * 600 + 400, // Wielkość losowa duża 400px - 1000px
-        blur: Math.random() * 80 + 120,  // Rozmycie losowe bardzo duże 120px - 200px
-        hue: Math.random() * 120 + 160, // Cyjany, fiolety, magenty, zielenie (160-280)
-        duration: Math.random() * 20 + 30, // Płynie powoli przez 30-50s
-      };
-      setAuroraOrbs(prev => [...prev, newOrb]);
-
-      // Automatyczne usuwanie orba po zakończeniu płynięcia
-      setTimeout(() => {
-        setAuroraOrbs(prev => prev.filter(orb => orb.id !== newOrb.id));
-      }, newOrb.duration * 1000);
-    };
-
-    // C. System Spadających Gwiazd ( Generator Shooting Stars )
-    const spawnShootingStar = () => {
-      const newStar: ShootingStar = {
-        id: Date.now() + Math.random(),
-        startX: Math.random() * 80 + 10,  // Pojawia się w górnej/środkowej strefie
-        startY: Math.random() * 30 - 10, // Pojawia się lekko nad górną krawędzią
-        length: Math.random() * 200 + 100, // Długość losowa 100px - 300px
-        speed: Math.random() * 1 + 0.5,    // Prędkość przelotu szybka 0.5s - 1.5s
-      };
-      setShootingStars(prev => [...prev, newStar]);
-
-      // Usuń spadającą gwiazdę natychmiast po przelocie
-      setTimeout(() => {
-        setShootingStars(prev => prev.filter(star => star.id !== newStar.id));
-      }, newStar.speed * 1000 + 100);
-    };
-
-    // Inicjalizacja Zorzy
-    for (let i = 0; i < 6; i++) spawnOrb();
-    const spawnAuroraInterval = setInterval(spawnOrb, 5000); 
-
-    // Inicjalizacja Spadających Gwiazd
-    const spawnStarInterval = setInterval(() => {
-       if (Math.random() > 0.4) spawnShootingStar(); // Losowe pojawianie się (nie zawsze)
-    }, 4000); 
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      clearInterval(spawnAuroraInterval);
-      clearInterval(spawnStarInterval);
-    };
-  }, []);
-  // ============================================================================
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -625,37 +484,43 @@ export default function Home() {
   const activeBlock = findBlockById(blocks, activeId);
 
   const categories = [
-    { id: 'tekst', label: 'Tekst', icon: 'H1' }, 
-    { id: 'obraz', label: 'Obraz', icon: '🖼️' }, 
-    { id: 'przycisk', label: 'Przycisk', icon: '👆' }, 
-    { id: 'grafika', label: 'Grafika', icon: '⭐' }, 
-    { id: 'pola', label: 'Pola', icon: '📦' }, 
-    { id: 'wideo', label: 'Wideo', icon: '▶️' }, 
-    { id: 'formularze', label: 'Formularze', icon: '📝' }, 
-    { id: 'menu', label: 'Menu', icon: '☰' },
-    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟' }, 
-    { id: 'lista', label: 'Lista', icon: '📋' }, 
-    { id: 'social', label: 'Social Media', icon: '❤️' },
-    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗' },
+    { id: 'tekst', label: 'Tekst', icon: 'T', color: '#ff4500', glowClass: 'neon-orange', shadowColor: 'rgba(255,69,0,0.5)' }, 
+    { id: 'obraz', label: 'Obraz', icon: '🖼️', color: '#00e5ff', glowClass: 'neon-cyan', shadowColor: 'rgba(0,229,255,0.5)' }, 
+    { id: 'przycisk', label: 'Przycisk', icon: '👆', color: '#ff0055', glowClass: 'neon-red', shadowColor: 'rgba(255,0,85,0.5)' }, 
+    { id: 'grafika', label: 'Grafika', icon: '⭐', color: '#ffea00', glowClass: 'neon-yellow', shadowColor: 'rgba(255,234,0,0.5)' }, 
+    { id: 'pola', label: 'Pola', icon: '📦', color: '#00ff66', glowClass: 'neon-green', shadowColor: 'rgba(0,255,102,0.5)' }, 
+    { id: 'wideo', label: 'Wideo', icon: '▶️', color: '#ff00aa', glowClass: 'neon-pink', shadowColor: 'rgba(255,0,170,0.5)' }, 
+    { id: 'formularze', label: 'Formularze', icon: '📝', color: '#ff4500', glowClass: 'neon-orange', shadowColor: 'rgba(255,69,0,0.5)' }, 
+    { id: 'menu', label: 'Menu', icon: '☰', color: '#7b61ff', glowClass: 'neon-purple', shadowColor: 'rgba(123,97,255,0.5)' }, 
+    { id: 'wyskakujace', label: 'Wyskakujące', icon: '🪟', color: '#00e5ff', glowClass: 'neon-cyan', shadowColor: 'rgba(0,229,255,0.5)' }, 
+    { id: 'lista', label: 'Lista', icon: '📋', color: '#00ff66', glowClass: 'neon-green', shadowColor: 'rgba(0,255,102,0.5)' }, 
+    { id: 'social', label: 'Social Media', icon: '❤️', color: '#ff0055', glowClass: 'neon-red', shadowColor: 'rgba(255,0,85,0.5)' }, 
+    { id: 'osadzona', label: 'Osadzona treść', icon: '🔗', color: '#a0a0b0', glowClass: 'neon-gray', shadowColor: 'rgba(160,160,176,0.5)' }
   ];
 
   const renderLayerTree = (arr: Block[], depth = 0) => {
     return arr.map(b => (
       <div key={`tree-${b.id}`} className="flex flex-col w-full">
-        <div className={`flex items-center justify-between pr-2 transition ${activeId === b.id ? 'bg-[#ff4500]/20 border-l-2 border-[#ff4500]' : 'hover:bg-white/10 border-l-2 border-transparent'}`}>
+        <div className={`flex items-center justify-between pr-2 transition ${activeId === b.id ? 'bg-[#ff4500]/20 border-l-2 border-[#ff4500]' : 'hover:bg-white/5 border-l-2 border-transparent'}`}>
           <button 
             onClick={(e) => { e.stopPropagation(); setActiveId(b.id); setIsEditing(false); }} 
-            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-[#ff4500] font-bold drop-shadow-[0_0_8px_rgba(255,69,0,0.8)]' : 'text-neutral-700 hover:text-white'}`} 
+            className={`flex-1 text-left text-[11px] py-1.5 px-2 truncate flex items-center gap-2 ${activeId === b.id ? 'text-[#ff4500] font-bold drop-shadow-[0_0_8px_rgba(255,69,0,0.8)]' : 'text-neutral-400 hover:text-white'}`} 
             style={{ paddingLeft: `${(depth * 12) + 8}px` }}
           >
             <span className={hiddenBlocks.includes(b.id) ? 'opacity-30 line-through' : ''}>
               {b.children ? '📂' : '📄'} {b.name}
             </span>
           </button>
-          <button onClick={(e) => toggleBlockVisibility(e, b.id)} className={`text-xs px-1 ${hiddenBlocks.includes(b.id) ? 'text-red-500 hover:text-red-400' : 'text-neutral-400 hover:text-white'}`}>
+          
+          <button 
+            onClick={(e) => toggleBlockVisibility(e, b.id)}
+            className={`text-xs px-1 ${hiddenBlocks.includes(b.id) ? 'text-red-500 hover:text-red-400 drop-shadow-[0_0_5px_rgba(255,0,0,0.5)]' : 'text-neutral-500 hover:text-white'}`}
+            title="Pokaż/Ukryj w edytorze"
+          >
             {hiddenBlocks.includes(b.id) ? '🙈' : '👁️'}
           </button>
         </div>
+        
         {b.children && renderLayerTree(b.children, depth + 1)}
       </div>
     ));
@@ -664,160 +529,67 @@ export default function Home() {
   const activeCategoryData = categories.find(c => c.id === addCategory);
 
   return (
-    <div className="flex h-screen w-screen bg-[#000] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30 z-0">
+    <div className="flex h-screen w-screen bg-[#070709] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30">
       
-      {/* MAGIA ANIMACJI: SYSTEM NIEBA V18 & MROCZNE SZKŁO */}
+      {/* MAGIA ANIMACJI (MOONLIGHT & FROSTED GLASS) */}
       <style dangerouslySetInnerHTML={{__html: `
-        /* A. Pełne Spektrum dla tła nieba (subtelny hue shift) */
-        @keyframes full-spectrum-shift {
-          0% { filter: hue-rotate(0deg); }
-          100% { filter: hue-rotate(360deg); }
+        @keyframes multi-color-breathe {
+          0% { background-color: rgba(34, 211, 238, 0.15); transform: scale(1) translate(0, 0); }
+          25% { background-color: rgba(168, 85, 247, 0.15); transform: scale(1.1) translate(10px, 15px); }
+          50% { background-color: rgba(236, 72, 153, 0.15); transform: scale(0.9) translate(-10px, -10px); }
+          75% { background-color: rgba(59, 130, 246, 0.15); transform: scale(1.05) translate(-15px, 10px); }
+          100% { background-color: rgba(34, 211, 238, 0.15); transform: scale(1) translate(0, 0); }
         }
-
-        /* B. Płynięcie pojedynczej zorzy diagonalnie przez ekran */
-        @keyframes aurora-flow {
-          0% { opacity: 0; transform: translate(0%, 0%) scale(0.9); }
-          10% { opacity: 0.15; transform: translate(10%, 10%) scale(1); }
-          /* Płynne przemieszczanie się w górę i w prawo */
-          90% { opacity: 0.15; transform: translate(90%, -90%) scale(1.1); }
-          100% { opacity: 0; transform: translate(100%, -100%) scale(1.2); }
-        }
-
-        /* C. Błyskawiczny przelot spadającej gwiazdy */
-        @keyframes shooting-star-dash {
-          0% { opacity: 0; transform: translate(0, 0) scaleX(1); }
-          5% { opacity: 1; transform: translate(20%, 20%) scaleX(1.3); }
-          90% { opacity: 1; transform: translate(950%, 950%) scaleX(1.5); }
-          100% { opacity: 0; transform: translate(1000%, 1000%) scaleX(0.8); }
-        }
-
-        /* D. Blask aktywnych kafelków interfejsu */
-        @keyframes neon-breathe {
-          0%, 100% { box-shadow: 0 0 10px -2px var(--theme-color), inset 0 0 5px -2px var(--theme-color); }
-          50% { box-shadow: 0 0 20px 2px var(--theme-color), inset 0 0 10px 1px var(--theme-color); }
-        }
-
-        /* E. Styl dla generowanej Zorzy (Płynący Orb) */
-        .aurora-flowing-orb {
+        
+        /* Delikatna, kolorowa poświata "księżyca" */
+        .ambient-moonlight {
           position: absolute;
+          width: 280px;
+          height: 280px;
           border-radius: 50%;
-          filter: blur(150px); /* Baza blur nadpisywana w JS */
+          filter: blur(80px);
+          animation: multi-color-breathe 12s infinite alternate ease-in-out;
           pointer-events: none;
-          mix-blend-mode: plus-lighter; /* Lepsze świecenie w mroku */
-          animation-name: aurora-flow;
-          animation-timing-function: ease-in-out;
-          animation-fill-mode: forwards;
-          opacity: 0;
+          z-index: 0;
         }
 
-        /* F. Styl dla Spadającej Gwiazdy (Dash & Tail) */
-        .shooting-star {
-          position: absolute;
-          height: 1.5px; /* Bardzo cienki neon */
-          background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 20%, rgba(255, 255, 255, 1) 30%, var(--theme-color) 80%, rgba(0, 229, 255, 0) 100%);
-          pointer-events: none;
-          mix-blend-mode: screen;
-          filter: drop-shadow(0 0 4px var(--theme-color));
-          animation-name: shooting-star-dash;
-          animation-timing-function: linear;
-          animation-fill-mode: forwards;
-          transform-origin: left center;
+        /* Nowy kontener kategorii: Mleczne Szkło z płynnym gradientem do jasnego */
+        .category-container {
+          background: linear-gradient(180deg, rgba(15,15,20,0.85) 0%, rgba(35,35,45,0.5) 60%, rgba(220,230,255,0.15) 100%) !important;
+          backdrop-filter: blur(24px) saturate(150%) !important;
+          -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+          box-shadow: 10px 0 40px rgba(0,0,0,0.6), inset 1px 1px 0 rgba(255,255,255,0.05) !important;
+          position: relative !important;
+          overflow: hidden !important;
         }
 
-        /* Mroczne Szkło Cyber Premium */
-        .cyber-glass-panel {
-          background: rgba(8, 8, 12, 0.75) !important; 
-          backdrop-filter: blur(30px) saturate(150%) !important;
-          -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
-          border-right: 1px solid rgba(255, 255, 255, 0.05);
-          box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important;
-        }
-
-        /* Szklany Kafel CyberTech */
-        .cyber-kafel {
-          background: rgba(255, 255, 255, 0.015);
-          border: 1px solid rgba(255, 255, 255, 0.04);
-          backdrop-filter: blur(12px);
-          border-radius: 14px;
-          color: #94a3b8;
-          transition: all 0.3s ease;
-        }
-        .cyber-kafel:hover {
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(255, 255, 255, 0.08);
-          color: #fff;
-        }
-        .cyber-kafel.active {
-          background: rgba(255, 255, 255, 0.07);
-          border-color: var(--theme-color);
-          animation: neon-breathe 2s infinite ease-in-out;
-          color: #fff;
-        }
+        .cyber-panel { background: #111115; border: 1px solid rgba(255,255,255,0.05); }
       `}} />
 
-      {/* == GENERYCZNE NIEBO V18 (Zorze i Spadające Gwiazdy) == */}
-      {/* z-10 dla zorzy, z-20 dla gwiazd, z-30 dla płótna */}
-      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden opacity-90 animate-[full-spectrum-shift_60s_linear_infinite]">
-        
-        {/* Subtelna kropkowana głębia kosmosu */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '48px 48px' }}></div>
+      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#555 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] bg-[#ff4500]/5 blur-[200px] rounded-full pointer-events-none z-0"></div>
 
-        {/* 1. Generowane, Płynące Zorze Polarne */}
-        {auroraOrbs.map(orb => (
-          <div 
-            key={orb.id}
-            className="aurora-flowing-orb"
-            style={{
-              width: `${orb.size}px`,
-              height: `${orb.size}px`,
-              left: `${orb.x}%`,
-              top: `${orb.y}%`,
-              // Unikalny kolor HSL
-              backgroundColor: `hsl(${orb.hue}, 100%, 55%)`,
-              // Unikalne rozmycie
-              filter: `blur(${orb.blur}px)`,
-              // Prędkość diagonalnego płynięcia
-              animationDuration: `${orb.duration}s`,
-            }}
-          />
-        ))}
-
-        {/* 2. Błyskawiczne Spadające Gwiazdy (Shooting Stars) */}
-        {shootingStars.map(star => (
-          <div 
-            key={star.id}
-            className="shooting-star"
-            style={{
-              width: `${star.length}px`,
-              left: `${star.startX}%`,
-              top: `${star.startY}%`,
-              // Prędkość przelotu
-              animationDuration: `${star.speed}s`,
-            }}
-          />
-        ))}
-
-      </div>
-
-      {/* LEWY PASEK TERMINALA V18 - MROCZNE SZKŁO (z-50) */}
-      <aside className="cyber-glass-panel w-[110px] flex flex-col items-center py-6 gap-4 z-50 shrink-0 overflow-y-auto scrollbar-hide relative border-r border-white/5">
+      {/* LEWY PASEK TERMINALA */}
+      <aside className="cyber-panel w-16 flex flex-col items-center py-4 gap-4 z-50 shrink-0 overflow-y-auto scrollbar-hide shadow-[10px_0_30px_rgba(0,0,0,0.8)] relative border-r border-[#ff4500]/20">
         
         <button 
           onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
-          className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-xl transition-all duration-300 z-30 font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] hover:scale-105"
+          className={`relative w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all duration-300 z-10 font-bold ${leftTab === 'pages' ? 'bg-[#ff4500]/20 text-white shadow-[0_0_15px_rgba(255,69,0,0.4)] scale-110' : 'bg-[#1a1a20] border border-white/5 text-neutral-500 hover:text-white hover:border-[#ff4500]/50 hover:shadow-[0_0_15px_rgba(255,69,0,0.4)]'}`} 
+          title="Zarządzanie Stronami"
         >
           +
         </button>
         <button 
           onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
-          className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-xl transition-all duration-300 z-30 bg-white/5 text-neutral-400 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
+          className={`relative w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all duration-300 z-10 ${leftTab === 'layers' ? 'bg-[#00e5ff]/20 text-white shadow-[0_0_15px_rgba(0,229,255,0.4)] scale-110' : 'bg-[#1a1a20] border border-white/5 text-neutral-500 hover:text-white hover:border-[#00e5ff]/50 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)]'}`} 
+          title="Nawigator DOM"
         >
           ☰
         </button>
         
-        <div className="w-12 h-px bg-white/10 my-1 z-30"></div>
+        <div className="w-8 h-px bg-white/5 my-1 z-10"></div>
         
-        {/* KATEGORIE - SZKLANE KAFLE (MROCZNE) */}
+        {/* KATEGORIE - PULSUJĄCE NEONY Z HOVER OTWARTYM */}
         {categories.map(cat => {
           const isActive = addCategory === cat.id;
           return (
@@ -825,16 +597,10 @@ export default function Home() {
               key={cat.id} 
               onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
               onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
-              className={`cyber-kafel w-[76px] h-[76px] flex items-center justify-center transition-all duration-300 z-30 ${isActive ? 'active scale-105' : 'hover:scale-105'}`}
+              title={cat.label}
+              className={`relative w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-300 z-10 ${isActive ? `bg-white/10 border border-[${cat.color}] text-white scale-110 shadow-[0_0_15px_${cat.shadowColor}]` : 'bg-[#1a1a20] border border-white/5 text-neutral-500 hover:bg-white/5 hover:text-white hover:scale-105'}`}
             >
-              <span 
-                className={`text-[32px] drop-shadow-md transition-all ${isActive ? 'scale-110' : ''}`}
-                style={isActive && cat.icon !== 'H1' ? { color: 'var(--theme-color)', filter: 'drop-shadow(0 0 8px var(--theme-color))' } : {}}
-              >
-                {cat.icon === 'H1' ? (
-                   <span className={`font-bold text-[28px] transition-colors ${isActive ? '' : 'text-neutral-500'}`} style={isActive ? { color: 'var(--theme-color)', textShadow: '0 0 8px var(--theme-color)' } : {}}>H1</span>
-                ) : cat.icon}
-              </span>
+              {cat.icon === 'T' ? <span className="font-serif font-bold text-[18px] drop-shadow-md">T</span> : <span className="drop-shadow-md">{cat.icon}</span>}
             </button>
           );
         })}
@@ -844,50 +610,61 @@ export default function Home() {
         
         {/* PANEL STRON */}
         {leftTab === 'pages' && (
-          <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-            <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
+          <div className="cyber-panel w-64 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-left-4 relative border-r border-[#ff4500]/30 overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-[#ff4500] shadow-[0_0_10px_#ff4500]"></div>
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
-              <h2 className="font-bold text-[11px] uppercase tracking-widest text-white">Strony</h2>
-              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+              <h2 className="font-bold text-[11px] uppercase tracking-widest text-[#ff4500] drop-shadow-[0_0_5px_rgba(255,69,0,0.8)]">Zarządzanie Stronami</h2>
+              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button>
             </div>
-            <div className="flex-1 p-4 relative z-10 bg-transparent">
-               <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-all shadow-sm">
+            <div className="flex-1 p-4 relative z-10">
+               <div className="p-3 bg-[#1a1a20] rounded border border-[#ff4500]/40 flex justify-between items-center cursor-pointer hover:bg-[#ff4500]/10 transition-all shadow-[inset_0_0_10px_rgba(255,69,0,0.1)]">
                  <span className="text-xs font-bold text-white">/{pageSlug}</span>
+                 <span className="text-[9px] bg-[#ff4500] text-white px-2 py-0.5 rounded uppercase tracking-widest shadow-[0_0_8px_#ff4500]">Aktywna</span>
                </div>
+               <button className="w-full mt-3 p-2 border border-dashed border-white/10 hover:border-[#ff4500]/50 hover:bg-[#ff4500]/5 text-neutral-400 hover:text-[#ff4500] text-xs font-bold rounded transition-all">+ Dodaj Podstronę</button>
             </div>
           </div>
         )}
         
         {/* PANEL WARSTW */}
         {leftTab === 'layers' && (
-          <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-            <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
+          <div className="cyber-panel w-64 h-full flex flex-col shadow-[30px_0_50px_rgba(0,0,0,0.8)] animate-in slide-in-from-left-4 relative border-r border-[#00e5ff]/30 overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-[2px] bg-[#00e5ff] shadow-[0_0_10px_#00e5ff]"></div>
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
-              <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-300">DOM Navigator</h2>
-              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+              <h2 className="font-bold text-[11px] uppercase tracking-widest text-[#00e5ff] drop-shadow-[0_0_5px_rgba(0,229,255,0.8)]">Nawigator DOM</h2>
+              <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button>
             </div>
-            <div className="flex-1 overflow-y-auto py-2 relative z-10 bg-transparent">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-500 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
+            <div className="flex-1 overflow-y-auto py-2 relative z-10">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-600 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
           </div>
         )}
 
-        {/* PANELE KATEGORII (MROCZNE SZKŁO Z DYNAMICZNYMI LINIAMI SPEKTRUM) */}
+        {/* PANELE KATEGORII (NOWE TŁO MLECZNE Z KSIĘŻYCEM) */}
         {addCategory && activeCategoryData && (
           <div 
-            className="cyber-glass-panel w-[340px] h-full z-30 flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5" 
+            className="category-container w-[340px] h-full z-30 flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden" 
+            style={{ 
+              borderRightColor: `${activeCategoryData.color}40`,
+              '--theme-color': activeCategoryData.color,
+              '--theme-shadow': activeCategoryData.shadowColor
+            } as React.CSSProperties}
           >
-            {/* Cienka linia akcentująca na górze i z lewej - płynnie zmienia kolory globalną zmienną HSL */}
-            <div className="absolute top-0 left-0 w-full h-[1px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 10px var(--theme-color)' }}></div>
-            <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: 'var(--theme-color)', opacity: 0.5 }}></div>
+            
+            {/* Animowane Kule Nocnego Światła (Ambient Moonlight) */}
+            <div className="ambient-moonlight top-[-10%] right-[-15%]"></div>
+            <div className="ambient-moonlight bottom-[15%] left-[-20%]" style={{ animationDelay: '-6s' }}></div>
+            
+            {/* Ultra-cienka Laserowa Linia góry */}
+            <div className={`absolute top-0 left-0 w-full h-[1px]`} style={{ backgroundColor: activeCategoryData.color, boxShadow: `0 0 10px ${activeCategoryData.color}` }}></div>
             
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
-              <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.2em] drop-shadow-sm">
+              <h3 className="text-[10px] font-semibold text-neutral-300 uppercase tracking-[0.2em] flex items-center gap-3">
                 {activeCategoryData.label}
               </h3>
-              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+              <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors">✕</button>
             </div>
             
-            {/* Wnętrze - Transparentne */}
+            {/* Wnętrze - Transparentne tło, by mleczne szkło oddychało */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 scrollbar-hide relative z-10 bg-transparent">
               {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
               {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
@@ -906,8 +683,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* Main Canvas Area - TŁO WRAPPERA JEST TRANSPARENTNE, BY ŚWIATŁO SWOBODNIE PŁYNĘŁO POD SPODEM */}
-      <div className="flex-1 flex flex-col relative z-30 bg-transparent">
+      <div className="flex-1 flex flex-col relative z-10">
         <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} />
         
         {isAiOpen && (
@@ -918,13 +694,10 @@ export default function Home() {
         )}
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
-        
-        <main className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
+        <main className="flex-1 overflow-auto flex justify-center p-10 z-10" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           
-          {/* == PŁÓTNO BIAŁE TEXT-BLACK (ORYGINAŁ) == */}
-          {/* Ustawiony wyższy z-index 30, aby płótno było nad niebem */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_30px_80px_rgba(0,0,0,0.8)] rounded-b-xl relative flex flex-row flex-wrap content-start items-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-[#ff4500] h-full"></div>)}</div>}
              
@@ -948,7 +721,7 @@ export default function Home() {
                       <div 
                         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if(setDraggedId) setDraggedId(null); }}
-                        className="flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-[#ff4500]/20 hover:scale-[1.02] transition-all cursor-pointer"
+                        className="flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-[#ff4500]/20 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,69,0,0.2)] transition-all cursor-pointer"
                       >
                         <span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,69,0,0.5)]">+ Wstaw Obok</span>
                       </div>
@@ -969,13 +742,8 @@ export default function Home() {
 
           </div>
         </main>
-        
-        {/* DOLNY BAR (MROCZNY CYBERTECH) - z-50 */}
-        <div className="relative z-50 bg-[#070709] border-t border-white/5">
-          <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
-        </div>
+        <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
       </div>
-      
       <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
       {isMediaManagerOpen && <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
     </div>
