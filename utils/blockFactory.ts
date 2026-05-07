@@ -189,7 +189,108 @@ export const createBlock = (type: string, variant: string, label: string) => {
     else if (variant === 'pill') { newBlock.styles.backgroundColor = '#f3f4f6'; newBlock.styles.borderRadius = '999px'; newBlock.styles.height = '80px'; newBlock.styles.width = '400px'; newBlock.styles.padding = '0 40px'; newBlock.styles.alignItems = 'center'; newBlock.styles.justifyContent = 'center'; }
     else if (variant === 'shadow-pro') { newBlock.styles.backgroundColor = '#fff'; newBlock.styles.borderRadius = '32px'; newBlock.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; }
     else if (variant === 'text-combo') { newBlock.styles.width = '100%'; newBlock.children = [{id:generateId(), type:'p', name:'ETYKIETA', text:'NOWOŚĆ', styles:{fontSize:'14px', fontWeight:'bold', color:'#3b82f6', letterSpacing:'0.1em', textTransform:'uppercase', margin:'0 0 10px 0', clearRow: true}}, {id:generateId(), type:'h2', name:'TYTUŁ', text:'Czysta Architektura', styles:{fontSize:'36px', fontWeight:'900', letterSpacing:'-0.02em', lineHeight:'1.1', color:'#0f172a', margin:'0 0 15px 0', clearRow: true}}, {id:generateId(), type:'p', name:'AKAPIT', text:'Odkryj nowy wymiar projektowania stron internetowych.', styles:{fontSize:'18px', color:'#64748b', lineHeight:'1.6', clearRow: true}}]; }
-    else if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box'].includes(variant)) { newBlock.styles.position = 'relative'; newBlock.styles.width = '450px'; newBlock.styles.maxWidth = '100%'; newBlock.styles.borderRadius = '12px'; newBlock.styles.padding = '0px'; newBlock.styles.marginTop = '25px'; newBlock.styles.overflow = 'visible'; newBlock.styles.display = 'block'; newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)'; const badgeId = generateId(); const textId = generateId(); let badgeText = ''; let mainColor = ''; let bgColor = ''; let textColor = ''; let borderLeftColor = ''; if (variant === 'alert-success') { badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46'; borderLeftColor = mainColor; } else if (variant === 'alert-warning') { badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e'; borderLeftColor = mainColor; } else if (variant === 'alert-tip') { badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a'; borderLeftColor = mainColor; } else if (variant === 'notice-box') { badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626'; newBlock.styles.border = `1px solid ${mainColor}`; } newBlock.styles.backgroundColor = bgColor; if (variant !== 'notice-box') { newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; } newBlock.children = [ { id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText, styles: { position: 'absolute', top: '0px', left: '30px', transform: 'translateY(-50%)', backgroundColor: mainColor, color: '#ffffff', padding: '4px 12px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', borderRadius: '6px', zIndex: 50, width: 'max-content', whiteSpace: 'nowrap', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', clearRow: false } }, { id: textId, type: 'p', name: 'TREŚĆ', text: variant === 'alert-success' ? 'Wszystkie systemy działają poprawnie.' : variant === 'alert-warning' ? 'Ta operacja jest nieodwracalna.' : variant === 'alert-tip' ? 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.' : 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.', styles: { color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', margin: 0, width: '100%', padding: '30px 20px 20px 25px', overflowY: 'auto', flex: '1', clearRow: true } } ]; }
+    
+    // ======== MAGIA: SYSTEM ALERTÓW Z NOWYM "DOJEBANYM" WARIANTEM ========
+    else if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box', 'alert-cosmos'].includes(variant)) { 
+      newBlock.styles.position = 'relative'; 
+      newBlock.styles.width = '450px'; 
+      newBlock.styles.maxWidth = '100%'; 
+      newBlock.styles.borderRadius = '12px'; 
+      newBlock.styles.padding = '0px'; 
+      newBlock.styles.marginTop = '25px'; 
+      newBlock.styles.overflow = 'visible'; 
+      newBlock.styles.display = 'block'; 
+      newBlock.styles.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)'; 
+      
+      const badgeId = generateId(); 
+      const textId = generateId(); 
+      let badgeText = ''; 
+      let mainColor = ''; 
+      let bgColor = ''; 
+      let textColor = ''; 
+      let borderLeftColor = ''; 
+      
+      if (variant === 'alert-success') { 
+        badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46'; borderLeftColor = mainColor; 
+      } else if (variant === 'alert-warning') { 
+        badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e'; borderLeftColor = mainColor; 
+      } else if (variant === 'alert-tip') { 
+        badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a'; borderLeftColor = mainColor; 
+      } else if (variant === 'notice-box') { 
+        badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626'; newBlock.styles.border = `1px solid ${mainColor}`; 
+      } else if (variant === 'alert-cosmos') {
+        // NOWY DOJEBANY ALERT
+        badgeText = 'KOSMICZNY ALERT'; 
+        mainColor = '#8b5cf6'; // Fioletowy fallback
+        bgColor = 'rgba(15, 23, 42, 0.8)'; // Ciemne szkło
+        textColor = '#94a3b8'; // Zgaszony, elegancki szary
+        newBlock.styles.backdropFilter = 'blur(12px)';
+        // Wstrzykujemy animowany gradient na border
+        newBlock.styles.border = '1px solid transparent';
+        newBlock.styles.borderImage = 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6) 1';
+        newBlock.text = `<style>
+          @keyframes gradientFlow_${rnd} { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+          @keyframes neonPulse_${rnd} { 0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2), 0 0 20px rgba(236, 72, 153, 0.2), inset 0 0 15px rgba(59, 130, 246, 0.1); } 50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(236, 72, 153, 0.4), inset 0 0 30px rgba(59, 130, 246, 0.3); } }
+          #block-${newBlock.id} { animation: neonPulse_${rnd} 4s infinite alternate; }
+          #block-${badgeId} { background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6) !important; background-size: 200% 200% !important; animation: gradientFlow_${rnd} 5s ease infinite !important; }
+        </style>`;
+      }
+      
+      newBlock.styles.backgroundColor = bgColor; 
+      if (variant !== 'notice-box' && variant !== 'alert-cosmos') { 
+        newBlock.styles.borderLeft = `8px solid ${borderLeftColor}`; 
+      } 
+      
+      newBlock.children = [ 
+        { 
+          id: badgeId, 
+          type: 'h2', 
+          name: 'PLAKIETKA', 
+          text: badgeText, 
+          styles: { 
+            position: 'absolute', 
+            top: '0px', 
+            left: '30px', 
+            transform: 'translateY(-50%)', 
+            backgroundColor: mainColor, 
+            color: '#ffffff', 
+            padding: '4px 12px', 
+            fontSize: '10px', 
+            fontWeight: '900', 
+            textTransform: 'uppercase', 
+            borderRadius: '6px', 
+            zIndex: 50, 
+            width: 'max-content', 
+            whiteSpace: 'nowrap', 
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', 
+            textShadow: variant === 'alert-cosmos' ? '0 0 4px rgba(255,255,255,0.5)' : 'none',
+            clearRow: false 
+          } 
+        }, 
+        { 
+          id: textId, 
+          type: 'p', 
+          name: 'TREŚĆ', 
+          text: variant === 'alert-success' ? 'Wszystkie systemy działają poprawnie.' 
+              : variant === 'alert-warning' ? 'Ta operacja jest nieodwracalna.' 
+              : variant === 'alert-tip' ? 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.' 
+              : variant === 'alert-cosmos' ? '<strong style="color: #fff; font-size: 16px; display: block; margin-bottom: 4px;">Anomalia Wykryta</strong>System odnotował fluktuacje na poziomie horyzontu zdarzeń.' 
+              : 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.', 
+          styles: { 
+            color: textColor, 
+            fontWeight: '600', 
+            fontSize: '14px', 
+            lineHeight: '1.6', 
+            margin: 0, 
+            width: '100%', 
+            padding: '30px 20px 20px 25px', 
+            overflowY: 'auto', 
+            flex: '1', 
+            clearRow: true 
+          } 
+        } 
+      ]; 
+    }
   }
 
   // ==========================================

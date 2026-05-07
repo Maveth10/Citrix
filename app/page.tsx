@@ -138,6 +138,8 @@ export default function Home() {
     for (const b of arr) { if (b.id === id) return b; if (b.children) { const f = findBlockById(b.children, id); if (f) return f; } } return null;
   };
 
+  const activeBlock = findBlockById(blocks, activeId);
+
   const checkIsChild = (parent: Block, childId: number): boolean => {
     if (!parent.children) return false;
     if (parent.children.some(c => c.id === childId)) return true;
@@ -153,8 +155,11 @@ export default function Home() {
           newStyles.gap = '20px';
           newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
           newStyles.gridTemplateColumns = 'unset';
-          newStyles.gridTemplateRows = 'unset';
-          newStyles.minHeight = 'auto'; 
+          // Gwarantujemy, że wiersze siatki mogą się kurczyć i rozciągać (1fr)
+          newStyles.gridTemplateRows = '1fr'; 
+          newStyles.minHeight = 'min-content'; // Bezpiecznik
+          newStyles.height = 'auto'; 
+          
           let childCount = 1;
 
           if (layout.startsWith('grid-custom-')) {
@@ -162,21 +167,24 @@ export default function Home() {
             const cols = parseInt(parts[2]) || 1;
             const rows = parseInt(parts[3]) || 1;
             newStyles.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            newStyles.gridTemplateRows = `repeat(${rows}, minmax(120px, auto))`;
+            newStyles.gridTemplateRows = `repeat(${rows}, 1fr)`;
             childCount = cols * rows;
           } else if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
           else if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
-          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
+          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = '1fr'; childCount = 2; }
           else if (layout === 'grid-left') { newStyles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
           else if (layout === 'grid-right') { newStyles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
-          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; childCount = 4; }
+          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, 1fr)'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
 
           let newChildren = [...b.children];
           if (layout !== 'flex-col' && newChildren.length < childCount) {
             const missingSlots = childCount - newChildren.length;
             for (let i = 0; i < missingSlots; i++) { 
               const emptyField = createBlock('container', 'empty', 'Puste Pole');
-              emptyField.id = Date.now() + Math.random();
+              emptyField.id = Date.now() + Math.floor(Math.random() * 100000);
+              // Puste pola muszą móc się kurczyć bardziej niż bazowe 120px
+              emptyField.styles.minHeight = '60px'; 
+              emptyField.styles.height = '100%';
               newChildren.push(emptyField); 
             }
           }
@@ -191,7 +199,7 @@ export default function Home() {
 
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', minHeight: 'auto', clearRow: true };
+    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', height: 'auto', minHeight: 'min-content', clearRow: true };
     let childCount = 1;
 
     if (layout.startsWith('grid-custom-')) {
@@ -199,18 +207,20 @@ export default function Home() {
       const cols = parseInt(parts[2]) || 1;
       const rows = parseInt(parts[3]) || 1;
       newSection.styles.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-      newSection.styles.gridTemplateRows = `repeat(${rows}, minmax(120px, auto))`;
+      newSection.styles.gridTemplateRows = `repeat(${rows}, 1fr)`;
       childCount = cols * rows;
-    } else if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; childCount = 2; }
-    else if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)'; childCount = 3; }
-    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
-    else if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; childCount = 2; }
-    else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; childCount = 2; }
-    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, minmax(120px, auto))'; childCount = 4; }
+    } else if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
+    else if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, 1fr)'; newSection.styles.gridTemplateRows = '1fr'; childCount = 3; }
+    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = '1fr'; childCount = 2; }
+    else if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = '2fr 1fr'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
+    else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = '1fr 2fr'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
+    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, 1fr)'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
 
     newSection.children = Array.from({ length: childCount }).map((_, i) => {
       const emptyField = createBlock('container', 'empty', `Pole ${i + 1}`);
-      emptyField.id = Date.now() + Math.random();
+      emptyField.id = Date.now() + Math.floor(Math.random() * 100000);
+      emptyField.styles.minHeight = '60px'; 
+      emptyField.styles.height = '100%';
       return emptyField;
     });
     setBlocks(prev => [...prev, newSection]);
@@ -223,19 +233,15 @@ export default function Home() {
   };
 
   const handleAddBlock = (type: string, variant: string, label: string) => {
-    // ======== CZYSTA ARCHITEKTURA ========
-    // Prosimy BlockFactory o gotowy klocek
     const newBlock = createBlock(type, variant, label);
-    // Zabezpieczamy unikalne ID przed kolizją przy szybkim klikaniu
-    newBlock.id = Date.now() + Math.random(); 
-    // =====================================
+    newBlock.id = Date.now() + Math.floor(Math.random() * 100000); 
 
     setBlocks(prevBlocks => {
       if (!activeId) {
         if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
-           autoWrapper.id = Date.now() + Math.random();
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: '120px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
+           autoWrapper.id = Date.now() + Math.floor(Math.random() * 100000);
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
@@ -299,7 +305,9 @@ export default function Home() {
           if (parentIsGrid) {
             const newArr = [...arr];
             const emptyContainer = createBlock('container', 'empty', 'Puste Pole');
-            emptyContainer.id = Date.now() + Math.random();
+            emptyContainer.id = Date.now() + Math.floor(Math.random() * 100000);
+            emptyContainer.styles.minHeight = '60px';
+            emptyContainer.styles.height = '100%';
             newArr[index] = emptyContainer;
             return newArr;
           }
@@ -410,7 +418,7 @@ export default function Home() {
 
     const spawnOrb = () => {
       const newOrb: AuroraOrb = {
-        id: Date.now(),
+        id: Date.now() + Math.floor(Math.random() * 100000),
         x: Math.random() * 120 - 10,   
         y: Math.random() * 120 - 10,   
         size: Math.random() * 600 + 400, 
@@ -426,7 +434,7 @@ export default function Home() {
 
     const spawnShootingStar = () => {
       const newStar: ShootingStar = {
-        id: Date.now() + Math.random(),
+        id: Date.now() + Math.floor(Math.random() * 100000),
         startX: Math.random() * 100,      
         startY: Math.random() * 50 - 20,  
         length: Math.random() * 200 + 100, 
@@ -527,10 +535,22 @@ export default function Home() {
         
         const updates: any = {};
         if (interaction.dir.includes('e') || interaction.dir.includes('w')) updates.width = `${percentWidth}%`;
+        
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
-          updates.height = `${newHeightPx}px`;
-          updates.minHeight = `${newHeightPx}px`;
+          const blockType = activeBlock?.type || 'container';
+          
+          if (['img', 'video', 'embed', 'shape'].includes(blockType)) {
+            updates.height = `${newHeightPx}px`;
+            updates.minHeight = `${newHeightPx}px`;
+          } else {
+            // KLUCZOWY FIX: Kontenery (sekcje, flexy, gridy) używają min-content!
+            // Możesz ciągnąć myszką ile chcesz, ale sekcja fizycznie zablokuje się 
+            // na swojej zawartości i uniemożliwi wyciek klocków (overflow).
+            updates.height = `${newHeightPx}px`;
+            updates.minHeight = `min-content`;
+          }
         }
+        
         updates.marginLeft = '0px'; updates.marginTop = '0px';
         updateActiveBlock({ styles: updates }, true);
       }
@@ -581,7 +601,7 @@ export default function Home() {
 
     if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
     return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport]);
+  }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport, activeBlock]);
 
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
@@ -603,8 +623,6 @@ export default function Home() {
     window.addEventListener('wheel', handleGlobalWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleGlobalWheel);
   }, [activeId, isMediaManagerOpen]);
-
-  const activeBlock = findBlockById(blocks, activeId);
 
   const categories = [
     { id: 'tekst', label: 'Tekst' }, 

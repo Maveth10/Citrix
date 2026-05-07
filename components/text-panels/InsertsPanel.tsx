@@ -52,6 +52,27 @@ export default function InsertsPanel({ handleAddBlock }: { handleAddBlock: any }
          </div>
       </button>
 
+      <button 
+  onClick={() => handleAddBlock('container', 'alert-cosmos', 'Kosmiczny Alert')}
+  className="w-full relative group flex items-center justify-center p-3 my-2 rounded-xl text-xs font-bold text-white uppercase tracking-widest transition-all duration-300 overflow-hidden"
+  style={{
+    background: 'linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(30,27,75,1) 100%)',
+    border: '1px solid rgba(139, 92, 246, 0.4)',
+    boxShadow: '0 0 15px rgba(139, 92, 246, 0.2), inset 0 0 10px rgba(236, 72, 153, 0.1)'
+  }}
+>
+  {/* Subtelny, pojawiający się gradient przy najechaniu myszką */}
+  <div 
+    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+    style={{ background: 'linear-gradient(90deg, rgba(236,72,153,0.4), rgba(139,92,246,0.4), rgba(59,130,246,0.4))' }}
+  ></div>
+  
+  {/* Błyszczący tekst */}
+  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 group-hover:text-white transition-colors duration-300 drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">
+    🌌 Kosmiczny Alert
+  </span>
+</button>
+
     </div>
   );
 }
