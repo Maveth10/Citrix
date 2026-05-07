@@ -43,6 +43,7 @@ export default function CanvasBlock({
   if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
   if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
   
+  // FIX: Używamy wartości z b.styles dla minWidth i minHeight, nie nadpisujemy ich zerami!
   const containerStyles: any = { 
     ...bgStyles, 
     filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
@@ -50,7 +51,8 @@ export default function CanvasBlock({
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
     zIndex: isActive ? 9999 : (b.styles.zIndex || 1),
     transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
-    minWidth: 0, minHeight: 0,
+    minWidth: b.styles.minWidth !== undefined ? b.styles.minWidth : 0, 
+    minHeight: b.styles.minHeight !== undefined ? b.styles.minHeight : 0,
     overflow: isActive ? 'visible' : (b.styles.overflow || 'visible'),
     boxShadow: isDragOver ? 'inset 0 4px 0 0 #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3)' : (b.styles.boxShadow || 'none')
   };
