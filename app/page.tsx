@@ -46,6 +46,7 @@ interface ShootingStar {
   startY: number;     // Początek Y (%)
   length: number;     // Długość ogona (px)
   speed: number;      // Prędkość przelotu (s)
+  angle: number;      // Losowy Kąt Opadania (deg)
 }
 // ==========================================================
 
@@ -457,18 +458,19 @@ export default function Home() {
       }, newOrb.duration * 1000);
     };
 
-    // C. System Spadających Gwiazd ( Generator Shooting Stars )
+    // C. System Spadających Gwiazd ( Generator Shooting Stars pod różnymi kątami )
     const spawnShootingStar = () => {
       const newStar: ShootingStar = {
         id: Date.now() + Math.random(),
-        startX: Math.random() * 80 + 10,  // Pojawia się w górnej/środkowej strefie
-        startY: Math.random() * 30 - 10, // Pojawia się lekko nad górną krawędzią
+        startX: Math.random() * 100,      // Pojawia się losowo na całej szerokości
+        startY: Math.random() * 50 - 20,  // Pojawia się gdzieś nad płótnem
         length: Math.random() * 200 + 100, // Długość losowa 100px - 300px
-        speed: Math.random() * 1 + 0.5,    // Prędkość przelotu szybka 0.5s - 1.5s
+        speed: Math.random() * 1.5 + 0.5, // Prędkość przelotu szybka 0.5s - 2.0s
+        angle: Math.random() * 60 + 20,   // LOSOWY KĄT: Od 20 do 80 stopni! (Naturalne opadanie)
       };
       setShootingStars(prev => [...prev, newStar]);
 
-      // Usuń spadającą gwiazdę natychmiast po przelocie
+      // Usuń spadającą gwiazdę natychmiast po przelocie (z zapasem bezpieczeństwa na animację)
       setTimeout(() => {
         setShootingStars(prev => prev.filter(star => star.id !== newStar.id));
       }, newStar.speed * 1000 + 100);
@@ -683,12 +685,13 @@ export default function Home() {
           100% { opacity: 0; transform: translate(100%, -100%) scale(1.2); }
         }
 
-        /* C. Błyskawiczny przelot spadającej gwiazdy */
+        /* C. Błyskawiczny przelot spadającej gwiazdy Z UWZGLĘDNIENIEM KĄTA ROTACJI */
         @keyframes shooting-star-dash {
-          0% { opacity: 0; transform: translate(0, 0) scaleX(1); }
-          5% { opacity: 1; transform: translate(20%, 20%) scaleX(1.3); }
-          90% { opacity: 1; transform: translate(950%, 950%) scaleX(1.5); }
-          100% { opacity: 0; transform: translate(1000%, 1000%) scaleX(0.8); }
+          0% { opacity: 0; transform: rotate(var(--star-angle)) translateX(0) scaleX(1); }
+          5% { opacity: 1; transform: rotate(var(--star-angle)) translateX(100%) scaleX(1.3); }
+          /* Gwiazda przelatuje bardzo głęboko wzdłuż swojej osi X, zależnie od długości */
+          90% { opacity: 1; transform: rotate(var(--star-angle)) translateX(2000%) scaleX(1.5); }
+          100% { opacity: 0; transform: rotate(var(--star-angle)) translateX(2500%) scaleX(0.8); }
         }
 
         /* D. Blask aktywnych kafelków interfejsu */
@@ -710,7 +713,7 @@ export default function Home() {
           opacity: 0;
         }
 
-        /* F. Styl dla Spadającej Gwiazdy (Dash & Tail) */
+        /* F. Styl dla Spadającej Gwiazdy (Dash & Tail pod kątem) */
         .shooting-star {
           position: absolute;
           height: 1.5px; /* Bardzo cienki neon */
@@ -721,6 +724,7 @@ export default function Home() {
           animation-name: shooting-star-dash;
           animation-timing-function: linear;
           animation-fill-mode: forwards;
+          /* Rotacja z CSS Variable ustawianej w React */
           transform-origin: left center;
         }
 
@@ -782,7 +786,7 @@ export default function Home() {
           />
         ))}
 
-        {/* 2. Błyskawiczne Spadające Gwiazdy (Shooting Stars) */}
+        {/* 2. Błyskawiczne Spadające Gwiazdy (Z ROŻNYMI KĄTAMI OPADANIA) */}
         {shootingStars.map(star => (
           <div 
             key={star.id}
@@ -791,9 +795,10 @@ export default function Home() {
               width: `${star.length}px`,
               left: `${star.startX}%`,
               top: `${star.startY}%`,
-              // Prędkość przelotu
               animationDuration: `${star.speed}s`,
-            }}
+              // Kąt wstrzykiwany jako zmienna CSS
+              '--star-angle': `${star.angle}deg`,
+            } as React.CSSProperties}
           />
         ))}
 
