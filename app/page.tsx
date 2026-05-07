@@ -34,13 +34,13 @@ interface AuroraOrb {
   id: number;
   x: number;          
   y: number;
-  tx: number; // Cel lotu na osi X (target X)
-  ty: number; // Cel lotu na osi Y (target Y)
+  tx: number; 
+  ty: number; 
   size: number;       
   blur: number;       
   hue: number;        
   duration: number;
-  opacity: number; // Indywidualna jasność
+  opacity: number; 
 }
 
 interface ShootingStar {
@@ -112,6 +112,16 @@ export default function Home() {
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
+  // ==========================================================
+  // KLUCZOWY UX: AUTO-ZOOM PŁÓTNA PRZY ZMIANIE URZĄDZENIA
+  // ==========================================================
+  useEffect(() => {
+    if (viewport === 'desktop') setCanvasZoom(1);
+    else if (viewport === 'tablet') setCanvasZoom(1.5);
+    else if (viewport === 'mobile') setCanvasZoom(2);
+  }, [viewport]);
+  // ==========================================================
+
   const [interaction, setInteraction] = useState<{ 
     type: 'drag' | 'resize'; dir?: string; 
     startX: number; startY: number; 
@@ -423,15 +433,15 @@ export default function Home() {
     const spawnOrb = () => {
       const newOrb: AuroraOrb = {
         id: Date.now() + Math.floor(Math.random() * 100000),
-        x: Math.random() * 140 - 20,   // Szeroki rozrzut narodzin (-20% do 120%)
+        x: Math.random() * 140 - 20,   
         y: Math.random() * 140 - 20,   
-        tx: (Math.random() - 0.5) * 80, // Wektor ruchu na osi X (od -40vw do +40vw)
-        ty: (Math.random() - 0.5) * 80, // Wektor ruchu na osi Y (od -40vh do +40vh)
-        size: Math.random() * 800 + 500, // Ogromne kule światła (500-1300px)
-        blur: Math.random() * 40 + 80,  // Mniejszy blur dla intensywniejszego koloru (80-120px)
-        hue: Math.random() * 140 + 150, // Piękne kosmiczne palety (150-290 - błękit, fiolet, róż)
-        duration: Math.random() * 20 + 20, // Animacja trajektorii: 20-40 sekund
-        opacity: Math.random() * 0.25 + 0.15, // Indywidualna moc światła dla każdej kuli (0.15-0.40)
+        tx: (Math.random() - 0.5) * 80, 
+        ty: (Math.random() - 0.5) * 80, 
+        size: Math.random() * 800 + 500, 
+        blur: Math.random() * 40 + 80,  
+        hue: Math.random() * 140 + 150, 
+        duration: Math.random() * 20 + 20, 
+        opacity: Math.random() * 0.25 + 0.15, 
       };
       setAuroraOrbs(prev => [...prev, newOrb]);
       setTimeout(() => {
@@ -472,9 +482,7 @@ export default function Home() {
       }, nextEventTime);
     };
 
-    // KLUCZOWE: Zagęszczamy kosmos na start
     for (let i = 0; i < 12; i++) spawnOrb();
-    // KLUCZOWE: Przyspieszamy rodzenie się nowych kul z 5 do 3 sekund
     const spawnAuroraInterval = setInterval(spawnOrb, 3000); 
     const spawnStarInterval = setInterval(() => {
        if (Math.random() > 0.4) spawnShootingStar(); 
@@ -993,7 +1001,7 @@ export default function Home() {
         <main className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
           
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40">
              
              {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-[#ff4500] h-full"></div>)}</div>}
              
@@ -1011,6 +1019,7 @@ export default function Home() {
                       setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                       interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                       hiddenBlocks={hiddenBlocks}
+                      viewport={viewport}
                     />
                     
                     {showGhost && !hiddenBlocks.includes(b.id) && (
@@ -1039,12 +1048,20 @@ export default function Home() {
           </div>
         </main>
         
-        <div className="relative z-50">
+        <div className="absolute bottom-0 left-0 w-full z-50">
           <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
         </div>
       </div>
       
-      <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
+      <RightPanel 
+        activeBlock={(leftTab !== null || addCategory !== null) ? null : activeBlock} 
+        rightTab={rightTab} 
+        setRightTab={setRightTab as any} 
+        updateActiveBlock={updateActiveBlock} 
+        removeActiveBlock={removeActiveBlock} 
+        setIsMediaManagerOpen={setIsMediaManagerOpen} 
+      />
+      
       {isMediaManagerOpen && <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
     </div>
   );

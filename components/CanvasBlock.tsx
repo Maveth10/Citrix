@@ -17,12 +17,13 @@ interface CanvasBlockProps {
   setDraggedId?: (id: number | null) => void;
   handleDrop?: (sourceId: number, targetId: number, type?: 'before'|'inline') => void;
   hiddenBlocks?: number[];
+  viewport?: 'desktop' | 'tablet' | 'mobile'; // DODANO PROP
 }
 
 export default function CanvasBlock({ 
   b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, 
   setInteraction, updateActiveBlock, parentId, parentActive, interaction,
-  draggedId, setDraggedId, handleDrop, hiddenBlocks = []
+  draggedId, setDraggedId, handleDrop, hiddenBlocks = [], viewport = 'desktop'
 }: CanvasBlockProps) {
   
   if (hiddenBlocks.includes(b.id)) return null;
@@ -38,28 +39,86 @@ export default function CanvasBlock({
     if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) { setShouldAnimate(true); }
   }, [b.entranceAnim, isActive]);
 
-  const hasMediaBg = b.styles.bgType === 'image' || b.styles.bgType === 'video';
-  const bgStyles = { ...b.styles };
-  if (b.styles.bgType === 'image') bgStyles.backgroundImage = b.styles.bgImage?.includes('gradient') ? b.styles.bgImage : `url(${b.styles.bgImage})`;
+  // ==========================================
+  // 🚀 SILNIK AUTO-RWD (Nondestructive RWD)
+  // ==========================================
+  const applyRWD = (baseStyles: any, blockName: string, viewportState: string) => {
+    if (viewportState === 'desktop') return baseStyles;
+    
+    // Tworzymy kopię, by nie uszkodzić oryginalnego JSON-a w bazie
+    const s = { ...baseStyles };
+
+    if (viewportState === 'mobile') {
+      // 1. Zwijanie siatek do 1 kolumny
+      if (s.display === 'grid') s.gridTemplateColumns = 'minmax(20px, 1fr)';
+      
+      // 2. Zwijanie flexboxów z poziomu na pion
+      if (s.display === 'flex' && s.flexDirection !== 'column' && !blockName?.includes('NAV')) {
+        s.flexDirection = 'column';
+        s.alignItems = 'center';
+      }
+      
+      // 3. Rozpychanie uciętych klocków
+      if (typeof s.width === 'string' && s.width.endsWith('%') && parseFloat(s.width) < 100) {
+        s.width = '100%';
+      }
+      
+      // 4. Skalowanie gigantycznej typografii
+      if (typeof s.fontSize === 'string' && s.fontSize.endsWith('px')) {
+        const size = parseInt(s.fontSize);
+        if (size >= 36) s.fontSize = `${Math.max(28, Math.round(size * 0.65))}px`;
+        else if (size > 18) s.fontSize = `${Math.round(size * 0.85)}px`;
+      }
+      
+      // 5. Redukcja marnowanego miejsca (paddingów)
+      if (typeof s.padding === 'string') {
+        if (s.padding === '40px' || s.padding === '60px' || s.padding.includes('60px')) {
+          s.padding = '20px';
+        }
+      }
+    }
+
+    if (viewportState === 'tablet') {
+      // 1. Redukcja Gridów 3 i 4 na 2 kolumny
+      if (s.display === 'grid' && typeof s.gridTemplateColumns === 'string') {
+        if (s.gridTemplateColumns.includes('3') || s.gridTemplateColumns.includes('4')) {
+          s.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))';
+        }
+      }
+      // 2. Średnie skalowanie fontów
+      if (typeof s.fontSize === 'string' && s.fontSize.endsWith('px')) {
+        const size = parseInt(s.fontSize);
+        if (size > 40) s.fontSize = `${Math.max(32, Math.round(size * 0.8))}px`;
+      }
+    }
+
+    return s;
+  };
+
+  // Generujemy responsywne style w locie
+  const currentStyles = applyRWD(b.styles, b.name || '', viewport);
+
+  const hasMediaBg = currentStyles.bgType === 'image' || currentStyles.bgType === 'video';
+  const bgStyles = { ...currentStyles };
+  if (currentStyles.bgType === 'image') bgStyles.backgroundImage = currentStyles.bgImage?.includes('gradient') ? currentStyles.bgImage : `url(${currentStyles.bgImage})`;
   if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
   
-  // FIX: Używamy wartości z b.styles dla minWidth i minHeight, nie nadpisujemy ich zerami!
   const containerStyles: any = { 
     ...bgStyles, 
-    filter: `blur(${b.styles.filterBlur || 0}px) brightness(${b.styles.filterBrightness ?? 100}%) contrast(${b.styles.filterContrast ?? 100}%)`, 
-    mixBlendMode: b.styles.mixBlendMode || 'normal', 
+    filter: `blur(${currentStyles.filterBlur || 0}px) brightness(${currentStyles.filterBrightness ?? 100}%) contrast(${currentStyles.filterContrast ?? 100}%)`, 
+    mixBlendMode: currentStyles.mixBlendMode || 'normal', 
     cursor: isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default', 
-    zIndex: isActive ? 9999 : (b.styles.zIndex || 1),
-    transition: isBeingDragged ? 'none' : (b.styles.transition || 'all 0.3s ease'),
-    minWidth: b.styles.minWidth !== undefined ? b.styles.minWidth : 0, 
-    minHeight: b.styles.minHeight !== undefined ? b.styles.minHeight : 0,
-    overflow: isActive ? 'visible' : (b.styles.overflow || 'visible'),
-    boxShadow: isDragOver ? 'inset 0 4px 0 0 #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3)' : (b.styles.boxShadow || 'none')
+    zIndex: isActive ? 9999 : (currentStyles.zIndex || 1),
+    transition: isBeingDragged ? 'none' : (currentStyles.transition || 'all 0.3s ease'),
+    minWidth: currentStyles.minWidth !== undefined ? currentStyles.minWidth : 0, 
+    minHeight: currentStyles.minHeight !== undefined ? currentStyles.minHeight : 0,
+    overflow: isActive ? 'visible' : (currentStyles.overflow || 'visible'),
+    boxShadow: isDragOver ? 'inset 0 4px 0 0 #ff4500, 0 0 20px rgba(255, 69, 0, 0.3)' : (currentStyles.boxShadow || 'none')
   };
 
   if (b.children) { 
-    containerStyles.display = 'flex'; 
-    containerStyles.flexDirection = 'column'; 
+    containerStyles.display = currentStyles.display || 'flex'; 
+    if (containerStyles.display === 'flex') containerStyles.flexDirection = currentStyles.flexDirection || 'column'; 
   }
 
   const hover = b.hoverStyles || {};
@@ -96,15 +155,22 @@ export default function CanvasBlock({
 
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements) => {
     const textStyles: any = { 
-      fontSize:'inherit', fontWeight:'inherit', color:'inherit', textAlign:b.styles.textAlign, lineHeight:'inherit', margin:0, 
-      overflowY: b.styles.overflowY || 'hidden', overflowX: 'hidden', 
-      wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: b.styles.textShadow, 
-      width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: b.styles.alignItems, justifyContent: b.styles.justifyContent, 
-      zIndex: 10, position: 'relative', flex: b.styles.flex || 'auto'
+      fontSize: currentStyles.fontSize || 'inherit', 
+      fontWeight: currentStyles.fontWeight || 'inherit', 
+      color: currentStyles.color || 'inherit', 
+      textAlign: currentStyles.textAlign, 
+      lineHeight: currentStyles.lineHeight || 'inherit', 
+      letterSpacing: currentStyles.letterSpacing || 'inherit',
+      textTransform: currentStyles.textTransform || 'none',
+      margin: 0, 
+      overflowY: currentStyles.overflowY || 'hidden', overflowX: 'hidden', 
+      wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing) ? 'text' : 'inherit', textShadow: currentStyles.textShadow, 
+      width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: currentStyles.alignItems, justifyContent: currentStyles.justifyContent, 
+      zIndex: 10, position: 'relative', flex: currentStyles.flex || 'auto'
     };
 
-    if (b.styles.WebkitBackgroundClip === 'text') {
-      textStyles.backgroundImage = b.styles.backgroundImage;
+    if (currentStyles.WebkitBackgroundClip === 'text') {
+      textStyles.backgroundImage = currentStyles.backgroundImage;
       textStyles.WebkitBackgroundClip = 'text';
       textStyles.WebkitTextFillColor = 'transparent';
       textStyles.color = 'transparent'; 
@@ -113,9 +179,9 @@ export default function CanvasBlock({
       containerStyles.WebkitTextFillColor = 'unset';
     }
 
-    if (b.styles.WebkitTextStroke) {
-      textStyles.WebkitTextStroke = b.styles.WebkitTextStroke;
-      textStyles.color = b.styles.color || 'transparent'; 
+    if (currentStyles.WebkitTextStroke) {
+      textStyles.WebkitTextStroke = currentStyles.WebkitTextStroke;
+      textStyles.color = currentStyles.color || 'transparent'; 
       containerStyles.WebkitTextStroke = 'unset';
     }
 
@@ -144,20 +210,13 @@ export default function CanvasBlock({
 
       <div id={`block-${b.id}`} style={containerStyles} 
         
-        // FIX V18.67: Przeciąganie działa TYLKO GDY ZAZNACZYSZ KLOCEK (isActive). 
-        // Wtedy natywne przeglądarki nie kradną kliknięć!
         draggable={isActive && !isEditing && !isAbsolute}
         
         onDragStart={(e) => { 
           e.stopPropagation(); 
-          // Payload dla przeglądarki (bez tego rzut zostaje anulowany)
           e.dataTransfer.setData('text/plain', b.id.toString());
           e.dataTransfer.effectAllowed = 'move';
-          
-          // Wyłączamy re-render w tej samej klatce, aby nie zgubić "Ghosta"
-          setTimeout(() => {
-            if (setDraggedId) setDraggedId(b.id); 
-          }, 10);
+          setTimeout(() => { if (setDraggedId) setDraggedId(b.id); }, 10);
         }}
         onDragEnd={(e) => { 
           e.stopPropagation();
@@ -175,9 +234,7 @@ export default function CanvasBlock({
         onMouseDown={(e) => { 
           e.stopPropagation(); 
           
-          // Natychmiastowe zaznaczenie (przywraca władzę nad klikaniem!)
           if (activeId !== b.id) { 
-            // Drążenie: Najpierw rodzic, potem dziecko
             if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) { 
               setActiveId(parentId); setIsEditing(false); return; 
             }
@@ -186,7 +243,6 @@ export default function CanvasBlock({
           
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
           
-          // Obsługa absolutnych PopUpów (Figma style move)
           if (isAbsolute) {
             const el = document.getElementById(`block-${b.id}`);
             const currentLeft = el ? el.offsetLeft : 0; const currentTop = el ? el.offsetTop : 0;
@@ -194,10 +250,10 @@ export default function CanvasBlock({
           }
         }}
         onDoubleClick={(e) => { e.stopPropagation(); if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
-        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-blue-400 hover:outline-dashed' : 'cursor-grab active:cursor-grabbing'} ${draggedId === b.id ? 'opacity-50' : ''}`}
+        className={`group ${!isActive ? 'hover:outline hover:outline-1 hover:outline-[#ff4500]/50 hover:outline-dashed' : 'cursor-grab active:cursor-grabbing'} ${draggedId === b.id ? 'opacity-50' : ''}`}
       >
-        {b.styles.bgType === 'video' && b.styles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={b.styles.bgVideo} />}
-        {hasMediaBg && b.styles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: b.styles.bgOverlay, zIndex: 1 }}></div>}
+        {currentStyles.bgType === 'video' && currentStyles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={currentStyles.bgVideo} />}
+        {hasMediaBg && currentStyles.bgOverlay && <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: currentStyles.bgOverlay, zIndex: 1 }}></div>}
         
         {b.type === 'ribbon' && b.ribbonItems && (
           <div style={{ overflow: 'hidden', width: '100%', display: 'flex', whiteSpace: 'nowrap', alignItems: 'center', height: '100%', zIndex: 10, position: 'relative', pointerEvents:'none' }}>
@@ -221,13 +277,13 @@ export default function CanvasBlock({
         {b.type === 'graphic' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}} dangerouslySetInnerHTML={{ __html: b.text || '' }}></div>}
         
         {['input', 'textarea'].includes(b.type) && (
-          <div className="w-full h-full text-inherit pointer-events-none z-10 relative flex" style={{ alignItems: b.styles.alignItems || 'center' }}>
+          <div className="w-full h-full text-inherit pointer-events-none z-10 relative flex" style={{ alignItems: currentStyles.alignItems || 'center' }}>
             {b.text}
           </div>
         )}
         
         {b.type === 'video' && (
-          <div className="w-full h-full relative z-10 overflow-hidden" style={{ borderRadius: b.styles.borderRadius }}>
+          <div className="w-full h-full relative z-10 overflow-hidden" style={{ borderRadius: currentStyles.borderRadius }}>
             {b.src && (b.src.includes('youtube') || b.src.includes('youtu.be') || b.src.includes('vimeo')) ? (
               <iframe className="w-full h-full pointer-events-none" src={getEmbedUrl(b.src)} frameBorder="0" allowFullScreen></iframe>
             ) : (
@@ -238,7 +294,7 @@ export default function CanvasBlock({
         )}
 
         {b.type === 'embed' && (
-          <div className="w-full h-full relative z-10 flex items-center justify-center overflow-hidden" style={{ borderRadius: b.styles.borderRadius }}>
+          <div className="w-full h-full relative z-10 flex items-center justify-center overflow-hidden" style={{ borderRadius: currentStyles.borderRadius }}>
              <style dangerouslySetInnerHTML={{__html: `#block-${b.id} iframe { width: 100%; height: 100%; border: none; pointer-events: none; }`}} />
              <div dangerouslySetInnerHTML={{ __html: b.text || '' }} className="w-full h-full pointer-events-none" />
              <div className="absolute inset-0 z-20 cursor-pointer"></div>
@@ -246,15 +302,16 @@ export default function CanvasBlock({
         )}
         
         {b.type === 'img' && (
-          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: b.styles.borderRadius, position: 'relative', zIndex: 10}} className="group/img">
-            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500`} style={{objectFit: b.styles.objectFit, objectPosition: `${b.styles.objectPositionX || 50}% ${b.styles.objectPositionY || 50}%`, transform: `scale(${b.styles.imageScale || 1})`}} />
+          <div style={{width:'100%', height:'100%', overflow:'hidden', borderRadius: currentStyles.borderRadius, position: 'relative', zIndex: 10}} className="group/img">
+            <img src={b.src} className={`w-full h-full pointer-events-none transition-all duration-500`} style={{objectFit: currentStyles.objectFit, objectPosition: `${currentStyles.objectPositionX || 50}% ${currentStyles.objectPositionY || 50}%`, transform: `scale(${currentStyles.imageScale || 1})`}} />
           </div>
         )}
         
+        {/* REKURSJA: Przekazujemy viewport niżej! */}
         {b.children && (
           <div className="w-full h-full min-h-[40px] relative pointer-events-none flex flex-col flex-1 overflow-visible" style={{zIndex: 10, borderRadius: 'inherit'}}>
              {b.children.length === 0 && <span className="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic">Upuść elementy</span>}
-             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: b.styles.display === 'grid' ? 'grid' : 'flex', flexWrap: b.styles.flexWrap || 'wrap', flexDirection: b.styles.display === 'grid' ? undefined : (b.styles.flexDirection || 'column'), gap: b.styles.gap || '20px', gridTemplateColumns: b.styles.gridTemplateColumns, gridTemplateRows: b.styles.gridTemplateRows, alignItems: b.styles.alignItems || 'flex-start', justifyContent: b.styles.justifyContent }}>
+             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: currentStyles.display === 'grid' ? 'grid' : 'flex', flexWrap: currentStyles.flexWrap || 'wrap', flexDirection: currentStyles.display === 'grid' ? undefined : (currentStyles.flexDirection || 'column'), gap: currentStyles.gap || '20px', gridTemplateColumns: currentStyles.gridTemplateColumns, gridTemplateRows: currentStyles.gridTemplateRows, alignItems: currentStyles.alignItems || 'flex-start', justifyContent: currentStyles.justifyContent }}>
                 {b.children.map((child: any) => {
                    return (
                      <CanvasBlock 
@@ -265,6 +322,7 @@ export default function CanvasBlock({
                        parentId={b.id} parentActive={isActive} interaction={interaction}
                        draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                        hiddenBlocks={hiddenBlocks}
+                       viewport={viewport} // <--- REKURSJA
                      />
                    );
                 })}
@@ -273,20 +331,20 @@ export default function CanvasBlock({
         )}
 
         {isActive && !isEditing && (
-          <div className="absolute inset-0 pointer-events-none border-2 border-blue-500 z-[200]">
-            <div className="absolute -top-6 left-[-2px] bg-blue-500 text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-default">
+          <div className="absolute inset-0 pointer-events-none border-2 border-[#ff4500] z-[200]">
+            <div className="absolute -top-6 left-[-2px] bg-[#ff4500] text-white text-[9px] px-3 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-default">
               <span>{b.name}</span>
             </div>
             
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-nw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-ne-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-sw-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-se-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
+            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-nw-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-ne-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
+            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-sw-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-se-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
             
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-n-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-blue-500 rounded-sm cursor-s-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
-            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-w-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
-            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-blue-500 rounded-sm cursor-e-resize pointer-events-auto hover:bg-blue-500 transition-colors" onMouseDown={(e) => handleResizeStart(e, 'e')} />
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-n-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-s-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
+            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-[#ff4500] rounded-sm cursor-w-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
+            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-[#ff4500] rounded-sm cursor-e-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'e')} />
           </div>
         )}
       </div>

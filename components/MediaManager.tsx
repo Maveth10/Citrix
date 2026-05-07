@@ -1,158 +1,217 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabase';
 
 interface MediaManagerProps {
   activeBlock: any;
   updateActiveBlock: (updates: any) => void;
-  setIsMediaManagerOpen: (isOpen: boolean) => void;
+  setIsMediaManagerOpen: (val: boolean) => void;
 }
 
 export default function MediaManager({ activeBlock, updateActiveBlock, setIsMediaManagerOpen }: MediaManagerProps) {
-  const [selectedMediaIndex, setSelectedMediaIndex] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'project' | 'upload' | 'stock'>('project');
+  const [files, setFiles] = useState<{ name: string, url: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (activeBlock && (activeBlock.images || activeBlock.type === 'img')) {
-      setSelectedMediaIndex(0);
+  // 1. Pobieranie plików z Supabase (bucket: 'media')
+  const fetchMedia = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.storage.from('media').list();
+    
+    if (error) {
+      console.error('Błąd pobierania mediów:', error);
+      setLoading(false);
+      return;
     }
-  }, [activeBlock?.id]);
 
-  if (!activeBlock) return null;
+    if (data) {
+      // Filtrujemy ukryte pliki (np. .emptyFolderPlaceholder) i mapujemy na publiczne URL
+      const validFiles = data.filter(f => f.name && !f.name.startsWith('.'));
+      const fileData = validFiles.map(file => {
+        const { data: publicUrlData } = supabase.storage.from('media').getPublicUrl(file.name);
+        return { name: file.name, url: publicUrlData.publicUrl };
+      });
+      
+      // Sortujemy od najnowszych (na podstawie domyślnego zachowania)
+      setFiles(fileData.reverse());
+    }
+    setLoading(false);
+  };
 
-  const isSingleImage = activeBlock.type === 'img';
-  const images = isSingleImage ? [activeBlock.src || ''] : (activeBlock.images || []);
+  useEffect(() => {
+    fetchMedia();
+  }, []);
 
-  const handleUpdateMedia = (url: string) => {
-    if (isSingleImage) {
+  // 2. Upload pliku do Supabase
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+    setUploading(true);
+
+    // Unikalna nazwa pliku zabezpieczająca przed nadpisaniem
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+
+    const { error } = await supabase.storage.from('media').upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+    if (error) {
+      alert(`Błąd wgrywania: ${error.message}`);
+    } else {
+      await fetchMedia(); // Odśwież galerię po udanym uploadzie
+    }
+    setUploading(false);
+  };
+
+  // 3. Obsługa zdarzeń Drag & Drop
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleUpload(e.target.files[0]);
+    }
+  };
+
+  // 4. Wybór zdjęcia i wstrzyknięcie do płótna
+  const handleSelectImage = (url: string) => {
+    if (!activeBlock) return;
+    
+    // Zabezpieczenie: Czy to obrazek/wideo, czy ustawiamy tło kontenera?
+    if (activeBlock.type === 'img' || activeBlock.type === 'video') {
       updateActiveBlock({ src: url });
     } else {
-      if (selectedMediaIndex === null) return;
-      const newImages = [...images];
-      newImages[selectedMediaIndex] = url;
-      updateActiveBlock({ images: newImages });
+      updateActiveBlock({ styles: { bgImage: url, bgType: 'image' } });
     }
+    
+    setIsMediaManagerOpen(false);
   };
-
-  const handleAddMedia = (url: string = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe') => {
-    if (isSingleImage) {
-      updateActiveBlock({ src: url }); // Podmienia zdjęcie
-      setActiveTab('project');
-    } else {
-      const newImages = [...images, url];
-      updateActiveBlock({ images: newImages });
-      setSelectedMediaIndex(newImages.length - 1);
-      setActiveTab('project');
-    }
-  };
-
-  const handleRemoveMedia = (index: number) => {
-    if (isSingleImage) return; 
-    const newImages = images.filter((_: any, i: number) => i !== index);
-    updateActiveBlock({ images: newImages });
-    if (selectedMediaIndex === index) setSelectedMediaIndex(null);
-  };
-
-  // UPLOAD LOKALNY Z DYSKU (Generuje ObjectURL dla przeglądarki)
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const localUrl = URL.createObjectURL(file);
-      handleAddMedia(localUrl);
-    }
-  };
-
-  // Symulacja bazy Stock (w pełnej wersji podpinamy tu API Unsplash/Pexels)
-  const stockPhotos = [
-    'https://images.unsplash.com/photo-1498050108023-c5249f4df085',
-    'https://images.unsplash.com/photo-1551288049-bebda4e38f71',
-    'https://images.unsplash.com/photo-1522071820081-009f0129c71c',
-    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8',
-    'https://images.unsplash.com/photo-1555099962-4199c345e5dd',
-    'https://images.unsplash.com/photo-1504384308090-c894fdcc538d',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c',
-    'https://images.unsplash.com/photo-1542744173-8e7e53415bb0',
-  ];
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[999] flex items-center justify-center font-sans">
-      <div className="bg-[#111] w-[1000px] h-[700px] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col text-white overflow-hidden animate-in fade-in zoom-in-95 border border-neutral-800">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-in fade-in duration-300">
+      
+      {/* Tło przyciemniające (Dark Backdrop) */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => setIsMediaManagerOpen(false)}
+      ></div>
+
+      {/* Główne okno Menedżera - Cyber Szkło */}
+      <div className="relative w-[900px] h-[80vh] max-h-[800px] bg-[rgba(15,15,20,0.8)] backdrop-blur-[40px] saturate-[150%] border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden scale-100 animate-in zoom-in-95 duration-300">
         
-        {/* HEADER MODALA ZE ZAKŁADKAMI */}
-        <div className="flex justify-between items-center px-6 py-0 border-b border-neutral-800 bg-[#161616]">
-          <div className="flex gap-6 h-14">
-            <button onClick={() => setActiveTab('project')} className={`font-bold text-sm border-b-2 transition ${activeTab === 'project' ? 'border-blue-500 text-blue-400' : 'border-transparent text-neutral-400 hover:text-white'}`}>Pliki Projektu</button>
-            <button onClick={() => setActiveTab('upload')} className={`font-bold text-sm border-b-2 transition ${activeTab === 'upload' ? 'border-blue-500 text-blue-400' : 'border-transparent text-neutral-400 hover:text-white'}`}>Wgraj z Dysku</button>
-            <button onClick={() => setActiveTab('stock')} className={`font-bold text-sm border-b-2 transition ${activeTab === 'stock' ? 'border-blue-500 text-blue-400' : 'border-transparent text-neutral-400 hover:text-white'}`}>Biblioteka Stock</button>
+        {/* HEADER */}
+        <div className="flex justify-between items-center px-6 py-4 border-b border-white/5 bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-inner">
+              <span className="text-xl">🌌</span>
+            </div>
+            <div>
+              <h2 className="text-white font-bold text-lg tracking-wide">Menedżer Mediów</h2>
+              <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold">Zarządzaj plikami w chmurze</p>
+            </div>
           </div>
-          <button onClick={() => { setIsMediaManagerOpen(false); setSelectedMediaIndex(null); }} className="text-neutral-500 hover:text-white font-bold text-xl">✕</button>
+          <button 
+            onClick={() => setIsMediaManagerOpen(false)} 
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-neutral-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* WORKSPACE */}
-        <div className="flex flex-1 overflow-hidden bg-[#0A0A0A]">
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide flex flex-col gap-6">
           
-          {/* ZAKŁADKA 1: PLIKI PROJEKTU */}
-          {activeTab === 'project' && (
-            <>
-              <div className="flex-1 p-6 overflow-y-auto">
-                <div className="grid grid-cols-4 gap-4">
-                  {images.length === 0 && <div className="col-span-4 text-neutral-600 text-center py-20 font-bold">Brak obrazów. Dodaj coś z biblioteki lub dysku.</div>}
-                  {images.map((img: string, i: number) => (
-                    <div key={i} onClick={() => setSelectedMediaIndex(i)} className={`relative aspect-square bg-neutral-900 rounded-lg cursor-pointer overflow-hidden transition-all border-2 ${selectedMediaIndex === i ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-neutral-800 hover:border-neutral-600'}`}>
-                      <img src={img} className="w-full h-full object-cover" alt="Media" />
-                    </div>
-                  ))}
-                </div>
+          {/* STREFA ZRZUTU (DRAG & DROP) */}
+          <div 
+            onDragEnter={handleDrag} 
+            onDragLeave={handleDrag} 
+            onDragOver={handleDrag} 
+            onDrop={handleDrop}
+            className={`w-full h-40 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer ${
+              dragActive 
+                ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] scale-[1.02]' 
+                : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+            }`}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*,video/*" 
+              className="hidden" 
+            />
+            
+            {uploading ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest animate-pulse">Wysyłanie w kosmos...</span>
               </div>
-              {/* INSPEKTOR POJEDYNCZEGO ZDJĘCIA */}
-              <div className="w-[320px] bg-[#111] border-l border-neutral-800 flex flex-col p-6 gap-4">
-                {selectedMediaIndex !== null && images[selectedMediaIndex] ? (
-                  <>
-                    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden border border-neutral-800"><img src={images[selectedMediaIndex]} className="w-full h-full object-contain" /></div>
-                    <div>
-                      <label className="text-xs font-bold text-neutral-500 uppercase block mb-2">Link do obrazka</label>
-                      <textarea value={images[selectedMediaIndex]} onChange={(e) => handleUpdateMedia(e.target.value)} className="w-full p-3 text-xs bg-black border border-neutral-800 rounded focus:border-blue-500 outline-none text-white resize-none" rows={4}/>
-                    </div>
-                    {!isSingleImage && <button onClick={() => handleRemoveMedia(selectedMediaIndex)} className="py-2 bg-red-900/30 text-red-500 hover:bg-red-600 hover:text-white rounded text-xs font-bold transition mt-auto">Usuń z Galerii</button>}
-                  </>
-                ) : (
-                   <div className="flex-1 flex flex-col items-center justify-center text-neutral-600"><span className="text-4xl mb-2">🖼️</span>Wybierz plik</div>
-                )}
-              </div>
-            </>
-          )}
+            ) : (
+              <>
+                <span className="text-4xl mb-2 transition-transform duration-300 group-hover:-translate-y-2">☁️</span>
+                <p className="text-sm font-bold text-white mb-1">Przeciągnij i upuść pliki tutaj</p>
+                <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">lub kliknij, aby przeglądać dysk</p>
+              </>
+            )}
+            
+            {/* Animowany blask na hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full hover:animate-[shine_1.5s_ease-in-out_infinite] pointer-events-none"></div>
+          </div>
 
-          {/* ZAKŁADKA 2: UPLOAD Z DYSKU */}
-          {activeTab === 'upload' && (
-            <div className="flex-1 flex items-center justify-center p-10">
-              <div className="w-full max-w-md bg-[#161616] border-2 border-dashed border-neutral-700 hover:border-blue-500 rounded-2xl p-10 flex flex-col items-center justify-center text-center transition group">
-                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📂</span>
-                <h3 className="text-xl font-bold text-white mb-2">Wgraj własne pliki</h3>
-                <p className="text-sm text-neutral-500 mb-6">Wspierane formaty: JPG, PNG, SVG, WEBP, MP4.</p>
-                <button onClick={() => fileInputRef.current?.click()} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg">Przeglądaj Dysk</button>
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*,video/*" />
+          {/* GALERIA PLIKÓW */}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-white/5 pb-2">
+              Twoja Biblioteka
+            </h3>
+            
+            {loading ? (
+              <div className="flex items-center justify-center h-40">
+                <span className="text-xs font-mono text-neutral-500 animate-pulse">Ładowanie bazy danych...</span>
               </div>
-            </div>
-          )}
-
-          {/* ZAKŁADKA 3: STOCK LIBRARY */}
-          {activeTab === 'stock' && (
-            <div className="flex-1 flex flex-col p-6">
-              <div className="flex gap-4 mb-6">
-                <input type="text" placeholder="Szukaj w darmowej bibliotece... (np. biuro, natura)" className="flex-1 bg-[#161616] border border-neutral-800 p-3 rounded-lg text-white outline-none focus:border-blue-500" />
-                <button className="bg-neutral-800 px-6 font-bold rounded-lg hover:bg-neutral-700">Szukaj</button>
+            ) : files.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-40 border border-white/5 rounded-xl bg-white/[0.02]">
+                <span className="text-2xl mb-2 opacity-30">🏜️</span>
+                <span className="text-xs font-mono text-neutral-500">Pustynia. Czas coś wgrać.</span>
               </div>
-              <div className="grid grid-cols-4 gap-4 overflow-y-auto pr-2">
-                {stockPhotos.map((url, i) => (
-                  <div key={i} className="relative aspect-video bg-neutral-900 rounded-lg overflow-hidden group cursor-pointer border border-neutral-800 hover:border-blue-500" onClick={() => handleAddMedia(url)}>
-                    <img src={url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded shadow">Użyj zdjęcia</span>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {files.map((file, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => handleSelectImage(file.url)}
+                    className="group relative aspect-square rounded-xl overflow-hidden border border-white/10 bg-black/50 cursor-pointer shadow-sm hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:border-white/30 hover:-translate-y-1 transition-all duration-300"
+                  >
+                    <img 
+                      src={file.url} 
+                      alt={file.name} 
+                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
+                    />
+                    {/* Nakładka przy najechaniu */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-600/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
+                      <span className="text-[10px] font-bold text-white uppercase tracking-widest drop-shadow-md">Wybierz</span>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
         </div>
       </div>
