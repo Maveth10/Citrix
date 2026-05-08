@@ -29,7 +29,7 @@ interface Block {
   images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string, styles?: any }[]; styles: any;
 }
 
-// ======== ANATOMIA KOSMICZNEGO NIEBA V18.NEXT ========
+// ======== ANATOMIA KOSMICZNEGO NIEBA VYRAI ========
 interface AuroraOrb {
   id: number;
   x: number;          
@@ -95,13 +95,16 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'tekst' | 'obraz' | 'przycisk' | 'grafika' | 'pola' | 'wideo' | 'formularze' | 'wyskakujace' | 'lista' | 'social' | 'osadzona' | null>(null);
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v18-architekt');
+  
+  const [pageSlug, setPageSlug] = useState('vyrai');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isMediaManagerOpen, setIsMediaManagerOpen] = useState<boolean>(false);
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
+  
+  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
 
   const [hiddenBlocks, setHiddenBlocks] = useState<number[]>([]);
 
@@ -112,18 +115,14 @@ export default function Home() {
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
-  // ==========================================================
-  // KLUCZOWY UX: AUTO-ZOOM PŁÓTNA PRZY ZMIANIE URZĄDZENIA
-  // ==========================================================
   useEffect(() => {
     if (viewport === 'desktop') setCanvasZoom(1);
     else if (viewport === 'tablet') setCanvasZoom(1.5);
     else if (viewport === 'mobile') setCanvasZoom(2);
   }, [viewport]);
-  // ==========================================================
 
   const [interaction, setInteraction] = useState<{ 
-    type: 'drag' | 'resize'; dir?: string; 
+    type: 'drag' | 'resize'; dir?: string; blockId?: number; hasMoved?: boolean;
     startX: number; startY: number; 
     initialLeft: number; initialTop: number; 
     initialWidth: number; initialHeight: number; 
@@ -164,39 +163,49 @@ export default function Home() {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
         if (b.id === activeId && b.children) {
           const newStyles = { ...b.styles };
-          newStyles.display = layout === 'flex-col' ? 'flex' : 'grid';
+          newStyles.display = 'flex';
+          newStyles.flexWrap = 'wrap';
           newStyles.gap = '20px';
-          newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
-          newStyles.gridTemplateColumns = 'unset';
-          newStyles.gridTemplateRows = '1fr'; 
+          newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'row';
           newStyles.minHeight = 'min-content'; 
-          newStyles.height = 'auto'; 
-          
-          let childCount = 1;
+          newStyles.padding = '30px'; 
+          newStyles.alignItems = 'flex-start';
+          newStyles.justifyContent = 'flex-start';
 
+          delete newStyles.gridTemplateColumns;
+          delete newStyles.gridTemplateRows;
+
+          let childWidths: string[] = [];
           if (layout.startsWith('grid-custom-')) {
             const parts = layout.split('-');
             const cols = parseInt(parts[2]) || 1;
             const rows = parseInt(parts[3]) || 1;
-            newStyles.gridTemplateColumns = `repeat(${cols}, minmax(20px, 1fr))`;
-            newStyles.gridTemplateRows = `repeat(${rows}, 1fr)`;
-            childCount = cols * rows;
-          } else if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; childCount = 2; }
-          else if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, minmax(20px, 1fr))'; childCount = 3; }
-          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = 'minmax(20px, 1fr)'; childCount = 2; }
-          else if (layout === 'grid-left') { newStyles.gridTemplateColumns = 'minmax(20px, 2fr) minmax(20px, 1fr)'; childCount = 2; }
-          else if (layout === 'grid-right') { newStyles.gridTemplateColumns = 'minmax(20px, 1fr) minmax(20px, 2fr)'; childCount = 2; }
-          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+            const gapDeduct = ((cols - 1) * 20) / cols;
+            const w = `calc(${100 / cols}% - ${gapDeduct}px)`;
+            childWidths = Array(cols * rows).fill(w);
+          } else if (layout === 'grid-2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)']; }
+          else if (layout === 'grid-3') { childWidths = ['calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)']; }
+          else if (layout === 'grid-2-rows') { childWidths = ['100%', '100%']; }
+          else if (layout === 'grid-left') { childWidths = ['calc(66.666% - 10px)', 'calc(33.333% - 10px)']; }
+          else if (layout === 'grid-right') { childWidths = ['calc(33.333% - 10px)', 'calc(66.666% - 10px)']; }
+          else if (layout === 'grid-2x2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)']; }
+          else { childWidths = ['100%']; }
 
           let newChildren = [...b.children];
-          if (layout !== 'flex-col' && newChildren.length < childCount) {
-            const missingSlots = childCount - newChildren.length;
+          newChildren = newChildren.map((child, i) => {
+             const w = childWidths[i] || '100%';
+             return { ...child, styles: { ...child.styles, width: w } };
+          });
+
+          if (layout !== 'flex-col' && newChildren.length < childWidths.length) {
+            const missingSlots = childWidths.length - newChildren.length;
             for (let i = 0; i < missingSlots; i++) { 
               const emptyField = createBlock('container', 'empty', 'Puste Pole');
-              emptyField.id = Date.now() + Math.floor(Math.random() * 100000);
+              emptyField.id = Date.now() + Math.floor(Math.random() * 100000) + i;
               emptyField.styles.minHeight = '20px'; 
               emptyField.styles.minWidth = '20px';
               emptyField.styles.height = '100%';
+              emptyField.styles.width = childWidths[newChildren.length + i] || '100%'; 
               newChildren.push(emptyField); 
             }
           }
@@ -211,29 +220,44 @@ export default function Home() {
 
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', height: 'auto', minHeight: 'min-content', clearRow: true };
-    let childCount = 1;
+    newSection.styles = { 
+      ...newSection.styles, 
+      display: 'flex', 
+      flexWrap: 'wrap',
+      flexDirection: layout === 'flex-col' ? 'column' : 'row',
+      gap: '20px', 
+      padding: '30px', 
+      backgroundColor: '#ffffff', 
+      width: '100%', 
+      minHeight: 'min-content', 
+      clearRow: true,
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start'
+    };
 
+    let childWidths: string[] = [];
     if (layout.startsWith('grid-custom-')) {
       const parts = layout.split('-');
       const cols = parseInt(parts[2]) || 1;
       const rows = parseInt(parts[3]) || 1;
-      newSection.styles.gridTemplateColumns = `repeat(${cols}, minmax(20px, 1fr))`;
-      newSection.styles.gridTemplateRows = `repeat(${rows}, 1fr)`;
-      childCount = cols * rows;
-    } else if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
-    else if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, minmax(20px, 1fr))'; newSection.styles.gridTemplateRows = '1fr'; childCount = 3; }
-    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = 'minmax(20px, 1fr)'; childCount = 2; }
-    else if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = 'minmax(20px, 2fr) minmax(20px, 1fr)'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
-    else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = 'minmax(20px, 1fr) minmax(20px, 2fr)'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
-    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+      const gapDeduct = ((cols - 1) * 20) / cols;
+      const w = `calc(${100 / cols}% - ${gapDeduct}px)`;
+      childWidths = Array(cols * rows).fill(w);
+    } else if (layout === 'grid-2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)']; }
+    else if (layout === 'grid-3') { childWidths = ['calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)']; }
+    else if (layout === 'grid-2-rows') { childWidths = ['100%', '100%']; }
+    else if (layout === 'grid-left') { childWidths = ['calc(66.666% - 10px)', 'calc(33.333% - 10px)']; }
+    else if (layout === 'grid-right') { childWidths = ['calc(33.333% - 10px)', 'calc(66.666% - 10px)']; }
+    else if (layout === 'grid-2x2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)']; }
+    else { childWidths = ['100%']; }
 
-    newSection.children = Array.from({ length: childCount }).map((_, i) => {
+    newSection.children = childWidths.map((w, i) => {
       const emptyField = createBlock('container', 'empty', `Pole ${i + 1}`);
-      emptyField.id = Date.now() + Math.floor(Math.random() * 100000);
+      emptyField.id = Date.now() + Math.floor(Math.random() * 100000) + i;
       emptyField.styles.minHeight = '20px'; 
       emptyField.styles.minWidth = '20px';
-      emptyField.styles.height = '100%';
+      emptyField.styles.height = '120px';
+      emptyField.styles.width = w;
       return emptyField;
     });
     setBlocks(prev => [...prev, newSection]);
@@ -249,12 +273,19 @@ export default function Home() {
     const newBlock = createBlock(type, variant, label);
     newBlock.id = Date.now() + Math.floor(Math.random() * 100000); 
 
+    if (type === 'container' && variant === 'empty') {
+       newBlock.styles.minHeight = '20px';
+       newBlock.styles.minWidth = '20px';
+       newBlock.styles.height = '100%';
+       newBlock.styles.width = '100%';
+    }
+
     setBlocks(prevBlocks => {
       if (!activeId) {
         if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
            autoWrapper.id = Date.now() + Math.floor(Math.random() * 100000);
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', minHeight: 'min-content', height: '150px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true, justifyContent: 'stretch', alignItems: 'stretch' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
@@ -278,6 +309,48 @@ export default function Home() {
     setActiveId(newBlock.id);
   };
 
+  const handleDuplicate = () => {
+    if (!activeId) return;
+
+    setBlocks(prevBlocks => {
+      let clonedBlock: Block | null = null;
+      
+      const deepClone = (block: Block): Block => {
+        return {
+          ...block,
+          id: Date.now() + Math.floor(Math.random() * 1000000),
+          children: block.children ? block.children.map(deepClone) : undefined
+        };
+      };
+
+      const findBlock = (arr: Block[]) => {
+        for (const b of arr) {
+          if (b.id === activeId) clonedBlock = deepClone(b);
+          if (b.children && !clonedBlock) findBlock(b.children);
+        }
+      };
+      findBlock(prevBlocks);
+
+      if (!clonedBlock) return prevBlocks;
+
+      const insertClone = (arr: Block[]): Block[] => {
+        let res: Block[] = [];
+        for (const b of arr) {
+          res.push(b);
+          if (b.id === activeId) {
+            res.push(clonedBlock!);
+          } else if (b.children) {
+            b.children = insertClone(b.children);
+          }
+        }
+        return res;
+      };
+
+      const nextBlocks = insertClone(prevBlocks);
+      return cleanupRows(nextBlocks);
+    });
+  };
+
   const cleanupRows = (arr: Block[]): Block[] => {
     let rows: Block[][] = [];
     let currentRow: Block[] = [];
@@ -299,7 +372,7 @@ export default function Home() {
       if (row.length === 1) {
         const single = row[0];
         const w = single.styles.width;
-        if (['48%', '40%', '50%'].includes(w)) {
+        if (typeof w === 'string' && (w.includes('48%') || w.includes('33%') || w.includes('31%') || w.includes('50%') || w.includes('calc'))) {
           return [{ ...single, styles: { ...single.styles, clearRow: true, width: '100%' } }];
         }
         return [{ ...single, styles: { ...single.styles, clearRow: true } }];
@@ -319,9 +392,10 @@ export default function Home() {
             const newArr = [...arr];
             const emptyContainer = createBlock('container', 'empty', 'Puste Pole');
             emptyContainer.id = Date.now() + Math.floor(Math.random() * 100000);
-            emptyContainer.styles.minHeight = '20px';
+            emptyContainer.styles.minHeight = '20px'; 
             emptyContainer.styles.minWidth = '20px';
             emptyContainer.styles.height = '100%';
+            emptyContainer.styles.width = arr[index].styles.width || '100%';
             newArr[index] = emptyContainer;
             return newArr;
           }
@@ -335,7 +409,7 @@ export default function Home() {
           
           return cleanupRows(newArr);
         }
-        return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
+        return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'flex' || b.styles.display === 'grid') : undefined }));
       };
       return removeRecursive(prev);
     });
@@ -374,8 +448,8 @@ export default function Home() {
 
       if (dropType === 'bottom') {
          let restoredWidth = sourceBlock!.styles.width;
-         if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
-         const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
+         if (typeof restoredWidth === 'string' && restoredWidth.includes('calc')) restoredWidth = '100%';
+         const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth, position: 'relative', left: '0px', top: '0px' } };
          return cleanupRows([...intermediate, updatedSource]);
       }
 
@@ -385,21 +459,21 @@ export default function Home() {
           if (dropType === 'inline') {
             const newArr = [...arr];
             let targetWidth = newArr[index].styles.width;
-            if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; 
+            if (targetWidth === '100%' || !targetWidth) targetWidth = 'calc(50% - 10px)'; 
             
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false, width: targetWidth } };
             
             let safeWidth = sourceBlock!.styles.width;
-            if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; 
+            if (safeWidth === '100%' || !safeWidth) safeWidth = 'calc(50% - 10px)'; 
             
-            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px', position: 'relative', left: '0px', top: '0px' } };
             const mergedArr = [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
             return cleanupRows(mergedArr);
           } else {
             let restoredWidth = sourceBlock!.styles.width;
-            if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
+            if (typeof restoredWidth === 'string' && restoredWidth.includes('calc')) restoredWidth = '100%';
             
-            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: restoredWidth, position: 'relative', left: '0px', top: '0px' } };
             const mergedArr = [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
             return cleanupRows(mergedArr);
           }
@@ -413,10 +487,9 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.NEXT! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano Vyrai! Link: /live/${pageSlug}`);
   };
 
-  // ======== MAGIA: GENERYCZNE NIEBO & CZARNA DZIURA V18.NEXT ========
   const [auroraOrbs, setAuroraOrbs] = useState<AuroraOrb[]>([]);
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
   const [blackHole, setBlackHole] = useState<BlackHole | null>(null);
@@ -496,37 +569,93 @@ export default function Home() {
       clearInterval(spawnStarInterval);
     };
   }, []);
-  // ============================================================================
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const inInput = activeTag === 'input' || activeTag === 'textarea';
+
       if (e.key === 'Escape') {
+        if (isPreviewMode) { setIsPreviewMode(false); return; } 
         if (isMediaManagerOpen) { setIsMediaManagerOpen(false); return; }
         if (isAiOpen) { setIsAiOpen(false); return; }
         if (leftTab || addCategory) { setLeftTab(null); setAddCategory(null); return; }
         if (isEditing) { setIsEditing(false); return; }
         if (activeId) { setActiveId(null); return; }
       }
-      if (!isEditing && (e.ctrlKey || e.metaKey)) {
-        if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-        if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+      
+      if (!isEditing && !inInput && !isPreviewMode) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault();
+          if (activeId) removeActiveBlock();
+        }
+        
+        // Z-INDEX SHORTCUTS
+        if (e.key === ']') {
+          e.preventDefault();
+          if (activeId && activeBlock) {
+             const z = activeBlock.styles?.zIndex || 1;
+             updateActiveBlock({ styles: { zIndex: z + 1 } }, true);
+          }
+        }
+        if (e.key === '[') {
+          e.preventDefault();
+          if (activeId && activeBlock) {
+             const z = activeBlock.styles?.zIndex || 1;
+             updateActiveBlock({ styles: { zIndex: Math.max(0, z - 1) } }, true);
+          }
+        }
+        
+        if (e.ctrlKey || e.metaKey) {
+          if (e.key === 'd' || e.key === 'D') {
+            e.preventDefault();
+            if (activeId) handleDuplicate();
+          }
+          if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+          if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isMediaManagerOpen, isAiOpen, leftTab, addCategory, isEditing, activeId, blocks, past, future]);
+  }, [isMediaManagerOpen, isAiOpen, leftTab, addCategory, isEditing, activeId, blocks, past, future, isPreviewMode, activeBlock]);
 
   const getCanvasWidth = () => viewport === 'mobile' ? '375px' : (viewport === 'tablet' ? '768px' : '1200px');
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!interaction || !activeId || isEditing || isMediaManagerOpen) return; e.preventDefault();
+      if (!interaction || !activeId || isEditing || isMediaManagerOpen || isPreviewMode) return; e.preventDefault();
       
       const dx = (e.pageX - interaction.startX) / canvasZoom; 
       const dy = (e.pageY - interaction.startY) / canvasZoom;
       
       if (interaction.type === 'drag') {
-        updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
+        if (!interaction.hasMoved) {
+          if (Math.abs(dx * canvasZoom) > 3 || Math.abs(dy * canvasZoom) > 3) {
+            setInteraction({ ...interaction, hasMoved: true });
+            if (!draggedId) setDraggedId(interaction.blockId || null);
+          }
+          return;
+        }
+
+        const SNAP_GRID = 20;
+        const cw = parseInt(getCanvasWidth());
+        let newLeft = interaction.initialLeft + dx;
+        let newTop = interaction.initialTop + dy;
+        
+        newLeft = Math.round(newLeft / SNAP_GRID) * SNAP_GRID;
+        newTop = Math.round(newTop / SNAP_GRID) * SNAP_GRID;
+
+        newLeft = Math.max(-cw, Math.min(newLeft, cw));
+        
+        updateActiveBlock({ styles: { position: 'relative', left: `${newLeft}px`, top: `${newTop}px`, right: 'auto', bottom: 'auto' } }, true);
+
+        document.querySelectorAll('.dropzone-active').forEach(el => el.classList.remove('dropzone-active'));
+        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+        const dropzone = elements.find(el => el.classList?.contains('dropzone-area'));
+        if (dropzone) {
+           dropzone.classList.add('dropzone-active');
+        }
       } 
       else if (interaction.type === 'resize' && interaction.dir) {
         const el = document.getElementById(`block-${activeId}`);
@@ -544,8 +673,13 @@ export default function Home() {
         newWidthPx = Math.max(20, Math.min(newWidthPx, parentWidth));
         newHeightPx = Math.max(20, newHeightPx);
 
+        const SNAP_GRID = 20;
+        newHeightPx = Math.round(newHeightPx / SNAP_GRID) * SNAP_GRID;
+
         let percentWidth = (newWidthPx / parentWidth) * 100;
-        const snaps = [10, 15, 20, 25, 30, 33.33, 40, 48, 50, 60, 66.66, 70, 75, 80, 85, 90, 100];
+        percentWidth = Math.max(10, percentWidth); 
+
+        const snaps = [20, 25, 30, 31, 33.33, 40, 48, 50, 60, 66, 66.66, 70, 75, 80, 85, 90, 100];
         for (const snap of snaps) {
           if (Math.abs(percentWidth - snap) < 3) { percentWidth = snap; break; }
         }
@@ -557,15 +691,8 @@ export default function Home() {
         }
         
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
-          const blockType = activeBlock?.type || 'container';
-          
-          if (['img', 'video', 'embed', 'shape'].includes(blockType)) {
-            updates.height = `${newHeightPx}px`;
-            updates.minHeight = `${newHeightPx}px`;
-          } else {
-            updates.height = `${newHeightPx}px`;
-            updates.minHeight = `min-content`;
-          }
+          updates.height = `${newHeightPx}px`; 
+          updates.minHeight = `20px`; 
         }
         
         updates.marginLeft = '0px'; updates.marginTop = '0px';
@@ -573,56 +700,73 @@ export default function Home() {
       }
     };
 
-    const handleMouseUp = () => {
-      if (interaction && interaction.type === 'resize') {
-        setInternalBlocks(prevBlocks => {
-          const sanitizeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
-            if (parentIsGrid) return arr.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, true) : undefined }));
-            
-            let res = [...arr];
-            let currentRowWidth = 0;
-            let rowStartIndex = 0;
-
-            for (let i = 0; i < res.length; i++) {
-              const block = res[i];
-              const wStr = block.styles.width || '100%';
-              let w = 100;
-              if (typeof wStr === 'string' && wStr.endsWith('%')) w = parseFloat(wStr) || 100;
+    const handleMouseUp = (e: MouseEvent) => {
+      if (interaction) {
+        if (interaction.type === 'drag' && draggedId) {
+          const elements = document.elementsFromPoint(e.clientX, e.clientY);
+          const dropzone = elements.find(el => el.classList?.contains('dropzone-area'));
+          if (dropzone) {
+             const targetId = parseInt(dropzone.getAttribute('data-dropzone-target') || '-1');
+             const dropType = dropzone.getAttribute('data-dropzone-type') as any;
+             if (handleDrop) handleDrop(draggedId, targetId, dropType);
+          }
+        }
+        else if (interaction.type === 'resize') {
+          setInternalBlocks(prevBlocks => {
+            const sanitizeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
+              if (parentIsGrid) return arr.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, true) : undefined }));
               
-              if (currentRowWidth + w > 102 && i > rowStartIndex) {
-                res[i - 1] = { ...res[i - 1], styles: { ...res[i - 1].styles, clearRow: true } };
-                currentRowWidth = w;
-                rowStartIndex = i;
-              } else {
-                currentRowWidth += w;
+              let res = [...arr];
+              let currentRowWidth = 0;
+              let rowStartIndex = 0;
+
+              for (let i = 0; i < res.length; i++) {
+                const block = res[i];
+                const wStr = block.styles.width || '100%';
+                let w = 100;
+                if (typeof wStr === 'string' && wStr.endsWith('%')) w = parseFloat(wStr) || 100;
+                
+                if (currentRowWidth + w > 102 && i > rowStartIndex) {
+                  res[i - 1] = { ...res[i - 1], styles: { ...res[i - 1].styles, clearRow: true } };
+                  currentRowWidth = w;
+                  rowStartIndex = i;
+                } else {
+                  currentRowWidth += w;
+                }
+                
+                if (res[i].styles.clearRow !== false) {
+                  currentRowWidth = 0;
+                  rowStartIndex = i + 1;
+                }
               }
               
-              if (res[i].styles.clearRow !== false) {
-                currentRowWidth = 0;
-                rowStartIndex = i + 1;
+              if (res.length > 0 && res[res.length - 1].styles.clearRow === false) {
+                res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
               }
-            }
-            
-            if (res.length > 0 && res[res.length - 1].styles.clearRow === false) {
-              res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
-            }
 
-            return res.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, b.styles.display === 'grid') : undefined }));
-          };
-          
-          return sanitizeRecursive(prevBlocks);
-        });
+              return res.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, b.styles.display === 'flex' || b.styles.display === 'grid') : undefined }));
+            };
+            
+            return sanitizeRecursive(prevBlocks);
+          });
+        }
+        
+        document.querySelectorAll('.dropzone-active').forEach(el => el.classList.remove('dropzone-active'));
+        
+        setTimeout(() => {
+          setInteraction(null);
+          if (setDraggedId) setDraggedId(null);
+        }, 10);
       }
-      setInteraction(null);
     };
 
-    if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
-    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-  }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport, activeBlock]);
+    if (interaction) { window.addEventListener('mousemove', handleMouseMove as any); window.addEventListener('mouseup', handleMouseUp); }
+    return () => { window.removeEventListener('mousemove', handleMouseMove as any); window.removeEventListener('mouseup', handleMouseUp); };
+  }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport, activeBlock, isPreviewMode]);
 
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
-      if (!activeId || isMediaManagerOpen) return;
+      if (!activeId || isMediaManagerOpen || isPreviewMode) return;
       const activeEl = document.getElementById(`block-${activeId}`);
       if (activeEl && activeEl.contains(e.target as Node)) {
         if (activeEl.classList.contains('group/img')) {
@@ -639,7 +783,7 @@ export default function Home() {
     };
     window.addEventListener('wheel', handleGlobalWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleGlobalWheel);
-  }, [activeId, isMediaManagerOpen]);
+  }, [activeId, isMediaManagerOpen, isPreviewMode]);
 
   const categories = [
     { id: 'tekst', label: 'Tekst' }, 
@@ -714,6 +858,12 @@ export default function Home() {
       {/* MAGIA ANIMACJI: SYSTEM NIEBA, ZAPADANIE SIĘ ŚWIATŁA I MROCZNE SZKŁO */}
       <style dangerouslySetInnerHTML={{__html: `
         
+        .dropzone-active {
+           background-color: rgba(255, 69, 0, 0.3) !important;
+           transform: scale(1.02) !important;
+           border-color: rgba(255, 69, 0, 1) !important;
+        }
+
         /* KOSMICZNE SUWAKI */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -880,130 +1030,146 @@ export default function Home() {
         />
       )}
 
-      {/* =========================================================================
-         KONTENER ZAMYKAJĄCY SUB-PANELE NA MOUSE-LEAVE
-         ========================================================================= */}
-      <div 
-        className="flex h-full relative z-50"
-        onMouseLeave={() => setAddCategory(null)}
-      >
-        {/* LEWY PASEK TERMINALA V18 */}
-        <aside className="cyber-glass-panel w-[110px] flex flex-col items-center py-6 gap-4 shrink-0 overflow-y-auto scrollbar-hide relative border-r border-white/5">
-          
-          <button 
-            onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
-            className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-neutral-400 transition-all duration-300 z-30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          </button>
-          <button 
-            onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
-            className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-neutral-400 transition-all duration-300 z-30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          </button>
-          
-          <div className="w-12 h-px bg-white/10 my-1 z-30"></div>
-          
-          {/* KATEGORIE - WEKTOROWE MINIMALISTYCZNE IKONY SVG */}
-          {categories.map(cat => {
-            const isActive = addCategory === cat.id;
-            return (
-              <button 
-                key={cat.id} 
-                onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
-                onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
-                className={`cyber-kafel w-[76px] h-[76px] flex items-center justify-center transition-all duration-300 z-30 ${isActive ? 'active scale-105 text-white' : 'text-neutral-500 hover:text-white hover:scale-105'}`}
-              >
-                <div 
-                  className={`transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
-                  style={isActive ? { color: 'var(--theme-color)', filter: 'drop-shadow(0 0 8px var(--theme-color))' } : {}}
+      {!isPreviewMode && (
+        <div 
+          className="flex h-full relative z-50 transition-all duration-300"
+          onMouseLeave={() => setAddCategory(null)}
+        >
+          {/* LEWY PASEK TERMINALA VYRAI */}
+          <aside className="cyber-glass-panel w-[110px] flex flex-col items-center py-6 gap-4 shrink-0 overflow-y-auto scrollbar-hide relative border-r border-white/5">
+            
+            <button 
+              onClick={() => { setLeftTab(leftTab === 'pages' ? null : 'pages'); setAddCategory(null); }} 
+              className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-neutral-400 transition-all duration-300 z-30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </button>
+            <button 
+              onClick={() => { setLeftTab(leftTab === 'layers' ? null : 'layers'); setAddCategory(null); }} 
+              className="relative w-[76px] h-12 rounded-[14px] flex items-center justify-center text-neutral-400 transition-all duration-300 z-30 bg-white/5 border border-white/10 hover:text-white hover:bg-white/10 hover:scale-105"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            </button>
+            
+            <div className="w-12 h-px bg-white/10 my-1 z-30"></div>
+            
+            {/* KATEGORIE - WEKTOROWE MINIMALISTYCZNE IKONY SVG */}
+            {categories.map(cat => {
+              const isActive = addCategory === cat.id;
+              return (
+                <button 
+                  key={cat.id} 
+                  onMouseEnter={() => { setAddCategory(cat.id); setLeftTab(null); }} 
+                  onClick={() => { setAddCategory(isActive ? null : cat.id); setLeftTab(null); }} 
+                  className={`cyber-kafel w-[76px] h-[76px] flex items-center justify-center transition-all duration-300 z-30 ${isActive ? 'active scale-105 text-white' : 'text-neutral-500 hover:text-white hover:scale-105'}`}
                 >
-                  {renderCategoryIcon(cat.id)}
+                  <div 
+                    className={`transition-all duration-300 ${isActive ? 'scale-110' : ''}`}
+                    style={isActive ? { color: 'var(--theme-color)', filter: 'drop-shadow(0 0 8px var(--theme-color))' } : {}}
+                  >
+                    {renderCategoryIcon(cat.id)}
+                  </div>
+                </button>
+              );
+            })}
+          </aside>
+
+          {/* PANELE WYSZUKIWANE Z LEWEJ (Strony, Warstwy, Kategorie) */}
+          <div className="relative z-40 h-full flex">
+            
+            {leftTab === 'pages' && (
+              <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
+                <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
+                <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
+                  <h2 className="font-bold text-[11px] uppercase tracking-widest text-white">Strony</h2>
+                  <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
                 </div>
-              </button>
-            );
-          })}
-        </aside>
+                <div className="flex-1 p-4 relative z-10 bg-transparent">
+                   <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-all shadow-sm">
+                     <span className="text-xs font-bold text-white">/{pageSlug}</span>
+                   </div>
+                </div>
+              </div>
+            )}
+            
+            {leftTab === 'layers' && (
+              <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
+                <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
+                <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
+                  <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-300">DOM Navigator</h2>
+                  <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+                </div>
+                <div className="flex-1 overflow-y-auto py-2 relative z-10 bg-transparent">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-500 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
+              </div>
+            )}
 
-        {/* PANELE WYSZUKIWANE Z LEWEJ (Strony, Warstwy, Kategorie) */}
-        <div className="relative z-40 h-full flex">
-          
-          {leftTab === 'pages' && (
-            <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
-              <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
-                <h2 className="font-bold text-[11px] uppercase tracking-widest text-white">Strony</h2>
-                <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+            {addCategory && activeCategoryData && (
+              <div className="cyber-glass-panel w-[340px] h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
+                <div className="absolute top-0 left-0 w-full h-[1px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 10px var(--theme-color)' }}></div>
+                <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: 'var(--theme-color)', opacity: 0.5 }}></div>
+                
+                <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
+                  <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.2em] drop-shadow-sm">
+                    {activeCategoryData.label}
+                  </h3>
+                  <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 scrollbar-hide relative z-10 bg-transparent">
+                  {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'grafika' && <GraphicsPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'pola' && <LayoutPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'wideo' && <VideoPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'formularze' && <FormPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'menu' && <MenuPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'wyskakujace' && <PopupPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'lista' && <ListPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'social' && <SocialPanel handleAddBlock={handleAddBlock} />}
+                  {addCategory === 'osadzona' && <EmbedPanel handleAddBlock={handleAddBlock} />}
+                </div>
               </div>
-              <div className="flex-1 p-4 relative z-10 bg-transparent">
-                 <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex justify-between items-center cursor-pointer hover:bg-white/10 transition-all shadow-sm">
-                   <span className="text-xs font-bold text-white">/{pageSlug}</span>
-                 </div>
-              </div>
-            </div>
-          )}
-          
-          {leftTab === 'layers' && (
-            <div className="cyber-glass-panel w-64 h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 15px var(--theme-color)' }}></div>
-              <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
-                <h2 className="font-bold text-[11px] uppercase tracking-widest text-neutral-300">DOM Navigator</h2>
-                <button onClick={() => setLeftTab(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
-              </div>
-              <div className="flex-1 overflow-y-auto py-2 relative z-10 bg-transparent">{blocks.length === 0 ? <div className="p-4 text-xs text-neutral-500 text-center">Płótno jest puste.</div> : renderLayerTree(blocks)}</div>
-            </div>
-          )}
-
-          {addCategory && activeCategoryData && (
-            <div className="cyber-glass-panel w-[340px] h-full flex flex-col animate-in slide-in-from-left-4 relative overflow-hidden border-r border-white/5">
-              <div className="absolute top-0 left-0 w-full h-[1px]" style={{ backgroundColor: 'var(--theme-color)', boxShadow: '0 0 10px var(--theme-color)' }}></div>
-              <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ backgroundColor: 'var(--theme-color)', opacity: 0.5 }}></div>
-              
-              <div className="flex justify-between items-center px-6 py-5 border-b border-white/5 relative z-10">
-                <h3 className="text-[11px] font-bold text-white uppercase tracking-[0.2em] drop-shadow-sm">
-                  {activeCategoryData.label}
-                </h3>
-                <button onClick={() => setAddCategory(null)} className="text-neutral-500 hover:text-white transition-colors font-bold">✕</button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2 scrollbar-hide relative z-10 bg-transparent">
-                {addCategory === 'tekst' && <TextPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'obraz' && <ImagePanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'przycisk' && <ButtonPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'grafika' && <GraphicsPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'pola' && <LayoutPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'wideo' && <VideoPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'formularze' && <FormPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'menu' && <MenuPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'wyskakujace' && <PopupPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'lista' && <ListPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'social' && <SocialPanel handleAddBlock={handleAddBlock} />}
-                {addCategory === 'osadzona' && <EmbedPanel handleAddBlock={handleAddBlock} />}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="flex-1 flex flex-col relative z-30 bg-transparent">
-        <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} />
+      <div className="flex-1 flex flex-col relative z-30 bg-transparent transition-all duration-300">
+        {!isPreviewMode && (
+          <TopHeader canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} />
+        )}
         
-        {isAiOpen && (
+        {isAiOpen && !isPreviewMode && (
           <AICopilot 
             activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsAiOpen={setIsAiOpen} 
             handleAddSection={handleAddSection} handleAddComplexSection={handleAddComplexSection}
           />
         )}
         
-        <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
+        {!isPreviewMode && <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}
         
-        <main className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          
+        <main 
+          className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent relative" 
+          onClick={() => { 
+            if (interaction) return;
+            setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); 
+          }}
+        >
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5 overflow-hidden">
              
-             {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-[#ff4500] h-full"></div>)}</div>}
+             {showGrid && !isPreviewMode && (
+               <div className="absolute inset-0 pointer-events-none z-0 rounded-b-xl overflow-hidden opacity-30">
+                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)', backgroundSize: '100px 100px' }}></div>
+                 <div className="absolute inset-0 flex justify-center w-full h-full">
+                   <div className="w-full h-full flex gap-5 px-5">
+                     {Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500/[0.04] border-x border-blue-500/10 h-full"></div>)}
+                   </div>
+                 </div>
+               </div>
+             )}
              
              {blocks.map(b => {
                 const widthVal = parseFloat(b.styles.width || '100');
@@ -1020,15 +1186,18 @@ export default function Home() {
                       interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                       hiddenBlocks={hiddenBlocks}
                       viewport={viewport}
+                      handleDuplicate={handleDuplicate}
+                      removeActiveBlock={removeActiveBlock}
+                      isPreviewMode={isPreviewMode}
                     />
                     
-                    {showGhost && !hiddenBlocks.includes(b.id) && (
+                    {showGhost && !hiddenBlocks.includes(b.id) && !isPreviewMode && (
                       <div 
-                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if(setDraggedId) setDraggedId(null); }}
-                        className="flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-[#ff4500]/20 hover:scale-[1.02] transition-all cursor-pointer"
+                        data-dropzone-target={b.id}
+                        data-dropzone-type="inline"
+                        className="dropzone-area flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 transition-all cursor-pointer pointer-events-auto z-[99999]"
                       >
-                        <span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,69,0,0.5)]">+ Wstaw Obok</span>
+                        <span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,69,0,0.5)] pointer-events-none">+ Wstaw Obok</span>
                       </div>
                     )}
 
@@ -1037,32 +1206,52 @@ export default function Home() {
                 );
              })}
 
-             <div 
-               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-               onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggedId && handleDrop) handleDrop(draggedId, -1, 'bottom'); if(setDraggedId) setDraggedId(null); }}
-               className="w-full h-32 mt-4 border-2 border-transparent hover:border-[#ff4500]/50 hover:bg-[#ff4500]/10 rounded-xl transition-all flex items-center justify-center text-transparent hover:text-[#ff4500] font-bold tracking-widest uppercase text-[10px]"
-             >
-               Upuść tutaj (Na koniec)
-             </div>
+             {!isPreviewMode && (
+               <div 
+                 data-dropzone-target="-1"
+                 data-dropzone-type="bottom"
+                 className="dropzone-area w-full h-32 mt-4 border-2 border-transparent hover:border-dashed hover:border-[#ff4500] hover:bg-[#ff4500]/10 hover:text-[#ff4500] rounded-xl transition-all flex items-center justify-center text-transparent font-bold tracking-widest uppercase text-[10px] pointer-events-auto z-[99999]"
+               >
+                 Upuść tutaj (Na koniec)
+               </div>
+             )}
 
           </div>
         </main>
         
-        <div className="absolute bottom-0 left-0 w-full z-50">
-          <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
-        </div>
+        {!isPreviewMode && (
+          <div className="absolute bottom-0 left-0 w-full z-50">
+            <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
+          </div>
+        )}
       </div>
       
-      <RightPanel 
-        activeBlock={(leftTab !== null || addCategory !== null) ? null : activeBlock} 
-        rightTab={rightTab} 
-        setRightTab={setRightTab as any} 
-        updateActiveBlock={updateActiveBlock} 
-        removeActiveBlock={removeActiveBlock} 
-        setIsMediaManagerOpen={setIsMediaManagerOpen} 
-      />
+      {!isPreviewMode && (
+        <RightPanel 
+          activeBlock={(leftTab !== null || addCategory !== null) ? null : activeBlock} 
+          rightTab={rightTab} 
+          setRightTab={setRightTab as any} 
+          updateActiveBlock={updateActiveBlock} 
+          removeActiveBlock={removeActiveBlock} 
+          setIsMediaManagerOpen={setIsMediaManagerOpen} 
+        />
+      )}
       
       {isMediaManagerOpen && <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
+
+      {/* PRZYCISK TRYBU PODGLĄDU - CZYSTA OKRĄGŁA IKONKA */}
+      <button 
+        onClick={() => { setActiveId(null); setIsPreviewMode(!isPreviewMode); }}
+        className="fixed bottom-6 right-6 z-[9999999] bg-white text-black font-bold w-12 h-12 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center justify-center outline outline-2 outline-white/20"
+        title={isPreviewMode ? "Wróć do edycji" : "Podgląd strony"}
+      >
+        {isPreviewMode ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        )}
+      </button>
+
     </div>
   );
 }

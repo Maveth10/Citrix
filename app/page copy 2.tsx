@@ -29,15 +29,18 @@ interface Block {
   images?: string[]; hoverStyles?: any; entranceAnim?: string; ribbonItems?: { type: 'text' | 'img', value: string, styles?: any }[]; styles: any;
 }
 
-// ======== ANATOMIA KOSMICZNEGO NIEBA V18 ========
+// ======== ANATOMIA KOSMICZNEGO NIEBA VYRAI ========
 interface AuroraOrb {
   id: number;
   x: number;          
-  y: number;          
+  y: number;
+  tx: number; 
+  ty: number; 
   size: number;       
   blur: number;       
   hue: number;        
-  duration: number;   
+  duration: number;
+  opacity: number; 
 }
 
 interface ShootingStar {
@@ -92,7 +95,8 @@ export default function Home() {
   const [leftTab, setLeftTab] = useState<'tekst' | 'obraz' | 'przycisk' | 'grafika' | 'pola' | 'wideo' | 'formularze' | 'wyskakujace' | 'lista' | 'social' | 'osadzona' | null>(null);
   const [addCategory, setAddCategory] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<'layout' | 'design' | 'effects' | 'interactions'>('layout');
-  const [pageSlug, setPageSlug] = useState('titan-v18-architekt');
+  
+  const [pageSlug, setPageSlug] = useState('vyrai');
   
   const [canvasZoom, setCanvasZoom] = useState<number>(1);
   const [showGrid, setShowGrid] = useState<boolean>(false);
@@ -109,8 +113,15 @@ export default function Home() {
 
   const [viewport, setViewport] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   
+  useEffect(() => {
+    if (viewport === 'desktop') setCanvasZoom(1);
+    else if (viewport === 'tablet') setCanvasZoom(1.5);
+    else if (viewport === 'mobile') setCanvasZoom(2);
+  }, [viewport]);
+
+  // FLAGI DRAG & DROP: Dodane hasMoved aby uniknąć pomyłkowego odklikiwania przy wejściu w edycję
   const [interaction, setInteraction] = useState<{ 
-    type: 'drag' | 'resize'; dir?: string; 
+    type: 'drag' | 'resize'; dir?: string; blockId?: number; hasMoved?: boolean;
     startX: number; startY: number; 
     initialLeft: number; initialTop: number; 
     initialWidth: number; initialHeight: number; 
@@ -146,44 +157,55 @@ export default function Home() {
     return parent.children.some(c => checkIsChild(c, childId));
   };
 
+  // ZAMIANA NA ELASTYCZNY FLEXBOX DLA UWOLNIENIA SZEROKOŚCI
   const handleChangeLayout = (layout: string) => {
     setBlocks(prevBlocks => {
       const updateRecursive = (arr: Block[]): Block[] => arr.map(b => {
         if (b.id === activeId && b.children) {
           const newStyles = { ...b.styles };
-          newStyles.display = layout === 'flex-col' ? 'flex' : 'grid';
+          newStyles.display = 'flex';
+          newStyles.flexWrap = 'wrap';
           newStyles.gap = '20px';
-          newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'unset';
-          newStyles.gridTemplateColumns = 'unset';
-          newStyles.gridTemplateRows = '1fr'; 
+          newStyles.flexDirection = layout === 'flex-col' ? 'column' : 'row';
           newStyles.minHeight = 'min-content'; 
-          newStyles.height = 'auto'; 
-          
-          let childCount = 1;
+          newStyles.padding = '30px'; 
+          newStyles.alignItems = 'flex-start';
+          newStyles.justifyContent = 'flex-start';
 
+          delete newStyles.gridTemplateColumns;
+          delete newStyles.gridTemplateRows;
+
+          let childWidths: string[] = [];
           if (layout.startsWith('grid-custom-')) {
             const parts = layout.split('-');
             const cols = parseInt(parts[2]) || 1;
             const rows = parseInt(parts[3]) || 1;
-            newStyles.gridTemplateColumns = `repeat(${cols}, minmax(20px, 1fr))`;
-            newStyles.gridTemplateRows = `repeat(${rows}, 1fr)`;
-            childCount = cols * rows;
-          } else if (layout === 'grid-2') { newStyles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; childCount = 2; }
-          else if (layout === 'grid-3') { newStyles.gridTemplateColumns = 'repeat(3, minmax(20px, 1fr))'; childCount = 3; }
-          else if (layout === 'grid-2-rows') { newStyles.gridTemplateRows = 'repeat(2, 1fr)'; newStyles.gridTemplateColumns = 'minmax(20px, 1fr)'; childCount = 2; }
-          else if (layout === 'grid-left') { newStyles.gridTemplateColumns = 'minmax(20px, 2fr) minmax(20px, 1fr)'; childCount = 2; }
-          else if (layout === 'grid-right') { newStyles.gridTemplateColumns = 'minmax(20px, 1fr) minmax(20px, 2fr)'; childCount = 2; }
-          else if (layout === 'grid-2x2') { newStyles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; newStyles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+            const gapDeduct = ((cols - 1) * 20) / cols;
+            const w = `calc(${100 / cols}% - ${gapDeduct}px)`;
+            childWidths = Array(cols * rows).fill(w);
+          } else if (layout === 'grid-2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)']; }
+          else if (layout === 'grid-3') { childWidths = ['calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)']; }
+          else if (layout === 'grid-2-rows') { childWidths = ['100%', '100%']; }
+          else if (layout === 'grid-left') { childWidths = ['calc(66.666% - 10px)', 'calc(33.333% - 10px)']; }
+          else if (layout === 'grid-right') { childWidths = ['calc(33.333% - 10px)', 'calc(66.666% - 10px)']; }
+          else if (layout === 'grid-2x2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)']; }
+          else { childWidths = ['100%']; }
 
           let newChildren = [...b.children];
-          if (layout !== 'flex-col' && newChildren.length < childCount) {
-            const missingSlots = childCount - newChildren.length;
+          newChildren = newChildren.map((child, i) => {
+             const w = childWidths[i] || '100%';
+             return { ...child, styles: { ...child.styles, width: w } };
+          });
+
+          if (layout !== 'flex-col' && newChildren.length < childWidths.length) {
+            const missingSlots = childWidths.length - newChildren.length;
             for (let i = 0; i < missingSlots; i++) { 
               const emptyField = createBlock('container', 'empty', 'Puste Pole');
-              emptyField.id = Date.now() + Math.floor(Math.random() * 100000);
+              emptyField.id = Date.now() + Math.floor(Math.random() * 100000) + i;
               emptyField.styles.minHeight = '20px'; 
               emptyField.styles.minWidth = '20px';
-              emptyField.styles.height = '100%';
+              emptyField.styles.height = '120px';
+              emptyField.styles.width = childWidths[newChildren.length + i] || '100%'; 
               newChildren.push(emptyField); 
             }
           }
@@ -198,29 +220,44 @@ export default function Home() {
 
   const handleAddSection = (layout: string) => {
     const newSection = createBlock('section', '', 'Sekcja Strony');
-    newSection.styles = { ...newSection.styles, display: layout === 'flex-col' ? 'flex' : 'grid', gap: '20px', padding: '40px', backgroundColor: '#ffffff', width: '100%', height: 'auto', minHeight: 'min-content', clearRow: true };
-    let childCount = 1;
+    newSection.styles = { 
+      ...newSection.styles, 
+      display: 'flex', 
+      flexWrap: 'wrap',
+      flexDirection: layout === 'flex-col' ? 'column' : 'row',
+      gap: '20px', 
+      padding: '30px', 
+      backgroundColor: '#ffffff', 
+      width: '100%', 
+      minHeight: 'min-content', 
+      clearRow: true,
+      justifyContent: 'flex-start',
+      alignItems: 'flex-start'
+    };
 
+    let childWidths: string[] = [];
     if (layout.startsWith('grid-custom-')) {
       const parts = layout.split('-');
       const cols = parseInt(parts[2]) || 1;
       const rows = parseInt(parts[3]) || 1;
-      newSection.styles.gridTemplateColumns = `repeat(${cols}, minmax(20px, 1fr))`;
-      newSection.styles.gridTemplateRows = `repeat(${rows}, 1fr)`;
-      childCount = cols * rows;
-    } else if (layout === 'grid-2') { newSection.styles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
-    else if (layout === 'grid-3') { newSection.styles.gridTemplateColumns = 'repeat(3, minmax(20px, 1fr))'; newSection.styles.gridTemplateRows = '1fr'; childCount = 3; }
-    else if (layout === 'grid-2-rows') { newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; newSection.styles.gridTemplateColumns = 'minmax(20px, 1fr)'; childCount = 2; }
-    else if (layout === 'grid-left') { newSection.styles.gridTemplateColumns = 'minmax(20px, 2fr) minmax(20px, 1fr)'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
-    else if (layout === 'grid-right') { newSection.styles.gridTemplateColumns = 'minmax(20px, 1fr) minmax(20px, 2fr)'; newSection.styles.gridTemplateRows = '1fr'; childCount = 2; }
-    else if (layout === 'grid-2x2') { newSection.styles.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))'; newSection.styles.gridTemplateRows = 'repeat(2, 1fr)'; childCount = 4; }
+      const gapDeduct = ((cols - 1) * 20) / cols;
+      const w = `calc(${100 / cols}% - ${gapDeduct}px)`;
+      childWidths = Array(cols * rows).fill(w);
+    } else if (layout === 'grid-2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)']; }
+    else if (layout === 'grid-3') { childWidths = ['calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)', 'calc(33.333% - 13.33px)']; }
+    else if (layout === 'grid-2-rows') { childWidths = ['100%', '100%']; }
+    else if (layout === 'grid-left') { childWidths = ['calc(66.666% - 10px)', 'calc(33.333% - 10px)']; }
+    else if (layout === 'grid-right') { childWidths = ['calc(33.333% - 10px)', 'calc(66.666% - 10px)']; }
+    else if (layout === 'grid-2x2') { childWidths = ['calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)', 'calc(50% - 10px)']; }
+    else { childWidths = ['100%']; }
 
-    newSection.children = Array.from({ length: childCount }).map((_, i) => {
+    newSection.children = childWidths.map((w, i) => {
       const emptyField = createBlock('container', 'empty', `Pole ${i + 1}`);
-      emptyField.id = Date.now() + Math.floor(Math.random() * 100000);
+      emptyField.id = Date.now() + Math.floor(Math.random() * 100000) + i;
       emptyField.styles.minHeight = '20px'; 
       emptyField.styles.minWidth = '20px';
-      emptyField.styles.height = '100%';
+      emptyField.styles.height = '120px'; // Baza by ładnie wyglądało, łatwo zmniejszyć bo flex-start
+      emptyField.styles.width = w;
       return emptyField;
     });
     setBlocks(prev => [...prev, newSection]);
@@ -236,12 +273,19 @@ export default function Home() {
     const newBlock = createBlock(type, variant, label);
     newBlock.id = Date.now() + Math.floor(Math.random() * 100000); 
 
+    if (type === 'container' && variant === 'empty') {
+       newBlock.styles.minHeight = '20px';
+       newBlock.styles.minWidth = '20px';
+       newBlock.styles.height = '120px';
+       newBlock.styles.width = '100%';
+    }
+
     setBlocks(prevBlocks => {
       if (!activeId) {
         if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
            autoWrapper.id = Date.now() + Math.floor(Math.random() * 100000);
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '40px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', minHeight: 'min-content', height: '150px', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true, justifyContent: 'flex-start', alignItems: 'flex-start' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
@@ -286,7 +330,7 @@ export default function Home() {
       if (row.length === 1) {
         const single = row[0];
         const w = single.styles.width;
-        if (['48%', '40%', '50%'].includes(w)) {
+        if (typeof w === 'string' && (w.includes('48%') || w.includes('33%') || w.includes('31%') || w.includes('50%') || w.includes('calc'))) {
           return [{ ...single, styles: { ...single.styles, clearRow: true, width: '100%' } }];
         }
         return [{ ...single, styles: { ...single.styles, clearRow: true } }];
@@ -306,9 +350,10 @@ export default function Home() {
             const newArr = [...arr];
             const emptyContainer = createBlock('container', 'empty', 'Puste Pole');
             emptyContainer.id = Date.now() + Math.floor(Math.random() * 100000);
-            emptyContainer.styles.minHeight = '20px';
+            emptyContainer.styles.minHeight = '20px'; 
             emptyContainer.styles.minWidth = '20px';
-            emptyContainer.styles.height = '100%';
+            emptyContainer.styles.height = '120px';
+            emptyContainer.styles.width = arr[index].styles.width || '100%';
             newArr[index] = emptyContainer;
             return newArr;
           }
@@ -322,7 +367,7 @@ export default function Home() {
           
           return cleanupRows(newArr);
         }
-        return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'grid') : undefined }));
+        return arr.map(b => ({ ...b, children: b.children ? removeRecursive(b.children, b.styles.display === 'flex' || b.styles.display === 'grid') : undefined }));
       };
       return removeRecursive(prev);
     });
@@ -361,8 +406,9 @@ export default function Home() {
 
       if (dropType === 'bottom') {
          let restoredWidth = sourceBlock!.styles.width;
-         if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
-         const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
+         if (typeof restoredWidth === 'string' && restoredWidth.includes('calc')) restoredWidth = '100%';
+         // Zabezpieczenie przed lataniem w powietrzu po przeniesieniu - natychmiastowy reset X i Y
+         const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth, position: 'relative', left: '0px', top: '0px' } };
          return cleanupRows([...intermediate, updatedSource]);
       }
 
@@ -372,21 +418,23 @@ export default function Home() {
           if (dropType === 'inline') {
             const newArr = [...arr];
             let targetWidth = newArr[index].styles.width;
-            if (targetWidth === '100%' || !targetWidth) targetWidth = '48%'; 
+            if (targetWidth === '100%' || !targetWidth) targetWidth = 'calc(50% - 10px)'; 
             
             newArr[index] = { ...newArr[index], styles: { ...newArr[index].styles, clearRow: false, width: targetWidth } };
             
             let safeWidth = sourceBlock!.styles.width;
-            if (safeWidth === '100%' || !safeWidth) safeWidth = '48%'; 
+            if (safeWidth === '100%' || !safeWidth) safeWidth = 'calc(50% - 10px)'; 
             
-            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px' } };
+            // Zabezpieczenie przed lataniem - reset X i Y
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: safeWidth, marginLeft: '0px', position: 'relative', left: '0px', top: '0px' } };
             const mergedArr = [...newArr.slice(0, index + 1), updatedSource, ...newArr.slice(index + 1)];
             return cleanupRows(mergedArr);
           } else {
             let restoredWidth = sourceBlock!.styles.width;
-            if (['48%', '40%', '50%'].includes(restoredWidth)) restoredWidth = '100%';
+            if (typeof restoredWidth === 'string' && restoredWidth.includes('calc')) restoredWidth = '100%';
             
-            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, flex: 'unset', clearRow: true, width: restoredWidth } };
+            // Zabezpieczenie przed lataniem - reset X i Y
+            const updatedSource = { ...sourceBlock!, styles: { ...sourceBlock!.styles, clearRow: true, flex: 'unset', width: restoredWidth, position: 'relative', left: '0px', top: '0px' } };
             const mergedArr = [...arr.slice(0, index), updatedSource, ...arr.slice(index)];
             return cleanupRows(mergedArr);
           }
@@ -400,10 +448,9 @@ export default function Home() {
 
   const handlePublish = async () => {
     const { error } = await supabase.from('pages').upsert({ slug: pageSlug, content: blocks }, { onConflict: 'slug' });
-    if (error) alert(error.message); else alert(`Opublikowano V18.NEXT! Link: /live/${pageSlug}`);
+    if (error) alert(error.message); else alert(`Opublikowano Vyrai! Link: /live/${pageSlug}`);
   };
 
-  // ======== MAGIA: GENERYCZNE NIEBO & CZARNA DZIURA V18 ========
   const [auroraOrbs, setAuroraOrbs] = useState<AuroraOrb[]>([]);
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
   const [blackHole, setBlackHole] = useState<BlackHole | null>(null);
@@ -420,12 +467,15 @@ export default function Home() {
     const spawnOrb = () => {
       const newOrb: AuroraOrb = {
         id: Date.now() + Math.floor(Math.random() * 100000),
-        x: Math.random() * 120 - 10,   
-        y: Math.random() * 120 - 10,   
-        size: Math.random() * 600 + 400, 
-        blur: Math.random() * 80 + 120,  
-        hue: Math.random() * 120 + 160, 
-        duration: Math.random() * 20 + 30, 
+        x: Math.random() * 140 - 20,   
+        y: Math.random() * 140 - 20,   
+        tx: (Math.random() - 0.5) * 80, 
+        ty: (Math.random() - 0.5) * 80, 
+        size: Math.random() * 800 + 500, 
+        blur: Math.random() * 40 + 80,  
+        hue: Math.random() * 140 + 150, 
+        duration: Math.random() * 20 + 20, 
+        opacity: Math.random() * 0.25 + 0.15, 
       };
       setAuroraOrbs(prev => [...prev, newOrb]);
       setTimeout(() => {
@@ -466,8 +516,8 @@ export default function Home() {
       }, nextEventTime);
     };
 
-    for (let i = 0; i < 6; i++) spawnOrb();
-    const spawnAuroraInterval = setInterval(spawnOrb, 5000); 
+    for (let i = 0; i < 12; i++) spawnOrb();
+    const spawnAuroraInterval = setInterval(spawnOrb, 3000); 
     const spawnStarInterval = setInterval(() => {
        if (Math.random() > 0.4) spawnShootingStar(); 
     }, 4000); 
@@ -480,7 +530,6 @@ export default function Home() {
       clearInterval(spawnStarInterval);
     };
   }, []);
-  // ============================================================================
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -510,7 +559,36 @@ export default function Home() {
       const dy = (e.pageY - interaction.startY) / canvasZoom;
       
       if (interaction.type === 'drag') {
-        updateActiveBlock({ styles: { left: `${interaction.initialLeft + dx}px`, top: `${interaction.initialTop + dy}px`, right: 'auto', bottom: 'auto' } }, true);
+        // BLOKADA WADLIWEGO ODKLIKIWANIA: Akceptujemy ruch tylko jeśli myszka przesunęła się więcej niż 3px.
+        if (!interaction.hasMoved) {
+          if (Math.abs(dx * canvasZoom) > 3 || Math.abs(dy * canvasZoom) > 3) {
+            setInteraction({ ...interaction, hasMoved: true });
+            if (!draggedId) setDraggedId(interaction.blockId || null);
+          }
+          return;
+        }
+
+        const cw = parseInt(getCanvasWidth());
+        let newLeft = interaction.initialLeft + dx;
+        let newTop = interaction.initialTop + dy;
+        
+        // Magnes 20px
+        const SNAP = 20;
+        newLeft = Math.round(newLeft / SNAP) * SNAP;
+        newTop = Math.round(newTop / SNAP) * SNAP;
+
+        // Twarde ograniczenie X - nie pozwala wyciągnąć po za mapę
+        newLeft = Math.max(-cw, Math.min(newLeft, cw));
+        
+        updateActiveBlock({ styles: { position: 'relative', left: `${newLeft}px`, top: `${newTop}px`, right: 'auto', bottom: 'auto' } }, true);
+
+        // SKANER PROMIENIOWY
+        document.querySelectorAll('.dropzone-active').forEach(el => el.classList.remove('dropzone-active'));
+        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+        const dropzone = elements.find(el => el.classList?.contains('dropzone-area'));
+        if (dropzone) {
+           dropzone.classList.add('dropzone-active');
+        }
       } 
       else if (interaction.type === 'resize' && interaction.dir) {
         const el = document.getElementById(`block-${activeId}`);
@@ -528,8 +606,13 @@ export default function Home() {
         newWidthPx = Math.max(20, Math.min(newWidthPx, parentWidth));
         newHeightPx = Math.max(20, newHeightPx);
 
+        const SNAP_GRID = 20;
+        newHeightPx = Math.round(newHeightPx / SNAP_GRID) * SNAP_GRID;
+
         let percentWidth = (newWidthPx / parentWidth) * 100;
-        const snaps = [10, 15, 20, 25, 30, 33.33, 40, 48, 50, 60, 66.66, 70, 75, 80, 85, 90, 100];
+        percentWidth = Math.max(10, percentWidth); // Limit aby nie zgnieść szerokości do zera
+
+        const snaps = [20, 25, 30, 31, 33.33, 40, 48, 50, 60, 66, 66.66, 70, 75, 80, 85, 90, 100];
         for (const snap of snaps) {
           if (Math.abs(percentWidth - snap) < 3) { percentWidth = snap; break; }
         }
@@ -541,16 +624,9 @@ export default function Home() {
         }
         
         if (interaction.dir.includes('s') || interaction.dir.includes('n')) {
-          const blockType = activeBlock?.type || 'container';
-          
-          if (['img', 'video', 'embed', 'shape'].includes(blockType)) {
-            updates.height = `${newHeightPx}px`;
-            updates.minHeight = `${newHeightPx}px`;
-          } else {
-            // SZTYWNE PIKSELE, ZABEZPIECZENIE PRZED ROZLEWANIEM Z WYKORZYSTANIEM MIN-CONTENT
-            updates.height = `${newHeightPx}px`;
-            updates.minHeight = `min-content`;
-          }
+          // ZMIANA: Zgnieciesz teraz wysokość do absolutnych 20px
+          updates.height = `${newHeightPx}px`; 
+          updates.minHeight = `20px`; 
         }
         
         updates.marginLeft = '0px'; updates.marginTop = '0px';
@@ -558,51 +634,75 @@ export default function Home() {
       }
     };
 
-    const handleMouseUp = () => {
-      if (interaction && interaction.type === 'resize') {
-        setInternalBlocks(prevBlocks => {
-          const sanitizeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
-            if (parentIsGrid) return arr.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, true) : undefined }));
-            
-            let res = [...arr];
-            let currentRowWidth = 0;
-            let rowStartIndex = 0;
-
-            for (let i = 0; i < res.length; i++) {
-              const block = res[i];
-              const wStr = block.styles.width || '100%';
-              let w = 100;
-              if (typeof wStr === 'string' && wStr.endsWith('%')) w = parseFloat(wStr) || 100;
+    const handleMouseUp = (e: MouseEvent) => {
+      if (interaction) {
+        if (interaction.type === 'drag' && draggedId) {
+          // Twarde Dokowanie w nowej Siatce
+          const elements = document.elementsFromPoint(e.clientX, e.clientY);
+          const dropzone = elements.find(el => el.classList?.contains('dropzone-area'));
+          if (dropzone) {
+             const targetId = parseInt(dropzone.getAttribute('data-dropzone-target') || '-1');
+             const dropType = dropzone.getAttribute('data-dropzone-type') as any;
+             if (handleDrop) handleDrop(draggedId, targetId, dropType);
+          }
+        }
+        else if (interaction.type === 'resize') {
+          setInternalBlocks(prevBlocks => {
+            const sanitizeRecursive = (arr: Block[], parentIsGrid: boolean = false): Block[] => {
+              if (parentIsGrid) return arr.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, true) : undefined }));
               
-              if (currentRowWidth + w > 102 && i > rowStartIndex) {
-                res[i - 1] = { ...res[i - 1], styles: { ...res[i - 1].styles, clearRow: true } };
-                currentRowWidth = w;
-                rowStartIndex = i;
-              } else {
-                currentRowWidth += w;
+              let res = [...arr];
+              let currentRowWidth = 0;
+              let rowStartIndex = 0;
+
+              for (let i = 0; i < res.length; i++) {
+                const block = res[i];
+                const wStr = block.styles.width || '100%';
+                let w = 100;
+                if (typeof wStr === 'string' && wStr.endsWith('%')) w = parseFloat(wStr) || 100;
+                
+                if (currentRowWidth + w > 102 && i > rowStartIndex) {
+                  res[i - 1] = { ...res[i - 1], styles: { ...res[i - 1].styles, clearRow: true } };
+                  currentRowWidth = w;
+                  rowStartIndex = i;
+                } else {
+                  currentRowWidth += w;
+                }
+                
+                if (res[i].styles.clearRow !== false) {
+                  currentRowWidth = 0;
+                  rowStartIndex = i + 1;
+                }
               }
               
-              if (res[i].styles.clearRow !== false) {
-                currentRowWidth = 0;
-                rowStartIndex = i + 1;
+              if (res.length > 0 && res[res.length - 1].styles.clearRow === false) {
+                res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
               }
-            }
-            
-            if (res.length > 0 && res[res.length - 1].styles.clearRow === false) {
-              res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
-            }
 
-            return res.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, b.styles.display === 'grid') : undefined }));
-          };
-          
-          return sanitizeRecursive(prevBlocks);
-        });
+              return res.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, b.styles.display === 'flex' || b.styles.display === 'grid') : undefined }));
+            };
+            
+            return sanitizeRecursive(prevBlocks);
+          });
+        }
+        
+        document.querySelectorAll('.dropzone-active').forEach(el => el.classList.remove('dropzone-active'));
+        
+        setTimeout(() => {
+          setInteraction(null);
+          if (setDraggedId) setDraggedId(null);
+        }, 10);
       }
-      setInteraction(null);
     };
 
-    if (interaction) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
-    return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
+    if (interaction) { 
+      window.addEventListener('mousemove', handleMouseMove as any); 
+      window.addEventListener('mouseup', handleMouseUp); 
+    }
+    return () => { 
+      window.removeEventListener('mousemove', handleMouseMove as any); 
+      window.removeEventListener('mouseup', handleMouseUp); 
+    };
   }, [interaction, activeId, canvasZoom, isEditing, isMediaManagerOpen, viewport, activeBlock]);
 
   useEffect(() => {
@@ -699,7 +799,13 @@ export default function Home() {
       {/* MAGIA ANIMACJI: SYSTEM NIEBA, ZAPADANIE SIĘ ŚWIATŁA I MROCZNE SZKŁO */}
       <style dangerouslySetInnerHTML={{__html: `
         
-        /* KOSMICZNE SUWAKI (Zabijamy brzydkie szare paski Windowsa) */
+        .dropzone-active {
+           background-color: rgba(255, 69, 0, 0.3) !important;
+           transform: scale(1.02) !important;
+           border-color: rgba(255, 69, 0, 1) !important;
+        }
+
+        /* KOSMICZNE SUWAKI */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
@@ -711,11 +817,12 @@ export default function Home() {
           100% { filter: hue-rotate(360deg); }
         }
 
+        /* NOWA ZORZA: Losowe trajektorie i miękkie przenikanie */
         @keyframes aurora-flow {
-          0% { opacity: 0; transform: translate(0%, 0%) scale(0.9); }
-          10% { opacity: 0.15; transform: translate(10%, 10%) scale(1); }
-          90% { opacity: 0.15; transform: translate(90%, -90%) scale(1.1); }
-          100% { opacity: 0; transform: translate(100%, -100%) scale(1.2); }
+          0% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+          25% { opacity: var(--max-opacity, 0.35); transform: translate(calc(var(--tx) * 0.33), calc(var(--ty) * 0.33)) scale(1.1); }
+          75% { opacity: var(--max-opacity, 0.35); transform: translate(calc(var(--tx) * 0.66), calc(var(--ty) * 0.66)) scale(1.2); }
+          100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.9); }
         }
 
         @keyframes shooting-star-dash {
@@ -756,7 +863,6 @@ export default function Home() {
           transition: opacity 5s ease-in, transform 8s ease-in;
         }
 
-        /* Wolniejsze oddychanie neonów (8 sekund) */
         @keyframes neon-breathe {
           0%, 100% { box-shadow: 0 0 10px -2px var(--theme-color), inset 0 0 5px -2px var(--theme-color); }
           50% { box-shadow: 0 0 20px 2px var(--theme-color), inset 0 0 10px 1px var(--theme-color); }
@@ -836,7 +942,10 @@ export default function Home() {
               backgroundColor: `hsl(${orb.hue}, 100%, 55%)`,
               filter: `blur(${orb.blur}px)`,
               animationDuration: `${orb.duration}s`,
-            }}
+              '--tx': `${orb.tx}vw`,
+              '--ty': `${orb.ty}vh`,
+              '--max-opacity': orb.opacity
+            } as React.CSSProperties}
           />
         ))}
 
@@ -862,14 +971,11 @@ export default function Home() {
         />
       )}
 
-      {/* =========================================================================
-         KONTENER ZAMYKAJĄCY SUB-PANELE NA MOUSE-LEAVE
-         ========================================================================= */}
       <div 
         className="flex h-full relative z-50"
         onMouseLeave={() => setAddCategory(null)}
       >
-        {/* LEWY PASEK TERMINALA V18 */}
+        {/* LEWY PASEK TERMINALA VYRAI */}
         <aside className="cyber-glass-panel w-[110px] flex flex-col items-center py-6 gap-4 shrink-0 overflow-y-auto scrollbar-hide relative border-r border-white/5">
           
           <button 
@@ -980,12 +1086,29 @@ export default function Home() {
         
         <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />
         
-        <main className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent" onClick={() => { setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); }}>
-          
+        <main 
+          className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent relative" 
+          onClick={() => { 
+            if (interaction) return;
+            setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); 
+          }}
+        >
+          {/* OBIEKT UCINA SIĘ POZA PŁÓTNEM - WPROWADZONY KAGANIEC (overflow-hidden) */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40">
+               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5 overflow-hidden">
              
-             {showGrid && <div className="absolute inset-0 pointer-events-none flex gap-4 px-[40px] z-0 opacity-[0.03]">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-[#ff4500] h-full"></div>)}</div>}
+             {/* NOWA SIATKA ARCHITEKTONICZNA: Renderowana NA płótnie */}
+             {showGrid && (
+               <div className="absolute inset-0 pointer-events-none z-0 rounded-b-xl overflow-hidden opacity-30">
+                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)', backgroundSize: '100px 100px' }}></div>
+                 <div className="absolute inset-0 flex justify-center w-full h-full">
+                   <div className="w-full h-full flex gap-5 px-5">
+                     {Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500/[0.04] border-x border-blue-500/10 h-full"></div>)}
+                   </div>
+                 </div>
+               </div>
+             )}
              
              {blocks.map(b => {
                 const widthVal = parseFloat(b.styles.width || '100');
@@ -1001,15 +1124,17 @@ export default function Home() {
                       setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
                       interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
                       hiddenBlocks={hiddenBlocks}
+                      viewport={viewport}
                     />
                     
+                    {/* WIDZIALNE STREFY ZRZUTU (DROP ZONES) */}
                     {showGhost && !hiddenBlocks.includes(b.id) && (
                       <div 
-                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(draggedId, b.id, 'inline'); if(setDraggedId) setDraggedId(null); }}
-                        className="flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 hover:opacity-100 hover:bg-[#ff4500]/20 hover:scale-[1.02] transition-all cursor-pointer"
+                        data-dropzone-target={b.id}
+                        data-dropzone-type="inline"
+                        className="dropzone-area flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 transition-all cursor-pointer pointer-events-auto z-[99999]"
                       >
-                        <span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,69,0,0.5)]">+ Wstaw Obok</span>
+                        <span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,69,0,0.5)] pointer-events-none">+ Wstaw Obok</span>
                       </div>
                     )}
 
@@ -1018,10 +1143,11 @@ export default function Home() {
                 );
              })}
 
+             {/* DOLNA STREFA ZRZUTU */}
              <div 
-               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-               onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (draggedId && handleDrop) handleDrop(draggedId, -1, 'bottom'); if(setDraggedId) setDraggedId(null); }}
-               className="w-full h-32 mt-4 border-2 border-transparent hover:border-[#ff4500]/50 hover:bg-[#ff4500]/10 rounded-xl transition-all flex items-center justify-center text-transparent hover:text-[#ff4500] font-bold tracking-widest uppercase text-[10px]"
+               data-dropzone-target="-1"
+               data-dropzone-type="bottom"
+               className="dropzone-area w-full h-32 mt-4 border-2 border-transparent hover:border-dashed hover:border-[#ff4500] hover:bg-[#ff4500]/10 hover:text-[#ff4500] rounded-xl transition-all flex items-center justify-center text-transparent font-bold tracking-widest uppercase text-[10px] pointer-events-auto z-[99999]"
              >
                Upuść tutaj (Na koniec)
              </div>
@@ -1029,13 +1155,20 @@ export default function Home() {
           </div>
         </main>
         
-        {/* KLUCZOWA ZMIANA: Cyber-Szkło dla dolnego panelu */}
-        <div className="relative z-50 bg-[rgba(8,8,12,0.6)] backdrop-blur-[24px] saturate-[150%] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <div className="absolute bottom-0 left-0 w-full z-50">
           <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
         </div>
       </div>
       
-      <RightPanel activeBlock={activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />
+      <RightPanel 
+        activeBlock={(leftTab !== null || addCategory !== null) ? null : activeBlock} 
+        rightTab={rightTab} 
+        setRightTab={setRightTab as any} 
+        updateActiveBlock={updateActiveBlock} 
+        removeActiveBlock={removeActiveBlock} 
+        setIsMediaManagerOpen={setIsMediaManagerOpen} 
+      />
+      
       {isMediaManagerOpen && <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
     </div>
   );

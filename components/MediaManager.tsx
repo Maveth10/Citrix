@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 
 interface MediaManagerProps {
@@ -13,7 +13,8 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // NOWY STAN: do wklejania zewnętrznego linku
+  const [externalUrl, setExternalUrl] = useState('');
 
   // 1. Pobieranie plików z Supabase (bucket: 'media')
   const fetchMedia = async () => {
@@ -27,14 +28,12 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
     }
 
     if (data) {
-      // Filtrujemy ukryte pliki (np. .emptyFolderPlaceholder) i mapujemy na publiczne URL
       const validFiles = data.filter(f => f.name && !f.name.startsWith('.'));
       const fileData = validFiles.map(file => {
         const { data: publicUrlData } = supabase.storage.from('media').getPublicUrl(file.name);
         return { name: file.name, url: publicUrlData.publicUrl };
       });
       
-      // Sortujemy od najnowszych (na podstawie domyślnego zachowania)
       setFiles(fileData.reverse());
     }
     setLoading(false);
@@ -49,7 +48,6 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
     if (!file) return;
     setUploading(true);
 
-    // Unikalna nazwa pliku zabezpieczająca przed nadpisaniem
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
@@ -61,7 +59,7 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
     if (error) {
       alert(`Błąd wgrywania: ${error.message}`);
     } else {
-      await fetchMedia(); // Odśwież galerię po udanym uploadzie
+      await fetchMedia(); 
     }
     setUploading(false);
   };
@@ -92,9 +90,8 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
 
   // 4. Wybór zdjęcia i wstrzyknięcie do płótna
   const handleSelectImage = (url: string) => {
-    if (!activeBlock) return;
+    if (!activeBlock || !url) return;
     
-    // Zabezpieczenie: Czy to obrazek/wideo, czy ustawiamy tło kontenera?
     if (activeBlock.type === 'img' || activeBlock.type === 'video') {
       updateActiveBlock({ src: url });
     } else {
@@ -107,13 +104,13 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-in fade-in duration-300">
       
-      {/* Tło przyciemniające (Dark Backdrop) */}
+      {/* Tło przyciemniające */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setIsMediaManagerOpen(false)}
       ></div>
 
-      {/* Główne okno Menedżera - Cyber Szkło */}
+      {/* Główne okno Menedżera */}
       <div className="relative w-[900px] h-[80vh] max-h-[800px] bg-[rgba(15,15,20,0.8)] backdrop-blur-[40px] saturate-[150%] border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden scale-100 animate-in zoom-in-95 duration-300">
         
         {/* HEADER */}
@@ -124,7 +121,7 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
             </div>
             <div>
               <h2 className="text-white font-bold text-lg tracking-wide">Menedżer Mediów</h2>
-              <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold">Zarządzaj plikami w chmurze</p>
+              <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold">Zarządzaj plikami w chmurze i linkami</p>
             </div>
           </div>
           <button 
@@ -137,48 +134,67 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
 
         <div className="flex-1 overflow-y-auto p-6 scrollbar-hide flex flex-col gap-6">
           
-          {/* STREFA ZRZUTU (DRAG & DROP) */}
-          <div 
+          {/* STREFA ZRZUTU (Upload) */}
+          <label 
             onDragEnter={handleDrag} 
             onDragLeave={handleDrag} 
             onDragOver={handleDrag} 
             onDrop={handleDrop}
-            className={`w-full h-40 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer ${
+            className={`w-full h-32 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer shrink-0 ${
               dragActive 
                 ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] scale-[1.02]' 
                 : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
             }`}
-            onClick={() => fileInputRef.current?.click()}
           >
             <input 
               type="file" 
-              ref={fileInputRef} 
               onChange={handleFileChange} 
               accept="image/*,video/*" 
-              className="hidden" 
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
             />
             
             {uploading ? (
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-3 pointer-events-none">
                 <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
                 <span className="text-xs font-bold text-blue-400 uppercase tracking-widest animate-pulse">Wysyłanie w kosmos...</span>
               </div>
             ) : (
-              <>
-                <span className="text-4xl mb-2 transition-transform duration-300 group-hover:-translate-y-2">☁️</span>
+              <div className="flex flex-col items-center pointer-events-none">
+                <span className="text-3xl mb-2 transition-transform duration-300 group-hover:-translate-y-2">☁️</span>
                 <p className="text-sm font-bold text-white mb-1">Przeciągnij i upuść pliki tutaj</p>
                 <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">lub kliknij, aby przeglądać dysk</p>
-              </>
+              </div>
             )}
-            
-            {/* Animowany blask na hover */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full hover:animate-[shine_1.5s_ease-in-out_infinite] pointer-events-none"></div>
+          </label>
+
+          {/* NOWE: ZEWNĘTRZNY URL */}
+          <div className="flex flex-col gap-2 shrink-0">
+            <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-white/5 pb-2">
+              Zewnętrzny Link (URL)
+            </h3>
+            <div className="flex gap-3">
+              <input 
+                type="text" 
+                value={externalUrl} 
+                onChange={(e) => setExternalUrl(e.target.value)} 
+                placeholder="https://images.unsplash.com/photo-..." 
+                className="flex-1 bg-black/40 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl outline-none focus:border-blue-500 transition-all shadow-inner"
+              />
+              <button 
+                onClick={() => handleSelectImage(externalUrl)}
+                disabled={!externalUrl.trim()}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                Zastosuj
+              </button>
+            </div>
           </div>
 
-          {/* GALERIA PLIKÓW */}
+          {/* GALERIA PLIKÓW Z CHMURY */}
           <div className="flex flex-col gap-3">
             <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-white/5 pb-2">
-              Twoja Biblioteka
+              Twoja Biblioteka w Chmurze
             </h3>
             
             {loading ? (
@@ -191,7 +207,7 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
                 <span className="text-xs font-mono text-neutral-500">Pustynia. Czas coś wgrać.</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 pb-4">
                 {files.map((file, idx) => (
                   <div 
                     key={idx} 
@@ -203,7 +219,6 @@ export default function MediaManager({ activeBlock, updateActiveBlock, setIsMedi
                       alt={file.name} 
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
                     />
-                    {/* Nakładka przy najechaniu */}
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-600/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
                       <span className="text-[10px] font-bold text-white uppercase tracking-widest drop-shadow-md">Wybierz</span>
                     </div>

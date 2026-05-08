@@ -45,14 +45,22 @@ export default function TopHeader({
   const isContainer = activeBlock && ['container', 'section', 'form', 'grid'].includes(activeBlock.type);
 
   return (
-    // Bez obramowania, czyste szkło!
-    <header className="h-16 relative z-[300] flex items-center justify-between px-6 bg-[rgba(8,8,12,0.6)] backdrop-blur-[24px] saturate-[150%] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+    <header className="h-16 relative z-[300] flex items-center justify-between px-6 border-b border-white/5 bg-[rgba(8,8,12,0.6)] backdrop-blur-[24px] saturate-[150%] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
       
       <div className="flex items-center">
-        <div className="flex items-center bg-white/5 p-1 rounded-full border border-white/5 shadow-inner">
-          <button onClick={() => setViewport('desktop')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'desktop' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>💻 <span className="hidden xl:inline">Desktop</span></button>
-          <button onClick={() => setViewport('tablet')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'tablet' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Tablet</span></button>
-          <button onClick={() => setViewport('mobile')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'mobile' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>📱 <span className="hidden xl:inline">Mobile</span></button>
+        <div className="flex items-center bg-white/5 p-1 rounded-full border border-white/10 shadow-inner">
+          <button onClick={() => setViewport('desktop')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'desktop' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span className="hidden xl:inline">Desktop</span>
+          </button>
+          <button onClick={() => setViewport('tablet')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'tablet' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span className="hidden xl:inline">Tablet</span>
+          </button>
+          <button onClick={() => setViewport('mobile')} className={`px-4 py-1.5 rounded-full transition-all text-xs font-semibold flex items-center gap-2 ${viewport === 'mobile' ? 'bg-white/10 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-300'}`}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span className="hidden xl:inline">Mobile</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-1 ml-4 border-l border-white/10 pl-4">
@@ -67,7 +75,7 @@ export default function TopHeader({
 
       <div className="flex items-center gap-3 flex-1 justify-center relative">
         <div className="relative mr-4 border-r border-white/10 pr-4">
-          <button onClick={() => { setShowAddSectionMenu(!showAddSectionMenu); setShowLayoutMenu(false); setShowBgMenu(false); setIsAiOpen(false); }} className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all bg-white/10 text-white hover:bg-white/20 border border-white/5">
+          <button onClick={() => { setShowAddSectionMenu(!showAddSectionMenu); setShowLayoutMenu(false); setShowBgMenu(false); setIsAiOpen(false); }} className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all bg-white/10 text-white hover:bg-white/20 border border-white/10 shadow-sm">
             <span className="text-lg leading-none">+</span> Dodaj Sekcję
           </button>
           {showAddSectionMenu && (
@@ -146,19 +154,19 @@ export default function TopHeader({
 
       <div className="flex items-center gap-3">
          <div className="pr-4 border-r border-white/10">
-           <button onClick={() => { setIsAiOpen(!isAiOpen); setShowAddSectionMenu(false); setShowLayoutMenu(false); setShowBgMenu(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all border shadow-lg transform hover:-translate-y-0.5 ${isAiOpen ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-gradient-to-r from-blue-600 to-purple-600 border-transparent text-white hover:shadow-[0_0_15px_rgba(147,51,234,0.5)]'}`}>
-             ✨ <span className="hidden xl:inline">AI Copilot</span>
+           <button onClick={() => { setIsAiOpen(!isAiOpen); setShowAddSectionMenu(false); setShowLayoutMenu(false); setShowBgMenu(false); }} className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all border ${isAiOpen ? 'bg-white/10 border-white/20 text-white shadow-inner' : 'bg-transparent border-white/10 text-neutral-400 hover:bg-white/5 hover:text-white'}`}>
+             <span className="opacity-60">✨</span> <span className="hidden xl:inline">AI Copilot</span>
            </button>
          </div>
 
-         <div className="flex items-center bg-white/5 rounded-full border border-white/5 text-xs shadow-inner">
-           <button onClick={() => setCanvasZoom(Math.max(0.25, canvasZoom - 0.25))} className="px-4 py-2 hover:bg-white/5 text-neutral-400 rounded-l-full transition-colors">−</button>
-           <span className="px-2 font-mono w-12 text-center text-white">{Math.round(canvasZoom * 100)}%</span>
-           <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.25))} className="px-4 py-2 hover:bg-white/5 text-neutral-400 rounded-r-full transition-colors">+</button>
+         <div className="flex items-center bg-white/5 rounded-full border border-white/10 text-xs shadow-inner">
+           <button onClick={() => setCanvasZoom(Math.max(0.25, canvasZoom - 0.25))} className="px-4 py-2 hover:bg-white/10 text-neutral-400 hover:text-white rounded-l-full transition-colors">−</button>
+           <span className="px-2 font-mono w-12 text-center text-white font-bold">{Math.round(canvasZoom * 100)}%</span>
+           <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.25))} className="px-4 py-2 hover:bg-white/10 text-neutral-400 hover:text-white rounded-r-full transition-colors">+</button>
          </div>
-         <button onClick={() => setShowGrid(!showGrid)} className={`w-9 h-9 rounded-full border text-sm font-bold transition-all flex items-center justify-center ${showGrid ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-white/5 border-white/10 text-neutral-400 hover:bg-white/10'}`} title="Siatka Architektoniczna">⊞</button>
-         <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-white/5 text-white border border-white/10 text-xs px-4 py-2 rounded-full outline-none focus:border-blue-500 w-32 shadow-inner transition-colors" placeholder="Adres URL..." />
-         <button onClick={handlePublish} className="bg-white text-black hover:bg-neutral-200 text-xs font-bold px-6 py-2 rounded-full transition shadow-lg transform hover:-translate-y-0.5">ZAPISZ</button>
+         <button onClick={() => setShowGrid(!showGrid)} className={`w-9 h-9 rounded-full border text-sm font-bold transition-all flex items-center justify-center ${showGrid ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.4)]' : 'bg-white/5 border-white/10 text-neutral-400 hover:bg-white/10 hover:text-white'}`} title="Siatka Architektoniczna">⊞</button>
+         <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-white/5 text-white border border-white/10 text-xs px-4 py-2 rounded-full outline-none focus:border-white/30 w-32 shadow-inner transition-colors" placeholder="Adres URL..." />
+         <button onClick={handlePublish} className="bg-white text-black hover:bg-neutral-200 text-xs font-bold px-6 py-2 rounded-full transition shadow-[0_0_15px_rgba(255,255,255,0.2)] transform hover:-translate-y-0.5">ZAPISZ</button>
       </div>
     </header>
   );
