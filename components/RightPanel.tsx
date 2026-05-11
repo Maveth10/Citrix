@@ -87,8 +87,7 @@ export default function RightPanel({ activeBlock, rightTab, setRightTab, updateA
 
         {/* MODUŁOWE RENDEROWANIE ZAKŁADEK */}
         {rightTab === 'layout' && <LayoutTab currentStyles={currentStyles} handleStyleChange={handleStyleChange} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}
-        {rightTab === 'design' && <DesignTab currentStyles={currentStyles} handleStyleChange={handleStyleChange} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
-        {rightTab === 'text' && <TextTab currentStyles={currentStyles} handleStyleChange={handleStyleChange} />}
+        {rightTab === 'design' && <DesignTab currentStyles={currentStyles} handleStyleChange={handleStyleChange} setIsMediaManagerOpen={setIsMediaManagerOpen} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} />}        {rightTab === 'text' && <TextTab currentStyles={currentStyles} handleStyleChange={handleStyleChange} />}
         {rightTab === 'effects' && <EffectsTab currentStyles={currentStyles} handleStyleChange={handleStyleChange} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} mode={mode} />}
         {rightTab === 'interactions' && <InteractionsTab activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} blocks={blocks} />}
       </div>
