@@ -17,12 +17,13 @@ interface TopHeaderProps {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  onPreviewClick: () => void; // <-- Dodany nowy prop
 }
 
 export default function TopHeader({ 
   canvasZoom, setCanvasZoom, showGrid, setShowGrid, pageSlug, setPageSlug, handlePublish, 
   activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection, handleChangeLayout,
-  isAiOpen, setIsAiOpen, undo, redo, canUndo, canRedo
+  isAiOpen, setIsAiOpen, undo, redo, canUndo, canRedo, onPreviewClick
 }: TopHeaderProps) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
@@ -165,6 +166,19 @@ export default function TopHeader({
            <button onClick={() => setCanvasZoom(Math.min(2, canvasZoom + 0.25))} className="px-4 py-2 hover:bg-white/10 text-neutral-400 hover:text-white rounded-r-full transition-colors">+</button>
          </div>
          <button onClick={() => setShowGrid(!showGrid)} className={`w-9 h-9 rounded-full border text-sm font-bold transition-all flex items-center justify-center ${showGrid ? 'bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.4)]' : 'bg-white/5 border-white/10 text-neutral-400 hover:bg-white/10 hover:text-white'}`} title="Siatka Architektoniczna">⊞</button>
+         
+         <div className="w-px h-6 bg-white/10 mx-1"></div>
+
+         {/* PODGLĄD */}
+         <button 
+           onClick={onPreviewClick}
+           className="flex items-center gap-2 bg-white/5 hover:bg-[#ff4500]/20 hover:text-[#ff4500] hover:border-[#ff4500]/50 text-white border border-white/10 text-xs px-4 py-2 rounded-full transition-all shadow-inner"
+           title="Podgląd strony (Kino-Mode)"
+         >
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+           <span className="hidden xl:inline font-bold uppercase tracking-widest text-[10px]">Podgląd</span>
+         </button>
+         
          <input type="text" value={pageSlug} onChange={(e) => setPageSlug(e.target.value.toLowerCase())} className="bg-white/5 text-white border border-white/10 text-xs px-4 py-2 rounded-full outline-none focus:border-white/30 w-32 shadow-inner transition-colors" placeholder="Adres URL..." />
          <button onClick={handlePublish} className="bg-white text-black hover:bg-neutral-200 text-xs font-bold px-6 py-2 rounded-full transition shadow-[0_0_15px_rgba(255,255,255,0.2)] transform hover:-translate-y-0.5">ZAPISZ</button>
       </div>
