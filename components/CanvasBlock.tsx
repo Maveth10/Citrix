@@ -1,119 +1,163 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import ActiveBlockOverlay from './ActiveBlockOverlay'; 
+import { loadGoogleFont } from '../utils/fontsConfig';
+import { applyRWD, buildHoverCSS, getEmbedUrl } from '../utils/styleBuilder';
+import { getAnimationStyles, getGlobalKeyframes } from '../utils/animationBuilder';
+import { supabase } from '../supabase';
 
 interface CanvasBlockProps {
   b: any; activeId: number | null; setActiveId: (id: number | null) => void;
   isEditing: boolean; setIsEditing: (val: boolean) => void;
   isMediaManagerOpen: boolean; setIsMediaManagerOpen: (val: boolean) => void;
-  setInteraction: (val: any) => void; updateActiveBlock: (updates: any) => void;
+  setInteraction: (val: any) => void; updateActiveBlock: (updates: any, skipHistory?: boolean, specificId?: number) => void;
   parentId?: number; parentActive?: boolean; interaction?: any; 
   draggedId?: number | null; setDraggedId?: (id: number | null) => void;
   handleDrop?: (sourceId: number, targetId: number, type?: 'before'|'inline') => void;
   hiddenBlocks?: number[]; viewport?: 'desktop' | 'tablet' | 'mobile';
-  handleDuplicate?: () => void; 
-  removeActiveBlock?: () => void;
-  isPreviewMode?: boolean; 
+  handleDuplicate?: () => void; removeActiveBlock?: () => void;
+  isPreviewMode?: boolean; copiedStyles?: any; setCopiedStyles?: (styles: any) => void;
+  setContextMenu?: (val: {x: number, y: number, blockId: number} | null) => void;
+  previewPopupId?: number | null; setPreviewPopupId?: (id: number | null) => void;
 }
 
 export default function CanvasBlock({ 
   b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, 
   setInteraction, updateActiveBlock, parentId, parentActive, interaction,
   draggedId, setDraggedId, handleDrop, hiddenBlocks = [], viewport = 'desktop',
-  handleDuplicate, removeActiveBlock, isPreviewMode = false
+  handleDuplicate, removeActiveBlock, isPreviewMode = false,
+  copiedStyles, setCopiedStyles, setContextMenu,
+  previewPopupId, setPreviewPopupId
 }: CanvasBlockProps) {
   
   if (hiddenBlocks.includes(b.id)) return null;
 
   const isActive = activeId === b.id;
   const isAbsolute = b.styles.position === 'absolute' || b.styles.position === 'fixed';
-  
   const isBeingDragged = interaction?.type === 'drag' && interaction?.hasMoved && draggedId === b.id;
   
-  const [shouldAnimate, setShouldAnimate] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
-  
-  useEffect(() => {
-    if (b.entranceAnim && b.entranceAnim !== 'none' && !isActive) { setShouldAnimate(true); }
-  }, [b.entranceAnim, isActive]);
+  const [isVisible, setIsVisible] = useState(false);
+  const [localText, setLocalText] = useState(b.text || '');
+  const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const applyRWD = (baseStyles: any, blockName: string, viewportState: string) => {
-    if (viewportState === 'desktop') return baseStyles;
-    const s = { ...baseStyles };
+  const textRef = useRef<HTMLElement>(null);
+  const blockRef = useRef<HTMLDivElement>(null);
 
-    if (viewportState === 'mobile') {
-      if (s.display === 'grid') s.gridTemplateColumns = 'minmax(20px, 1fr)';
-      if (s.display === 'flex' && s.flexDirection !== 'column' && !blockName?.includes('NAV')) {
-        s.flexDirection = 'column'; s.alignItems = 'center';
-      }
-      if (typeof s.width === 'string' && s.width.endsWith('%') && parseFloat(s.width) < 100) s.width = '100%';
-      if (typeof s.fontSize === 'string' && s.fontSize.endsWith('px')) {
-        const size = parseInt(s.fontSize);
-        if (size >= 36) s.fontSize = `${Math.max(28, Math.round(size * 0.65))}px`;
-        else if (size > 18) s.fontSize = `${Math.round(size * 0.85)}px`;
-      }
-      if (typeof s.padding === 'string') {
-        if (s.padding === '40px' || s.padding === '60px' || s.padding.includes('60px')) s.padding = '20px';
-      }
-    }
-
-    if (viewportState === 'tablet') {
-      if (s.display === 'grid' && typeof s.gridTemplateColumns === 'string') {
-        if (s.gridTemplateColumns.includes('3') || s.gridTemplateColumns.includes('4')) s.gridTemplateColumns = 'repeat(2, minmax(20px, 1fr))';
-      }
-      if (typeof s.fontSize === 'string' && s.fontSize.endsWith('px')) {
-        const size = parseInt(s.fontSize);
-        if (size > 40) s.fontSize = `${Math.max(32, Math.round(size * 0.8))}px`;
-      }
-    }
-    return s;
+  const checkIsChildLocal = (block: any, id: number): boolean => {
+    if (!block?.children) return false;
+    if (block.children.some((c: any) => c.id === id)) return true;
+    return block.children.some((c: any) => checkIsChildLocal(c, id));
   };
+  const hasActiveChild = activeId ? checkIsChildLocal(b, activeId) : false;
+  const forceVisibleOverflow = !isPreviewMode && (isActive || hasActiveChild);
 
-  const currentStyles = applyRWD(b.styles, b.name || '', viewport);
+  useEffect(() => {
+    if (!isEditing) setLocalText(b.text || '');
+  }, [b.text, isEditing]);
+
+  useEffect(() => {
+    if (b.styles?.fontFamily) loadGoogleFont(b.styles.fontFamily);
+  }, [b.styles?.fontFamily]);
+
+  // Intersection Observer dla animacji Reveal on Scroll
+  useEffect(() => {
+    if (!isPreviewMode || !b.entranceAnim || b.entranceAnim === 'none') {
+      setIsVisible(true); return;
+    }
+    setIsVisible(false);
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.unobserve(entry.target); } },
+      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
+    );
+    if (blockRef.current) observer.observe(blockRef.current);
+    return () => observer.disconnect();
+  }, [isPreviewMode, b.entranceAnim]);
+  
+  const currentStyles = applyRWD(b, viewport);
+  const animStyles = getAnimationStyles(b, isVisible, isPreviewMode);
+  const hoverCSS = buildHoverCSS(b.hoverStyles);
 
   const hasMediaBg = currentStyles.bgType === 'image' || currentStyles.bgType === 'video';
   const bgStyles = { ...currentStyles };
   if (currentStyles.bgType === 'image') bgStyles.backgroundImage = currentStyles.bgImage?.includes('gradient') ? currentStyles.bgImage : `url(${currentStyles.bgImage})`;
   if (hasMediaBg) bgStyles.backgroundColor = 'transparent';
   
+  const isHiddenByRWD = currentStyles.display === 'none';
+  if (isHiddenByRWD && !isPreviewMode) {
+      currentStyles.display = 'flex';
+      currentStyles.opacity = 0.3;
+      currentStyles.border = '2px dashed #ff4500';
+  }
+
+  const currentZIndex = currentStyles.zIndex !== undefined ? currentStyles.zIndex : 1;
+  const isInteractive = isPreviewMode && (b.interactionType === 'url' || b.interactionType === 'scroll' || b.interactionType === 'open_popup' || b.interactionType === 'close_popup' || b.type === 'button');
+
   const containerStyles: any = { 
     ...bgStyles, 
-    filter: `blur(${currentStyles.filterBlur || 0}px) brightness(${currentStyles.filterBrightness ?? 100}%) contrast(${currentStyles.filterContrast ?? 100}%)`, 
+    fontFamily: currentStyles.fontFamily || 'inherit',
+    filter: `blur(${currentStyles.filterBlur || 0}px) brightness(${currentStyles.filterBrightness ?? 100}%) contrast(${currentStyles.filterContrast ?? 100}%) saturate(${currentStyles.filterSaturate ?? 100}%) grayscale(${currentStyles.filterGrayscale ?? 0}%)`, 
+    backdropFilter: currentStyles.backdropBlur ? `blur(${currentStyles.backdropBlur}px)` : undefined,
+    WebkitBackdropFilter: currentStyles.backdropBlur ? `blur(${currentStyles.backdropBlur}px)` : undefined,
     mixBlendMode: currentStyles.mixBlendMode || 'normal', 
-    cursor: isPreviewMode ? 'default' : (isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default'), 
+    cursor: isInteractive ? 'pointer' : (isPreviewMode ? 'default' : (isAbsolute && !isEditing && !isMediaManagerOpen ? 'move' : 'default')), 
     pointerEvents: isBeingDragged ? 'none' : 'auto',
-    zIndex: isBeingDragged ? 99999 : (isActive && !isPreviewMode ? 9999 : (currentStyles.zIndex || 1)),
+    zIndex: isBeingDragged ? 99999 : (isActive && !isPreviewMode ? 9999 : currentZIndex),
     transition: isBeingDragged ? 'none' : (currentStyles.transition || 'all 0.3s ease'),
     minWidth: currentStyles.minWidth !== undefined ? currentStyles.minWidth : 0, 
     minHeight: currentStyles.minHeight !== undefined ? currentStyles.minHeight : 0,
-    overflow: isActive && !isPreviewMode ? 'visible' : (currentStyles.overflow || 'visible'),
-    boxShadow: isDragOver && !isPreviewMode ? 'inset 0 4px 0 0 #ff4500, 0 0 20px rgba(255, 69, 0, 0.3)' : (currentStyles.boxShadow || 'none')
+    overflow: currentStyles.overflow || 'visible',
+    boxShadow: isDragOver && !isPreviewMode ? 'inset 0 4px 0 0 #ff4500, 0 0 20px rgba(255, 69, 0, 0.3)' : (currentStyles.boxShadow || 'none'),
+    ...animStyles 
   };
 
-  if (b.children) { 
-    containerStyles.display = currentStyles.display || 'flex'; 
-    if (containerStyles.display === 'flex') containerStyles.flexDirection = currentStyles.flexDirection || 'column'; 
-    containerStyles.flexWrap = currentStyles.flexWrap || 'wrap';
-    containerStyles.gap = currentStyles.gap || '20px';
-    containerStyles.gridTemplateColumns = currentStyles.gridTemplateColumns;
-    containerStyles.gridTemplateRows = currentStyles.gridTemplateRows;
-    containerStyles.alignItems = currentStyles.alignItems || 'stretch';
-    containerStyles.justifyContent = currentStyles.justifyContent || 'stretch';
+  let innerPadding = currentStyles.padding || '0px';
+  if (b.children) {
+    delete containerStyles.padding; 
+    containerStyles.display = 'block';
   }
 
-  const hover = b.hoverStyles || {};
-  const hasHover = hover.scale || hover.translateY || hover.backgroundColor;
-  
-  if (shouldAnimate) {
-    if (b.entranceAnim === 'fade-in') containerStyles.animation = `fadeIn 0.8s ease-out forwards`;
-    if (b.entranceAnim === 'slide-up') containerStyles.animation = `slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
-    if (b.entranceAnim === 'zoom-in') containerStyles.animation = `zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards`;
+  if (b.type === 'popup') {
+    if (!isPreviewMode) {
+      containerStyles.border = '2px dashed #9333ea';
+      containerStyles.position = 'relative';
+      containerStyles.margin = '20px 0';
+    } else {
+      if (previewPopupId !== b.id) return null;
+      containerStyles.position = 'fixed';
+      containerStyles.top = '50%';
+      containerStyles.left = '50%';
+      containerStyles.transform = 'translate(-50%, -50%)';
+      containerStyles.zIndex = 999999;
+      containerStyles.maxWidth = '90vw';
+      containerStyles.maxHeight = '90vh';
+      containerStyles.overflowY = 'auto';
+    }
   }
 
-  const getEmbedUrl = (url: string) => {
-    if (!url) return '';
-    if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/').split('&')[0];
-    if (url.includes('youtu.be/')) return url.replace('youtu.be/', 'www.youtube.com/embed/');
-    if (url.includes('vimeo.com/')) return url.replace('vimeo.com/', 'player.vimeo.com/video/');
-    return url;
+  if (isHiddenByRWD && isPreviewMode) return null;
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormStatus('loading');
+    
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    
+    const enrichedData = { ...data, form_id: `form_${b.id}` };
+    const currentSlug = typeof window !== 'undefined' ? (window.location.pathname.split('/').pop() || 'vyrai') : 'vyrai';
+    
+    try {
+      const { error } = await supabase.from('leads').insert([
+        { page_slug: currentSlug, data: enrichedData }
+      ]);
+      if (error) throw error;
+      setFormStatus('success');
+      e.currentTarget.reset();
+    } catch (err) {
+      console.error(err);
+      setFormStatus('error');
+    }
+    setTimeout(() => setFormStatus('idle'), 3000);
   };
 
   const handleResizeStart = (e: React.MouseEvent, dir: string) => {
@@ -130,60 +174,103 @@ export default function CanvasBlock({
     });
   };
 
+  // 🔥 NAPRAWIONE RENDEROWANIE TEKSTU I PRZYCISKÓW 🔥
   const renderTextElement = (Tag: keyof JSX.IntrinsicElements) => {
     const textStyles: any = { 
       fontSize: currentStyles.fontSize || 'inherit', fontWeight: currentStyles.fontWeight || 'inherit', color: currentStyles.color || 'inherit', 
       textAlign: currentStyles.textAlign, lineHeight: currentStyles.lineHeight || 'inherit', letterSpacing: currentStyles.letterSpacing || 'inherit',
       textTransform: currentStyles.textTransform || 'none', margin: 0, overflowY: currentStyles.overflowY || 'hidden', overflowX: 'hidden', 
-      wordBreak:'break-word', outline: 'none', cursor: (isActive && isEditing && !isPreviewMode) ? 'text' : 'inherit', textShadow: currentStyles.textShadow, 
+      wordBreak:'break-word', outline: 'none', cursor: isInteractive ? 'pointer' : ((isActive && isEditing && !isPreviewMode) ? 'text' : 'inherit'), textShadow: currentStyles.textShadow, 
       width: '100%', height: '100%', display: Tag === 'div' ? 'flex' : 'block', alignItems: currentStyles.alignItems, justifyContent: currentStyles.justifyContent, 
       zIndex: 10, position: 'relative', flex: currentStyles.flex || 'auto'
     };
 
     if (currentStyles.WebkitBackgroundClip === 'text') {
       textStyles.backgroundImage = currentStyles.backgroundImage; textStyles.WebkitBackgroundClip = 'text'; textStyles.WebkitTextFillColor = 'transparent';
-      textStyles.color = 'transparent'; containerStyles.backgroundImage = 'none'; containerStyles.WebkitBackgroundClip = 'unset'; containerStyles.WebkitTextFillColor = 'unset';
+      textStyles.color = 'transparent';
     }
 
     if (currentStyles.WebkitTextStroke) {
-      textStyles.WebkitTextStroke = currentStyles.WebkitTextStroke; textStyles.color = currentStyles.color || 'transparent'; containerStyles.WebkitTextStroke = 'unset';
+      textStyles.WebkitTextStroke = currentStyles.WebkitTextStroke; textStyles.color = currentStyles.color || 'transparent';
+    }
+
+    const ActualTag = (isPreviewMode && b.type === 'button') ? 'button' : Tag;
+
+    const commonProps = {
+      id: `text-${b.id}`,
+      ref: textRef as any,
+      style: textStyles,
+      onMouseDown: (e: any) => {
+        if (isPreviewMode) return;
+        e.stopPropagation(); 
+        if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); }
+      },
+      onDoubleClick: (e: any) => { 
+        if (isPreviewMode) return; 
+        e.stopPropagation(); 
+        setIsEditing(true); 
+        setTimeout(() => e.target.focus(), 10);
+      },
+      onBlur: (e: React.FocusEvent<HTMLElement>) => { 
+        if (e.currentTarget.innerHTML !== b.text) updateActiveBlock({ text: e.currentTarget.innerHTML }, false, b.id); 
+      }
+    };
+
+    if (ActualTag === 'button') {
+      return (
+        <button {...commonProps} type="submit">
+          <span dangerouslySetInnerHTML={{ __html: localText }} />
+        </button>
+      );
     }
 
     return (
-      <Tag style={textStyles} contentEditable={isActive && isEditing && !isPreviewMode} suppressContentEditableWarning={true} onDoubleClick={(e: any) => { if (isPreviewMode) return; e.stopPropagation(); setIsEditing(true); }} onBlur={(e: any) => { setIsEditing(false); updateActiveBlock({ text: e.currentTarget.innerHTML }); }} dangerouslySetInnerHTML={{ __html: b.text || '' }} />
+      <ActualTag 
+        {...commonProps}
+        contentEditable={isActive && isEditing && !isPreviewMode} 
+        suppressContentEditableWarning={true} 
+        dangerouslySetInnerHTML={{ __html: localText }} 
+      />
     );
   };
 
-  return (
+  const ContainerTag = (isPreviewMode && b.type === 'form') ? 'form' : 'div';
+
+  const blockContent = (
     <>
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        #block-${b.id} { transition: ${isBeingDragged ? 'none !important' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease'}; }
-        ${hasHover ? `#block-${b.id}:hover { transform: scale(${hover.scale || 1}) translateY(${hover.translateY || 0}px) !important; ${hover.backgroundColor ? `background-color: ${hover.backgroundColor} !important;` : ''} z-index: 50 !important; }` : ''}
-        #block-${b.id} ::-webkit-scrollbar { width: 6px; }
-        #block-${b.id} ::-webkit-scrollbar-track { background: transparent; }
-        #block-${b.id} ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-        #block-${b.id} ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+        ${getGlobalKeyframes()}
+        #block-${b.id} { transition: ${isBeingDragged ? 'none !important' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'}; }
+        ${hoverCSS ? `#block-${b.id}:hover { ${hoverCSS} z-index: 50 !important; }` : ''}
       `}} />
 
-      <div id={`block-${b.id}`} style={containerStyles} 
-        onClick={(e) => { e.stopPropagation(); }} 
+      <ContainerTag 
+        ref={blockRef as any} id={`block-${b.id}`} style={containerStyles} 
+        onSubmit={isPreviewMode && b.type === 'form' ? handleFormSubmit : undefined}
+        onClick={(e) => { 
+          e.stopPropagation(); 
+          if (isPreviewMode) {
+             if (b.interactionType === 'url' && b.actionUrl) window.open(b.actionUrl, b.actionTarget || '_self');
+             else if (b.interactionType === 'scroll' && b.actionScrollId) {
+                const target = document.getElementById(`block-${b.actionScrollId}`);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+             } 
+             else if (b.interactionType === 'open_popup' && b.actionPopupId && setPreviewPopupId) setPreviewPopupId(parseInt(b.actionPopupId));
+             else if (b.interactionType === 'close_popup' && setPreviewPopupId) setPreviewPopupId(null);
+          }
+        }} 
+        onContextMenu={(e) => {
+          if (isPreviewMode) return; e.preventDefault(); e.stopPropagation(); setActiveId(b.id); setIsEditing(false);
+          if (setContextMenu) setContextMenu({ x: e.clientX, y: e.clientY, blockId: b.id });
+        }}
         onMouseDown={(e) => { 
           e.stopPropagation(); 
-          if (isPreviewMode) return; // BLOKADA: W podglądzie nie da się klikać i ciągnąć elementów
-          
+          if (isPreviewMode) return; 
           if (activeId !== b.id) { if (parentId && !parentActive && !e.ctrlKey && !e.metaKey) { setActiveId(parentId); setIsEditing(false); return; } setActiveId(b.id); setIsEditing(false); } 
           if ((isActive && isEditing) || isMediaManagerOpen) return; 
-          
-          setInteraction({ 
-            type: 'drag', startX: e.pageX, startY: e.pageY, blockId: b.id, hasMoved: false,
-            initialLeft: parseFloat(b.styles.left) || 0, 
-            initialTop: parseFloat(b.styles.top) || 0 
-          });
+          setInteraction({ type: 'drag', startX: e.pageX, startY: e.pageY, blockId: b.id, hasMoved: false, initialLeft: parseFloat(b.styles.left) || 0, initialTop: parseFloat(b.styles.top) || 0 });
         }}
-        onDoubleClick={(e) => { e.stopPropagation(); if (isPreviewMode) return; if (b.type === 'img' || b.images) { setIsMediaManagerOpen(true); } }}
+        onDoubleClick={(e) => { e.stopPropagation(); if (isPreviewMode) return; if (b.type === 'img' || b.images) setIsMediaManagerOpen(true); }}
         className={`group ${!isActive && !isPreviewMode ? 'hover:outline hover:outline-1 hover:outline-[#ff4500]/50 hover:outline-dashed' : (!isPreviewMode ? 'cursor-grab active:cursor-grabbing' : '')} ${draggedId === b.id ? 'opacity-50' : ''}`}
       >
         {currentStyles.bgType === 'video' && currentStyles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={currentStyles.bgVideo} />}
@@ -211,18 +298,20 @@ export default function CanvasBlock({
         {b.type === 'graphic' && <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}} dangerouslySetInnerHTML={{ __html: b.text || '' }}></div>}
         
         {['input', 'textarea'].includes(b.type) && (
-          <div className="w-full h-full text-inherit pointer-events-none z-10 relative flex" style={{ alignItems: currentStyles.alignItems || 'center' }}>
-            {b.text}
-          </div>
+          isPreviewMode ? (
+            b.type === 'input' 
+              ? <input type="text" name={`field_${b.id}`} placeholder={b.text || 'Wpisz...'} className="w-full h-full text-inherit outline-none bg-transparent placeholder-white/50 relative z-10" style={{ alignItems: currentStyles.alignItems || 'center' }} required />
+              : <textarea name={`field_${b.id}`} placeholder={b.text || 'Wpisz...'} className="w-full h-full text-inherit outline-none bg-transparent placeholder-white/50 resize-none relative z-10" style={{ alignItems: currentStyles.alignItems || 'center' }} required />
+          ) : (
+            <div className="w-full h-full text-inherit pointer-events-none z-10 relative flex" style={{ alignItems: currentStyles.alignItems || 'center' }}>{b.text}</div>
+          )
         )}
         
         {b.type === 'video' && (
           <div className="w-full h-full relative z-10 overflow-hidden" style={{ borderRadius: currentStyles.borderRadius }}>
             {b.src && (b.src.includes('youtube') || b.src.includes('youtu.be') || b.src.includes('vimeo')) ? (
               <iframe className="w-full h-full pointer-events-none" src={getEmbedUrl(b.src)} frameBorder="0" allowFullScreen></iframe>
-            ) : (
-              <video className="w-full h-full object-cover pointer-events-none" controls src={b.src} />
-            )}
+            ) : <video className="w-full h-full object-cover pointer-events-none" controls src={b.src} />}
             <div className="absolute inset-0 z-20 cursor-pointer"></div>
           </div>
         )}
@@ -242,63 +331,65 @@ export default function CanvasBlock({
         )}
         
         {b.children && (
-          <div className="w-full h-full relative pointer-events-none flex flex-col flex-1 overflow-hidden" style={{zIndex: 10, borderRadius: 'inherit'}}>
-             
+          <div className="w-full h-full relative pointer-events-none flex flex-col flex-1" style={{zIndex: 10, borderRadius: 'inherit', overflow: forceVisibleOverflow ? 'visible' : 'hidden'}}>
              {b.children.length === 0 && !isPreviewMode && (
                <div className="absolute inset-2 flex items-center justify-center text-[10px] text-neutral-400 font-mono italic border-2 border-dashed border-neutral-300/50 bg-neutral-50/50 rounded-lg pointer-events-none transition-colors group-hover:border-blue-400/50 group-hover:bg-blue-50/30 z-0">
                  Upuść elementy
                </div>
              )}
-             
-             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ display: currentStyles.display === 'grid' ? 'grid' : 'flex', flexWrap: currentStyles.flexWrap || 'wrap', flexDirection: currentStyles.display === 'grid' ? undefined : (currentStyles.flexDirection || 'column'), gap: currentStyles.gap || '20px', gridTemplateColumns: currentStyles.gridTemplateColumns, gridTemplateRows: currentStyles.gridTemplateRows, alignItems: currentStyles.alignItems || 'stretch', justifyContent: currentStyles.justifyContent || 'stretch' }}>
-                {b.children.map((child: any) => {
-                   return (
+             <div className="pointer-events-auto w-full h-full relative flex-1" style={{ 
+                 padding: innerPadding, display: currentStyles.display === 'grid' ? 'grid' : 'flex', flexWrap: currentStyles.flexWrap || 'wrap', 
+                 flexDirection: currentStyles.display === 'grid' ? undefined : (currentStyles.flexDirection || 'column'), gap: currentStyles.gap || '20px', 
+                 gridTemplateColumns: currentStyles.gridTemplateColumns, gridTemplateRows: currentStyles.gridTemplateRows, 
+                 alignItems: currentStyles.alignItems || 'stretch', justifyContent: currentStyles.justifyContent || 'stretch' 
+             }}>
+                {b.children.map((child: any) => (
                      <CanvasBlock 
-                       key={child.id} b={child} activeId={activeId} setActiveId={setActiveId} 
-                       isEditing={isEditing} setIsEditing={setIsEditing} 
-                       isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                       setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                       parentId={b.id} parentActive={isActive} interaction={interaction}
-                       draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                       hiddenBlocks={hiddenBlocks} viewport={viewport}
-                       handleDuplicate={handleDuplicate} removeActiveBlock={removeActiveBlock}
-                       isPreviewMode={isPreviewMode}
+                       key={child.id} b={child} activeId={activeId} setActiveId={setActiveId} isEditing={isEditing} setIsEditing={setIsEditing} 
+                       isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
+                       parentId={b.id} parentActive={isActive} interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
+                       hiddenBlocks={hiddenBlocks} viewport={viewport} handleDuplicate={handleDuplicate} removeActiveBlock={removeActiveBlock}
+                       isPreviewMode={isPreviewMode} copiedStyles={copiedStyles} setCopiedStyles={setCopiedStyles} setContextMenu={setContextMenu}
+                       previewPopupId={previewPopupId} setPreviewPopupId={setPreviewPopupId}
                      />
-                   );
-                })}
+                ))}
              </div>
+             
+             {isPreviewMode && b.type === 'form' && formStatus === 'loading' && (
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 rounded-inherit">
+                   <div className="w-8 h-8 border-4 border-[#ff4500] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+             )}
+             {isPreviewMode && b.type === 'form' && formStatus === 'success' && (
+                <div className="absolute inset-0 bg-green-500/90 text-white flex flex-col items-center justify-center z-50 rounded-inherit animate-in fade-in zoom-in">
+                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                   <span className="font-bold tracking-widest uppercase text-[10px]">Wysłano pomyślnie!</span>
+                </div>
+             )}
+             {isPreviewMode && b.type === 'form' && formStatus === 'error' && (
+                <div className="absolute inset-0 bg-red-500/90 text-white flex flex-col items-center justify-center z-50 rounded-inherit animate-in fade-in zoom-in">
+                   <span className="font-bold tracking-widest uppercase text-[10px]">Błąd wysyłania!</span>
+                </div>
+             )}
           </div>
         )}
 
         {isActive && !isEditing && !isPreviewMode && (
-          <div className="absolute inset-0 pointer-events-none border-2 border-[#ff4500] z-[200]">
-            <div className="absolute -top-6 left-[-2px] bg-[#ff4500] text-white text-[9px] px-2 py-1.5 rounded-t font-bold shadow-sm whitespace-nowrap z-[200] flex items-center gap-2 pointer-events-auto cursor-default transition-colors hover:bg-orange-600"
-                 onDoubleClick={(e) => { e.stopPropagation(); updateActiveBlock({ styles: { left: '0px', top: '0px' } }, true); }}
-                 title="Dwuklik: Wyzeruj swobodne przesunięcie"
-            >
-              <span>{b.name}</span>
-              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-white/30">
-                 <button onClick={(e) => { e.stopPropagation(); if(handleDuplicate) handleDuplicate(); }} className="hover:text-yellow-200 transition-colors" title="Duplikuj (Ctrl+D)">
-                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                 </button>
-                 <button onClick={(e) => { e.stopPropagation(); if(removeActiveBlock) removeActiveBlock(); }} className="hover:text-red-300 transition-colors" title="Usuń (Delete)">
-                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                 </button>
-              </div>
-            </div>
-            
-            <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-nw-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
-            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-ne-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
-            <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-sw-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
-            <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-se-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'se')} />
-            
-            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-n-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'n')} />
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-3 bg-white border-2 border-[#ff4500] rounded-sm cursor-s-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 's')} />
-            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-[#ff4500] rounded-sm cursor-w-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'w')} />
-            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-4 bg-white border-2 border-[#ff4500] rounded-sm cursor-e-resize pointer-events-auto hover:bg-[#ff4500] transition-colors" onMouseDown={(e) => handleResizeStart(e, 'e')} />
-          </div>
+          <ActiveBlockOverlay 
+            block={b} currentZIndex={currentZIndex} updateActiveBlock={updateActiveBlock} copiedStyles={copiedStyles} setCopiedStyles={setCopiedStyles} handleDuplicate={handleDuplicate} removeActiveBlock={removeActiveBlock} handleResizeStart={handleResizeStart} 
+          />
         )}
-      </div>
+      </ContainerTag>
     </>
   );
+
+  if (isPreviewMode && b.type === 'popup' && previewPopupId === b.id) {
+    return (
+      <div className="fixed inset-0 z-[999998] flex items-center justify-center animate-in fade-in duration-300" style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }} onClick={() => setPreviewPopupId && setPreviewPopupId(null)}>
+        <div onClick={e => e.stopPropagation()}>{blockContent}</div>
+      </div>
+    );
+  }
+
+  return blockContent;
 }

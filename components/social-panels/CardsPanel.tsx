@@ -1,11 +1,15 @@
 import React from 'react';
 
+interface PanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
+
 const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, icon: string, onClick: () => void }) => (
   <button 
     onClick={onClick} 
-    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-pink-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm"
+    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-pink-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm mb-2"
   >
-    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-pink-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5">
+    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-pink-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5 text-white">
       {icon}
     </div>
     <div className="flex-1">
@@ -15,15 +19,21 @@ const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, i
   </button>
 );
 
-export default function CardsPanel({ handleAddBlock }: { handleAddBlock: any }) {
+export default function CardsPanel({ handleAddBlock }: PanelProps) {
   return (
-    <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
-       <UICard 
-         icon="💬" 
-         title="Karta Opinii (Testimonial)" 
-         desc="Gotowy blok z cytatem, zdjęciem autora i gwiazdkami." 
-         onClick={() => handleAddBlock('container', 'testimonial', 'Opinia')} 
-       />
+    <div className="p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
+      <UICard 
+        icon="⭐" 
+        title="Klasyczna Recenzja" 
+        desc="Karta z cytatem, pięcioma gwiazdkami i zdjęciem autora." 
+        onClick={() => handleAddBlock('container', 'review-classic', 'Recenzja')} 
+      />
+      <UICard 
+        icon="🐦" 
+        title="Wpis z Twittera (X)" 
+        desc="Elegancka imitacja prawdziwego tweeta od zadowolonego klienta." 
+        onClick={() => handleAddBlock('container', 'tweet-card', 'Tweet Card')} 
+      />
     </div>
   );
 }

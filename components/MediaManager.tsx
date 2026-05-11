@@ -1,234 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabase';
 
 interface MediaManagerProps {
   activeBlock: any;
-  updateActiveBlock: (updates: any) => void;
+  updateActiveBlock: (updates: any, skipHistory?: boolean, specificId?: number) => void;
   setIsMediaManagerOpen: (val: boolean) => void;
 }
 
 export default function MediaManager({ activeBlock, updateActiveBlock, setIsMediaManagerOpen }: MediaManagerProps) {
-  const [files, setFiles] = useState<{ name: string, url: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  
-  // NOWY STAN: do wklejania zewnętrznego linku
-  const [externalUrl, setExternalUrl] = useState('');
+  const [query, setQuery] = useState('cyberpunk');
+  const [images, setImages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // 1. Pobieranie plików z Supabase (bucket: 'media')
-  const fetchMedia = async () => {
+  // 🔥 TUTAJ WKLEJ SWÓJ KLUCZ API Z UNSPLASH 🔥
+  // Możesz go wygenerować za darmo na stronie: https://unsplash.com/developers
+  const UNSPLASH_ACCESS_KEY = 'Lq2Ac98VdZ_O0RF3RKiuCplmbMbVyTQzcHxmo3UFPNI'; 
+
+  const searchUnsplash = async (searchQuery: string) => {
     setLoading(true);
-    const { data, error } = await supabase.storage.from('media').list();
+    setError('');
     
-    if (error) {
-      console.error('Błąd pobierania mediów:', error);
-      setLoading(false);
-      return;
-    }
+    try {
+      if (UNSPLASH_ACCESS_KEY === 'WPISZ_SWOJ_KLUCZ_API_UNSPLASH') {
+        // Tryb demonstracyjny (Fallback) dopóki nie wpiszesz swojego klucza API
+        setImages([
+          { id: 1, urls: { regular: 'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Cyber city', user: { name: 'Demo User' } },
+          { id: 2, urls: { regular: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Code', user: { name: 'Demo User' } },
+          { id: 3, urls: { regular: 'https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Setup', user: { name: 'Demo User' } },
+          { id: 4, urls: { regular: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Earth', user: { name: 'Demo User' } },
+          { id: 5, urls: { regular: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Matrix', user: { name: 'Demo User' } },
+          { id: 6, urls: { regular: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Cyberpunk', user: { name: 'Demo User' } },
+          { id: 7, urls: { regular: 'https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Abstract', user: { name: 'Demo User' } },
+          { id: 8, urls: { regular: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1080&auto=format&fit=crop' }, alt_description: 'Tech', user: { name: 'Demo User' } }
+        ]);
+        setError('Tryb Demo: Dodaj swój darmowy klucz API z Unsplash w kodzie (UNSPLASH_ACCESS_KEY), aby korzystać z wyszukiwarki na żywo!');
+        setLoading(false);
+        return;
+      }
 
-    if (data) {
-      const validFiles = data.filter(f => f.name && !f.name.startsWith('.'));
-      const fileData = validFiles.map(file => {
-        const { data: publicUrlData } = supabase.storage.from('media').getPublicUrl(file.name);
-        return { name: file.name, url: publicUrlData.publicUrl };
-      });
+      const res = await fetch(`https://api.unsplash.com/search/photos?page=1&per_page=30&query=${searchQuery}&client_id=${UNSPLASH_ACCESS_KEY}`);
+      const data = await res.json();
       
-      setFiles(fileData.reverse());
+      if (data.results && data.results.length > 0) {
+        setImages(data.results);
+      } else {
+        setImages([]);
+        setError('Brak wyników dla tego hasła. Spróbuj czegoś innego!');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Wystąpił błąd podczas łączenia z API Unsplash. Sprawdź konsolę.');
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchMedia();
+    // Odpalamy domyślne wyszukiwanie przy otwarciu okna
+    searchUnsplash(query);
   }, []);
 
-  // 2. Upload pliku do Supabase
-  const handleUpload = async (file: File) => {
-    if (!file) return;
-    setUploading(true);
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-
-    const { error } = await supabase.storage.from('media').upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-
-    if (error) {
-      alert(`Błąd wgrywania: ${error.message}`);
-    } else {
-      await fetchMedia(); 
-    }
-    setUploading(false);
-  };
-
-  // 3. Obsługa zdarzeń Drag & Drop
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-    else if (e.type === "dragleave") setDragActive(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleUpload(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleUpload(e.target.files[0]);
-    }
-  };
-
-  // 4. Wybór zdjęcia i wstrzyknięcie do płótna
   const handleSelectImage = (url: string) => {
-    if (!activeBlock || !url) return;
+    if (!activeBlock) return;
     
-    if (activeBlock.type === 'img' || activeBlock.type === 'video') {
-      updateActiveBlock({ src: url });
+    // Sprawdzamy czy to klocek typu obrazek, czy dodajemy zdjęcie jako tło
+    if (activeBlock.type === 'img') {
+      updateActiveBlock({ src: url }, false, activeBlock.id);
     } else {
-      updateActiveBlock({ styles: { bgImage: url, bgType: 'image' } });
+      updateActiveBlock({ 
+        styles: { 
+          ...activeBlock.styles, 
+          bgType: 'image', 
+          bgImage: url,
+        } 
+      }, false, activeBlock.id);
     }
     
     setIsMediaManagerOpen(false);
   };
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-in fade-in duration-300">
-      
-      {/* Tło przyciemniające */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={() => setIsMediaManagerOpen(false)}
-      ></div>
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    searchUnsplash(query);
+  };
 
-      {/* Główne okno Menedżera */}
-      <div className="relative w-[900px] h-[80vh] max-h-[800px] bg-[rgba(15,15,20,0.8)] backdrop-blur-[40px] saturate-[150%] border border-white/10 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden scale-100 animate-in zoom-in-95 duration-300">
+  return (
+    <div 
+      className="fixed inset-0 z-[9999999] flex items-center justify-center p-6 animate-in fade-in duration-300"
+      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)' }}
+      onClick={() => setIsMediaManagerOpen(false)} // Zamknij po kliknięciu w tło
+    >
+      <div 
+        className="w-full max-w-5xl bg-[#0a0a0c] border border-white/10 rounded-2xl shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col h-[85vh]"
+        onClick={(e) => e.stopPropagation()} // Zapobiega zamknięciu po kliknięciu w samo okno
+      >
         
-        {/* HEADER */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-white/5 bg-white/[0.02]">
+        {/* HEADER: Wyszukiwarka */}
+        <div className="p-5 border-b border-white/5 bg-black/40 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center shadow-inner">
-              <span className="text-xl">🌌</span>
-            </div>
-            <div>
-              <h2 className="text-white font-bold text-lg tracking-wide">Menedżer Mediów</h2>
-              <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold">Zarządzaj plikami w chmurze i linkami</p>
-            </div>
+             <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+             </div>
+             <div>
+               <h2 className="text-sm font-bold text-white uppercase tracking-widest">Biblioteka Mediów</h2>
+               <p className="text-[10px] text-neutral-400">Powered by Unsplash API</p>
+             </div>
           </div>
-          <button 
-            onClick={() => setIsMediaManagerOpen(false)} 
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-neutral-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all"
-          >
-            ✕
+
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md relative group">
+            <input 
+              type="text" 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Szukaj zdjęć (np. neon, office, nature)..." 
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-white outline-none focus:border-[#ff4500] focus:bg-black/50 transition-all shadow-inner"
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 group-focus-within:text-[#ff4500] transition-colors" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <button type="submit" className="hidden">Szukaj</button>
+          </form>
+
+          <button onClick={() => setIsMediaManagerOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-neutral-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 border border-white/10 transition-all">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide flex flex-col gap-6">
-          
-          {/* STREFA ZRZUTU (Upload) */}
-          <label 
-            onDragEnter={handleDrag} 
-            onDragLeave={handleDrag} 
-            onDragOver={handleDrag} 
-            onDrop={handleDrop}
-            className={`w-full h-32 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer shrink-0 ${
-              dragActive 
-                ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_30px_rgba(59,130,246,0.2)] scale-[1.02]' 
-                : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
-            }`}
-          >
-            <input 
-              type="file" 
-              onChange={handleFileChange} 
-              accept="image/*,video/*" 
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-            />
-            
-            {uploading ? (
-              <div className="flex flex-col items-center gap-3 pointer-events-none">
-                <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-                <span className="text-xs font-bold text-blue-400 uppercase tracking-widest animate-pulse">Wysyłanie w kosmos...</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center pointer-events-none">
-                <span className="text-3xl mb-2 transition-transform duration-300 group-hover:-translate-y-2">☁️</span>
-                <p className="text-sm font-bold text-white mb-1">Przeciągnij i upuść pliki tutaj</p>
-                <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">lub kliknij, aby przeglądać dysk</p>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full hover:animate-[shine_1.5s_ease-in-out_infinite] pointer-events-none"></div>
-          </label>
-
-          {/* NOWE: ZEWNĘTRZNY URL */}
-          <div className="flex flex-col gap-2 shrink-0">
-            <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-white/5 pb-2">
-              Zewnętrzny Link (URL)
-            </h3>
-            <div className="flex gap-3">
-              <input 
-                type="text" 
-                value={externalUrl} 
-                onChange={(e) => setExternalUrl(e.target.value)} 
-                placeholder="https://images.unsplash.com/photo-..." 
-                className="flex-1 bg-black/40 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl outline-none focus:border-blue-500 transition-all shadow-inner"
-              />
-              <button 
-                onClick={() => handleSelectImage(externalUrl)}
-                disabled={!externalUrl.trim()}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                Zastosuj
-              </button>
-            </div>
+        {/* ERROR MESSAGE (np. Info o braku klucza API) */}
+        {error && (
+          <div className="bg-orange-500/20 border-b border-orange-500/30 p-3 text-center">
+            <span className="text-orange-400 text-xs font-bold">{error}</span>
           </div>
+        )}
 
-          {/* GALERIA PLIKÓW Z CHMURY */}
-          <div className="flex flex-col gap-3">
-            <h3 className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest border-b border-white/5 pb-2">
-              Twoja Biblioteka w Chmurze
-            </h3>
-            
-            {loading ? (
-              <div className="flex items-center justify-center h-40">
-                <span className="text-xs font-mono text-neutral-500 animate-pulse">Ładowanie bazy danych...</span>
-              </div>
-            ) : files.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 border border-white/5 rounded-xl bg-white/[0.02]">
-                <span className="text-2xl mb-2 opacity-30">🏜️</span>
-                <span className="text-xs font-mono text-neutral-500">Pustynia. Czas coś wgrać.</span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 pb-4">
-                {files.map((file, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => handleSelectImage(file.url)}
-                    className="group relative aspect-square rounded-xl overflow-hidden border border-white/10 bg-black/50 cursor-pointer shadow-sm hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:border-white/30 hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <img 
-                      src={file.url} 
-                      alt={file.name} 
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-600/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-3">
-                      <span className="text-[10px] font-bold text-white uppercase tracking-widest drop-shadow-md">Wybierz</span>
+        {/* GALERIA ZDJĘĆ */}
+        <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative">
+          {loading ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+               <div className="w-10 h-10 border-4 border-white/10 border-t-[#ff4500] rounded-full animate-spin"></div>
+               <span className="text-xs text-neutral-400 uppercase tracking-widest font-bold animate-pulse">Ładowanie zasobów...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-max">
+              {images.map((img) => (
+                <div 
+                  key={img.id} 
+                  onClick={() => handleSelectImage(img.urls.regular)}
+                  className="group relative aspect-video bg-neutral-900 rounded-xl overflow-hidden cursor-pointer border border-white/5 hover:border-[#ff4500] transition-all duration-300 shadow-md hover:shadow-[0_10px_30px_rgba(255,69,0,0.3)] hover:-translate-y-1"
+                >
+                  <img 
+                    src={img.urls.regular} 
+                    alt={img.alt_description || 'Unsplash image'} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                     <span className="text-[9px] text-white/70 truncate">📷 {img.user?.name || 'Unsplash'}</span>
+                  </div>
+                  
+                  {/* Przycisk użycia, który pojawia się na środku */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="bg-[#ff4500] text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-lg scale-90 group-hover:scale-100 transition-transform duration-300">
+                      Zastosuj
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* STOPKA */}
+        <div className="p-4 border-t border-white/5 bg-black/40 flex justify-between items-center text-[10px] text-neutral-500">
+          <span>Wybrany element: <strong className="text-neutral-300">{activeBlock?.name || 'Brak'}</strong></span>
+          <span>Dwuklik w edytorze pozwala na szybką podmianę mediów.</span>
+        </div>
+
       </div>
     </div>
   );

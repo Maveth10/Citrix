@@ -1,46 +1,52 @@
 import React from 'react';
 
-const btnWrapper = "group relative w-full text-left p-4 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-[color:var(--theme-color)]/[0.03] flex items-center gap-4 overflow-hidden";
-const activeLine = "absolute left-0 top-1/4 bottom-1/4 w-[2px] bg-[color:var(--theme-color)] scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow-[0_0_10px_var(--theme-color)] rounded-r-full";
-const iconBox = "relative w-9 h-9 rounded-lg bg-white/[0.02] border border-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0 group-hover:border-[color:var(--theme-color)]/40 group-hover:bg-[color:var(--theme-color)]/10 transition-all duration-300";
+interface PanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
 
-export default function ParagraphsPanel({ handleAddBlock }: { handleAddBlock: any }) {
+export default function ParagraphsPanel({ handleAddBlock }: PanelProps) {
   return (
-    <div className="flex flex-col bg-black/10">
+    <div className="flex flex-col gap-2 p-3 bg-white/5 border-x border-b border-[color:var(--theme-color)]/20 rounded-b-xl border-t-0 animate-in slide-in-from-top-2 duration-300">
       
-      <button onClick={() => handleAddBlock('p', 'eyebrow', 'Etykieta')} className={btnWrapper}>
-        <div className={activeLine}></div>
-        <div className={iconBox}><span className="text-[color:var(--theme-color)] font-bold text-[7px] uppercase tracking-widest">Eye</span></div>
-        <div>
-          <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Etykieta (Eyebrow)</span>
-          <span className="text-[10px] text-neutral-500 block leading-tight font-light">Drobny nadtytuł sekcji.</span>
+      {/* 1. Zwykły Akapit i Lead */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <button onClick={() => handleAddBlock('p', 'classic', 'Zwykły Akapit')} className="p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all text-left">
+          <span className="text-[10px] text-neutral-400 font-bold block mb-1">Standard</span>
+          <span className="text-xs text-white">Zwykły tekst...</span>
+        </button>
+        <button onClick={() => handleAddBlock('p', 'lead', 'Lead')} className="p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all text-left">
+          <span className="text-[10px] text-neutral-400 font-bold block mb-1">Lead</span>
+          <span className="text-[13px] text-white font-medium">Większy wstęp...</span>
+        </button>
+      </div>
+
+      {/* 2. Drop Cap (Inicjał) */}
+      <button onClick={() => handleAddBlock('p', 'drop-cap', 'Drop Cap')} className="w-full flex items-center p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group">
+        <div className="w-10 h-10 bg-white/5 rounded flex items-center justify-center mr-3 font-serif font-black text-2xl text-[color:var(--theme-color)]">L</div>
+        <div className="flex flex-col text-left">
+           <span className="text-[11px] font-bold text-white tracking-widest uppercase">Inicjał (Drop Cap)</span>
+           <span className="text-[9px] text-neutral-500">Wielka pierwsza litera jak w gazecie</span>
         </div>
       </button>
 
-      <button onClick={() => handleAddBlock('p', 'lead', 'Akapit Wiodący')} className={btnWrapper}>
-        <div className={activeLine}></div>
-        <div className={iconBox}><span className="text-neutral-400 text-sm italic font-serif border-l border-[color:var(--theme-color)] pl-1">¶</span></div>
-        <div>
-          <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Akapit Wiodący (Lead)</span>
-          <span className="text-[10px] text-neutral-500 block leading-tight font-light">Większy tekst wprowadzający.</span>
+      {/* 3. Kolumny Gazetowe */}
+      <button onClick={() => handleAddBlock('p', 'columns', 'Kolumny')} className="w-full flex items-center p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group">
+        <div className="w-10 h-10 bg-white/5 rounded flex gap-1 items-center justify-center mr-3 p-2">
+           <div className="w-full h-full bg-neutral-600 rounded-sm"></div>
+           <div className="w-full h-full bg-neutral-600 rounded-sm"></div>
+        </div>
+        <div className="flex flex-col text-left">
+           <span className="text-[11px] font-bold text-white tracking-widest uppercase">Kolumny CSS</span>
+           <span className="text-[9px] text-neutral-500">Automatyczny podział tekstu na 2 łamy</span>
         </div>
       </button>
 
-      <button onClick={() => handleAddBlock('p', 'quote', 'Cytat')} className={btnWrapper}>
-        <div className={activeLine}></div>
-        <div className={iconBox}><span className="text-neutral-400 text-base font-serif">"</span></div>
-        <div>
-          <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Wyróżnienie (Cytat)</span>
-          <span className="text-[10px] text-neutral-500 block leading-tight font-light">Z boczną ramką. Idealne na opinie.</span>
-        </div>
-      </button>
-
-      <button onClick={() => handleAddBlock('p', '', 'Zwykły Akapit')} className={btnWrapper}>
-        <div className={activeLine}></div>
-        <div className={iconBox}><span className="text-neutral-500 text-sm">≡</span></div>
-        <div>
-          <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Zwykły Akapit</span>
-          <span className="text-[10px] text-neutral-500 block leading-tight font-light">Standardowy blok tekstu.</span>
+      {/* 4. Pro Cytat */}
+      <button onClick={() => handleAddBlock('p', 'pro-quote', 'Cytat')} className="w-full flex items-center p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group">
+        <div className="w-10 h-10 bg-white/5 rounded flex items-center justify-center mr-3 font-serif italic font-black text-xl text-neutral-400 border-l-2 border-[color:var(--theme-color)]">"</div>
+        <div className="flex flex-col text-left">
+           <span className="text-[11px] font-bold text-white tracking-widest uppercase">Pro Cytat</span>
+           <span className="text-[9px] text-neutral-500">Z autorem i lewą linią akcentującą</span>
         </div>
       </button>
 

@@ -1,11 +1,15 @@
 import React from 'react';
 
+interface PanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
+
 const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, icon: string, onClick: () => void }) => (
   <button 
     onClick={onClick} 
-    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-slate-400/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm"
+    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-slate-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm mb-2"
   >
-    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-slate-400/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5">
+    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-slate-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5 text-white">
       {icon}
     </div>
     <div className="flex-1">
@@ -15,15 +19,21 @@ const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, i
   </button>
 );
 
-export default function CustomCodePanel({ handleAddBlock }: { handleAddBlock: any }) {
+export default function CustomCodePanel({ handleAddBlock }: PanelProps) {
   return (
-    <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
-       <UICard 
-         icon="⌨️" 
-         title="Custom HTML/Iframe" 
-         desc="Wklej dowolny kod iframe (Spotify, Typeform, Calendly)." 
-         onClick={() => handleAddBlock('embed', 'custom', 'Custom HTML')} 
-       />
+    <div className="p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
+      <UICard 
+        icon="🪟" 
+        title="Czysty iFrame" 
+        desc="Pusty kontener przygotowany na wklejenie linku (src)." 
+        onClick={() => handleAddBlock('embed', 'iframe', 'iFrame')} 
+      />
+      <UICard 
+        icon="👨‍💻" 
+        title="Własny kod HTML" 
+        desc="Blok, w którym możesz napisać dowolny kod HTML/CSS." 
+        onClick={() => handleAddBlock('embed', 'custom-html', 'HTML/JS')} 
+      />
     </div>
   );
 }

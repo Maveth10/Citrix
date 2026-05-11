@@ -1,35 +1,58 @@
-import React from 'react';
+import React, { useState } from 'react';
+import BasicFieldsPanel from './form-panels/BasicFieldsPanel';
+import ReadyFormsPanel from './form-panels/ReadyFormsPanel';
 
-const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, icon: string, onClick: () => void }) => (
-  <button 
-    onClick={onClick} 
-    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-cyan-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm"
-  >
-    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-cyan-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5">
-      {icon}
-    </div>
-    <div className="flex-1">
-      <span className="text-xs font-bold text-neutral-200 block mb-0.5">{title}</span>
-      <span className="text-[9px] text-neutral-500 block leading-tight">{desc}</span>
-    </div>
-  </button>
-);
+interface FormPanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
 
-export default function DirectVideoPanel({ handleAddBlock }: { handleAddBlock: any }) {
+type TabType = 'ready' | 'basic' | null;
+
+export default function FormPanel({ handleAddBlock }: FormPanelProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('ready');
+
+  const toggleTab = (tab: TabType) => {
+    setActiveTab(activeTab === tab ? null : tab);
+  };
+
+  const getTabStyle = (tab: TabType) => {
+    const isActive = activeTab === tab;
+    return `flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${
+      isActive 
+        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30 rounded-b-none' 
+        : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'
+    }`;
+  };
+
   return (
-    <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
-       <UICard 
-         icon="🎞️" 
-         title="Surowy MP4" 
-         desc="Odtwarzacz systemowy HTML5. Bezpośredni link do pliku." 
-         onClick={() => handleAddBlock('video', 'direct', 'Plik Wideo')} 
-       />
-       <UICard 
-         icon="🎬" 
-         title="Cinematic Hero" 
-         desc="Gotowa sekcja z wideo w tle, napisem i filtrem blur." 
-         onClick={() => handleAddBlock('section', 'video-hero', 'Sekcja Kinowa')} 
-       />
+    <div className="flex flex-col gap-3 pb-10">
+      
+      {/* KATEGORIA 1: GOTOWE FORMULARZE */}
+      <div className="flex flex-col drop-shadow-lg">
+        <button onClick={() => toggleTab('ready')} className={getTabStyle('ready')}>
+          <span>Gotowe Zestawy (Lead Gen)</span>
+          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'ready' ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
+        </button>
+        {activeTab === 'ready' && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+            <ReadyFormsPanel handleAddBlock={handleAddBlock} />
+          </div>
+        )}
+      </div>
+
+      {/* KATEGORIA 2: POJEDYNCZE POLA */}
+      <div className="flex flex-col drop-shadow-lg">
+        <button onClick={() => toggleTab('basic')} className={getTabStyle('basic')}>
+          <span>Pojedyncze Pola Input</span>
+          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'basic' ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
+        </button>
+        {activeTab === 'basic' && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+            <BasicFieldsPanel handleAddBlock={handleAddBlock} />
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

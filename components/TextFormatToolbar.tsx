@@ -1,107 +1,158 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { GOOGLE_FONTS, loadGoogleFont } from '../utils/fontsConfig';
 
 interface TextFormatToolbarProps {
   activeBlock: any;
   updateActiveBlock: (updates: any) => void;
+  isEditing?: boolean; // Dodane dla pełnej kompatybilności
 }
 
 export default function TextFormatToolbar({ activeBlock, updateActiveBlock }: TextFormatToolbarProps) {
-  if (!activeBlock || !['h1', 'h2', 'p', 'button', 'marquee', 'list', 'faq'].includes(activeBlock.type)) return null;
+  const [show, setShow] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
-  // Pogrupowany słownik potężnych fontów
-  const fontGroups = [
-    {
-      label: 'Systemowe',
-      options: [
-        { label: 'Domyślna (Dziedziczona)', value: 'inherit' },
-        { label: 'Systemowa Sans-serif', value: 'system-ui, -apple-system, sans-serif' },
-        { label: 'Systemowa Serif', value: 'ui-serif, Georgia, serif' },
-        { label: 'Systemowa Mono', value: 'ui-monospace, monospace' },
-      ]
-    },
-    {
-      label: 'Klasyczne (Web-safe)',
-      options: [
-        { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
-        { label: 'Arial Black', value: '"Arial Black", Gadget, sans-serif' },
-        { label: 'Book Antiqua', value: '"Book Antiqua", Palatino, serif' },
-        { label: 'Comic Sans MS', value: '"Comic Sans MS", cursive, sans-serif' },
-        { label: 'Courier New', value: '"Courier New", Courier, monospace' },
-        { label: 'Georgia', value: 'Georgia, serif' },
-        { label: 'Impact', value: 'Impact, Charcoal, sans-serif' },
-        { label: 'Lucida Console', value: '"Lucida Console", Monaco, monospace' },
-        { label: 'Lucida Sans', value: '"Lucida Sans Unicode", "Lucida Grande", sans-serif' },
-        { label: 'Palatino', value: 'Palatino, "Palatino Linotype", serif' },
-        { label: 'Tahoma', value: 'Tahoma, Geneva, sans-serif' },
-        { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
-        { label: 'Trebuchet MS', value: '"Trebuchet MS", Helvetica, sans-serif' },
-        { label: 'Verdana', value: 'Verdana, Geneva, sans-serif' },
-      ]
-    },
-    {
-      label: 'Nowoczesne (Google Fonts)',
-      options: [
-        { label: 'Inter', value: '"Inter", sans-serif' },
-        { label: 'Lato', value: '"Lato", sans-serif' },
-        { label: 'Montserrat', value: '"Montserrat", sans-serif' },
-        { label: 'Open Sans', value: '"Open Sans", sans-serif' },
-        { label: 'Oswald', value: '"Oswald", sans-serif' },
-        { label: 'Playfair Display', value: '"Playfair Display", serif' },
-        { label: 'Poppins', value: '"Poppins", sans-serif' },
-        { label: 'Raleway', value: '"Raleway", sans-serif' },
-        { label: 'Roboto', value: '"Roboto", sans-serif' },
-        { label: 'Source Sans Pro', value: '"Source Sans Pro", sans-serif' },
-      ]
+  // Nasłuchujemy zaznaczania tekstu przez użytkownika
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      
+      // Jeśli nie ma zaznaczenia lub to tylko kliknięcie (kursor) - ukrywamy pasek
+      if (!selection || selection.isCollapsed || !activeBlock) {
+        setShow(false);
+        return;
+      }
+
+      // Upewniamy się, że zaznaczony tekst jest wewnątrz aktywnego bloku
+      let node = selection.anchorNode;
+      let isInsideActive = false;
+      while (node) {
+        if (node.nodeType === 1 && (node as Element).id === `block-${activeBlock.id}`) {
+          isInsideActive = true;
+          break;
+        }
+        node = node.parentNode;
+      }
+
+      if (isInsideActive && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        // Obliczamy środek zaznaczonego tekstu i pozycjonujemy pasek lekko ponad nim
+        setPos({
+          top: rect.top - 55, 
+          left: rect.left + rect.width / 2
+        });
+        setShow(true);
+      } else {
+        setShow(false);
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelection);
+    window.addEventListener('scroll', handleSelection);
+    window.addEventListener('resize', handleSelection);
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleSelection);
+      window.removeEventListener('scroll', handleSelection);
+      window.removeEventListener('resize', handleSelection);
+    };
+  }, [activeBlock]);
+
+  if (!show || !activeBlock) return null;
+
+  // Wykonanie formatowania (używamy document.execCommand - standardu Rich Text)
+  const applyFormat = (e: React.MouseEvent | React.FormEvent<HTMLInputElement>, cmd: string, val?: string) => {
+    e.preventDefault(); // Krytyczne: Zapobiega utracie zaznaczenia tekstu po kliknięciu w przycisk!
+    
+    if (cmd === 'createLink') {
+      const url = prompt('Podaj adres URL (np. https://google.com):');
+      if (url) document.execCommand(cmd, false, url);
+    } else {
+      document.execCommand(cmd, false, val);
     }
-  ];
+  };
+
+  const handleFontFamilyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const font = e.target.value;
+    if (font) loadGoogleFont(font);
+    updateActiveBlock({ styles: { ...activeBlock.styles, fontFamily: font } });
+  };
 
   return (
-    <div className="flex items-center justify-center gap-2 px-6 py-3 border-b border-white/5 bg-[rgba(8,8,12,0.6)] backdrop-blur-[24px] saturate-[150%] relative z-40 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">      
-      
-      {/* WYBÓR CZCIONKI */}
-      <div className="relative group">
-        <select 
-          value={activeBlock.styles.fontFamily || 'inherit'} 
-          onChange={(e) => updateActiveBlock({ styles: { fontFamily: e.target.value }})}
-          className="appearance-none bg-white/5 hover:bg-white/10 text-white text-xs font-bold border border-white/10 hover:border-white/20 rounded-lg pl-4 pr-8 py-2 outline-none focus:border-[#ff4500] cursor-pointer transition-all shadow-inner"
-        >
-          {fontGroups.map((group, gIdx) => (
-            <optgroup key={gIdx} label={group.label} className="bg-[#0f0f13] text-neutral-400 font-semibold italic">
-              {group.options.map(f => (
-                <option key={f.value} value={f.value} className="bg-[#1a1a24] text-white not-italic font-normal">{f.label}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400 group-hover:text-white transition-colors text-[10px]">▼</div>
-      </div>
+    <div 
+      className="fixed z-[9999999] bg-[#1a1a1a] border border-white/10 rounded-xl shadow-[0_15px_50px_rgba(0,0,0,0.9)] flex items-center p-1.5 backdrop-blur-xl animate-in zoom-in-95 duration-200 -translate-x-1/2"
+      style={{ top: pos.top, left: pos.left }}
+    >
+      {/* SELEKTOR CZCIONEK */}
+      <select
+        value={activeBlock.styles?.fontFamily || ''}
+        onChange={handleFontFamilyChange}
+        onMouseDown={(e) => e.preventDefault()} // Zabezpieczenie przed utratą focusu!
+        className="bg-black/40 text-white text-xs py-1.5 px-2 rounded-lg border border-white/10 outline-none hover:border-[#ff4500] cursor-pointer appearance-none mr-1 shadow-inner focus:ring-1 focus:ring-[#ff4500] max-w-[120px]"
+      >
+        <option value="">Domyślny Font</option>
+        {GOOGLE_FONTS.map(font => (
+          <option key={font} value={font} style={{ fontFamily: font }}>
+            {font}
+          </option>
+        ))}
+      </select>
 
-      <div className="w-px h-6 bg-white/10 mx-2"></div>
+      <div className="w-px h-5 bg-white/20 mx-1"></div>
 
-      {/* WYRÓWNANIE TEKSTU */}
-      <div className="flex bg-white/5 rounded-lg border border-white/10 overflow-hidden shadow-inner p-0.5 gap-0.5">
-        <button onClick={() => updateActiveBlock({ styles: { textAlign: 'left' }})} className={`px-3 py-1.5 rounded-md transition-all text-xs ${activeBlock.styles.textAlign === 'left' ? 'text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>⫷</button>
-        <button onClick={() => updateActiveBlock({ styles: { textAlign: 'center' }})} className={`px-3 py-1.5 rounded-md transition-all text-xs ${activeBlock.styles.textAlign === 'center' || !activeBlock.styles.textAlign ? 'text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>⫼</button>
-        <button onClick={() => updateActiveBlock({ styles: { textAlign: 'right' }})} className={`px-3 py-1.5 rounded-md transition-all text-xs ${activeBlock.styles.textAlign === 'right' ? 'text-white bg-white/10 shadow-[0_0_10px_rgba(255,255,255,0.1)]' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}>⫸</button>
-      </div>
+      <button onMouseDown={(e) => applyFormat(e, 'bold')} className="p-2 hover:bg-white/10 rounded text-white transition-colors" title="Pogrubienie (Ctrl+B)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+      </button>
       
-      <div className="w-px h-6 bg-white/10 mx-2"></div>
+      <button onMouseDown={(e) => applyFormat(e, 'italic')} className="p-2 hover:bg-white/10 rounded text-white transition-colors" title="Kursywa (Ctrl+I)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+      </button>
       
-      {/* KOLOR TEKSTU */}
-      <div className="flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-all shadow-inner">
-        <span className="text-neutral-400 text-xs font-bold uppercase tracking-wider">Kolor</span>
-        <div className="relative w-5 h-5 rounded-md overflow-hidden border border-white/20 shadow-sm cursor-pointer hover:scale-110 transition-transform">
-          <input type="color" value={activeBlock.styles.color || '#000000'} onChange={(e) => updateActiveBlock({ styles: { color: e.target.value }})} className="absolute -top-2 -left-2 w-10 h-10 cursor-pointer" title="Kolor tekstu"/>
-        </div>
-      </div>
-      
-      <div className="w-px h-6 bg-white/10 mx-2"></div>
-      
-      {/* ROZMIAR TEKSTU */}
-      <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-all shadow-inner focus-within:border-blue-500">
-        <span className="text-neutral-400 text-xs font-bold uppercase tracking-wider">Rozmiar</span>
-        <input type="text" value={activeBlock.styles.fontSize || '16px'} onChange={(e) => updateActiveBlock({ styles: { fontSize: e.target.value }})} className="w-12 bg-transparent text-white font-mono font-bold outline-none text-center text-xs" placeholder="16px" />
-      </div>
+      <button onMouseDown={(e) => applyFormat(e, 'underline')} className="p-2 hover:bg-white/10 rounded text-white transition-colors" title="Podkreślenie (Ctrl+U)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+      </button>
+
+      <button onMouseDown={(e) => applyFormat(e, 'strikeThrough')} className="p-2 hover:bg-white/10 rounded text-white transition-colors" title="Przekreślenie">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+      </button>
+
+      <div className="w-px h-5 bg-white/20 mx-1"></div>
+
+      <button onMouseDown={(e) => applyFormat(e, 'createLink')} className="p-2 hover:bg-[#ff4500]/20 rounded text-[#ff4500] transition-colors" title="Wstaw Link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </button>
+
+      <div className="w-px h-5 bg-white/20 mx-1"></div>
+
+      {/* Kolor tekstu */}
+      <label onMouseDown={(e) => e.preventDefault()} className="relative p-2 hover:bg-white/10 rounded cursor-pointer flex items-center justify-center transition-colors" title="Kolor tekstu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20"/></svg>
+        <input 
+          type="color" 
+          className="absolute opacity-0 w-0 h-0 cursor-pointer" 
+          onInput={(e) => applyFormat(e, 'foreColor', e.currentTarget.value)} 
+        />
+      </label>
+
+      {/* Kolor tła zaznaczenia */}
+      <label onMouseDown={(e) => e.preventDefault()} className="relative p-2 hover:bg-white/10 rounded cursor-pointer flex items-center justify-center transition-colors" title="Podświetlenie (Tło)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l-6 6v3h9l3-3"/><path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+        <input 
+          type="color" 
+          className="absolute opacity-0 w-0 h-0 cursor-pointer" 
+          onInput={(e) => applyFormat(e, 'backColor', e.currentTarget.value)} 
+        />
+      </label>
+
+      <div className="w-px h-5 bg-white/20 mx-1"></div>
+
+      {/* Usuwanie formatowania */}
+      <button onMouseDown={(e) => applyFormat(e, 'removeFormat')} className="p-2 hover:bg-red-500/20 rounded text-red-400 transition-colors" title="Wyczyść formatowanie">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
 
     </div>
   );

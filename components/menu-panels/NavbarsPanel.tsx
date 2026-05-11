@@ -1,11 +1,15 @@
 import React from 'react';
 
+interface PanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
+
 const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, icon: string, onClick: () => void }) => (
   <button 
     onClick={onClick} 
-    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-teal-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm"
+    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-teal-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm mb-2"
   >
-    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-teal-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5">
+    <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-teal-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5 text-white">
       {icon}
     </div>
     <div className="flex-1">
@@ -15,21 +19,27 @@ const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, i
   </button>
 );
 
-export default function NavbarsPanel({ handleAddBlock }: { handleAddBlock: any }) {
+export default function NavbarsPanel({ handleAddBlock }: PanelProps) {
   return (
-    <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
-       <UICard 
-         icon="🔝" 
-         title="Klasyczny Navbar" 
-         desc="Pełna szerokość. Logo po lewej, linki na środku, akcja po prawej." 
-         onClick={() => handleAddBlock('container', 'nav-classic', 'Klasyczny Navbar')} 
-       />
-       <UICard 
-         icon="💊" 
-         title="Pływająca Kapsuła" 
-         desc="Apple Style. Wycentrowany, szklany pasek nawigacyjny." 
-         onClick={() => handleAddBlock('container', 'nav-pill', 'Pływający Navbar')} 
-       />
+    <div className="p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
+      <UICard 
+        icon="📄" 
+        title="Klasyczny Navbar" 
+        desc="Prosty, czysty pasek nawigacyjny: Logo, linki na środku, przycisk z prawej." 
+        onClick={() => handleAddBlock('container', 'nav-classic', 'Navbar Classic')} 
+      />
+      <UICard 
+        icon="💊" 
+        title="Floating Pill (Pływający)" 
+        desc="Nowoczesne, zaokrąglone menu z efektem szklanym (Glassmorphism), pływające na górze." 
+        onClick={() => handleAddBlock('container', 'nav-pill', 'Navbar Pływający')} 
+      />
+      <UICard 
+        icon="🏢" 
+        title="Mega-Menu (Zaawansowane)" 
+        desc="Rozbudowana nawigacja idealna dla sklepów i dużych platform SaaS." 
+        onClick={() => handleAddBlock('container', 'nav-mega', 'Mega Menu')} 
+      />
     </div>
   );
 }

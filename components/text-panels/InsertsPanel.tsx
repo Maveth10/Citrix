@@ -1,77 +1,45 @@
 import React from 'react';
 
-const btnWrapper = "group relative w-full text-left p-4 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-/ flex items-center gap-4 overflow-hidden";
-const activeLine = "absolute left-0 top-1/4 bottom-1/4 w- bg- scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow- rounded-r-full";
-const iconBox = "relative w-9 h-9 rounded-lg bg-white/ border border-white/ shadow- flex items-center justify-center shrink-0 group-hover:border-/40 group-hover:bg-/10 transition-all duration-300";
+interface PanelProps {
+  handleAddBlock: (type: string, variant: string, label: string) => void;
+}
 
-export default function InsertsPanel({ handleAddBlock }: { handleAddBlock: any }) {
+export default function InsertsPanel({ handleAddBlock }: PanelProps) {
   return (
-    <div className="flex flex-col bg-black/10">
+    <div className="flex flex-col gap-2 p-3 bg-white/5 border-x border-b border-[color:var(--theme-color)]/20 rounded-b-xl border-t-0 animate-in slide-in-from-top-2 duration-300">
       
-      <button onClick={() => handleAddBlock('container', 'alert-success', 'Wstawka: Sukces')} className={btnWrapper}>
-         <div className={activeLine}></div>
-         <div className="relative w-9 h-7 border-l-2 border-emerald-500 bg-emerald-500/10 rounded-r flex shrink-0 group-hover:border-emerald-400 transition-colors">
-            <div className="absolute -top-1 left-1 bg-emerald-500 w-3 h-1 rounded-sm"></div>
-         </div>
-         <div>
-           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Panel Sukcesu</span>
-           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Zielony pasek i plakietka.</span>
-         </div>
+      {/* 1. Odznaki i Klawisze (Mikro-UI) */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <button onClick={() => handleAddBlock('p', 'badge', 'Odznaka')} className="flex flex-col items-center justify-center p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group">
+          <span className="px-3 py-1 bg-[color:var(--theme-color)]/20 text-[color:var(--theme-color)] rounded-full text-[10px] font-bold uppercase mb-2">v2.0 Beta</span>
+          <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest">Odznaka / Tag</span>
+        </button>
+        <button onClick={() => handleAddBlock('p', 'kbd', 'Klawisz')} className="flex flex-col items-center justify-center p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group">
+          <span className="px-2 py-1 bg-white text-black rounded border border-b-[3px] border-neutral-300 text-[10px] font-mono font-bold mb-2">CTRL</span>
+          <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest">Klawisz 3D</span>
+        </button>
+      </div>
+
+      {/* 2. Pro Checklist */}
+      <button onClick={() => handleAddBlock('list', 'pro-checklist', 'Pro Checklist')} className="w-full flex items-center p-3 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group mb-3">
+        <div className="w-10 h-10 bg-[color:var(--theme-color)]/10 rounded-full flex items-center justify-center mr-3 text-[color:var(--theme-color)]">✓</div>
+        <div className="flex flex-col text-left">
+           <span className="text-[11px] font-bold text-white tracking-widest uppercase">Pro Checklist</span>
+           <span className="text-[9px] text-neutral-500">Lista z customowymi ikonami SVG</span>
+        </div>
       </button>
 
-      <button onClick={() => handleAddBlock('container', 'alert-warning', 'Wstawka: Uwaga')} className={btnWrapper}>
-         <div className={activeLine}></div>
-         <div className="relative w-9 h-7 border-l-2 border-amber-500 bg-amber-500/10 rounded-r flex shrink-0 group-hover:border-amber-400 transition-colors">
-            <div className="absolute -top-1 left-1 bg-amber-500 w-3 h-1 rounded-sm"></div>
-         </div>
-         <div>
-           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Panel Ostrzeżenia</span>
-           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Musztardowy pasek.</span>
-         </div>
-      </button>
+      <div className="w-full h-px bg-white/10 my-1"></div>
+      <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest ml-1 mt-1 block">Złożone Alerty:</span>
 
-      <button onClick={() => handleAddBlock('container', 'alert-tip', 'Wstawka: Wskazówka')} className={btnWrapper}>
-         <div className={activeLine}></div>
-         <div className="relative w-9 h-7 border-l-2 border-blue-500 bg-blue-500/10 rounded-r flex shrink-0 group-hover:border-blue-400 transition-colors">
-            <div className="absolute -top-1 left-1 bg-blue-500 w-3 h-1 rounded-sm"></div>
-         </div>
-         <div>
-           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Panel Info (Tip)</span>
-           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Niebieski pasek i plakietka.</span>
-         </div>
-      </button>
-
-      <button onClick={() => handleAddBlock('container', 'notice-box', 'Złożony Alert')} className={btnWrapper}>
-         <div className={activeLine}></div>
-         <div className="relative w-9 h-7 border border-red-500/50 bg-red-500/10 rounded shrink-0 group-hover:border-red-400 transition-colors">
-            <div className="absolute -top-1 left-1 bg-red-500 w-4 h-1.5 rounded-sm"></div>
-         </div>
-         <div>
-           <span className="text-xs font-semibold text-neutral-200 block mb-0.5 group-hover:text-white transition-colors">Alert z Ramką</span>
-           <span className="text-[10px] text-neutral-500 block leading-tight font-light">Pełna ramka, górna plakietka.</span>
-         </div>
-      </button>
-
-      <button 
-  onClick={() => handleAddBlock('container', 'alert-cosmos', 'Kosmiczny Alert')}
-  className="w-full relative group flex items-center justify-center p-3 my-2 rounded-xl text-xs font-bold text-white uppercase tracking-widest transition-all duration-300 overflow-hidden"
-  style={{
-    background: 'linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(30,27,75,1) 100%)',
-    border: '1px solid rgba(139, 92, 246, 0.4)',
-    boxShadow: '0 0 15px rgba(139, 92, 246, 0.2), inset 0 0 10px rgba(236, 72, 153, 0.1)'
-  }}
->
-  {/* Subtelny, pojawiający się gradient przy najechaniu myszką */}
-  <div 
-    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
-    style={{ background: 'linear-gradient(90deg, rgba(236,72,153,0.4), rgba(139,92,246,0.4), rgba(59,130,246,0.4))' }}
-  ></div>
-  
-  {/* Błyszczący tekst */}
-  <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 group-hover:text-white transition-colors duration-300 drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">
-    🌌 Kosmiczny Alert
-  </span>
-</button>
+      {/* 3. Alerty (Zwrócone wszystkie 5) */}
+      <div className="grid grid-cols-2 gap-2 mt-1">
+        <button onClick={() => handleAddBlock('container', 'alert-success', 'Alert Sukces')} className="p-2 bg-green-500/10 border border-green-500/30 text-green-500 rounded text-[10px] font-bold hover:bg-green-500/20">Sukces</button>
+        <button onClick={() => handleAddBlock('container', 'alert-warning', 'Alert Uwaga')} className="p-2 bg-orange-500/10 border border-orange-500/30 text-orange-500 rounded text-[10px] font-bold hover:bg-orange-500/20">Ostrzeżenie</button>
+        <button onClick={() => handleAddBlock('container', 'alert-tip', 'Alert Wskazówka')} className="p-2 bg-blue-500/10 border border-blue-500/30 text-blue-500 rounded text-[10px] font-bold hover:bg-blue-500/20">Wskazówka</button>
+        <button onClick={() => handleAddBlock('container', 'notice-box', 'Alert Ważne')} className="p-2 bg-red-500/10 border border-red-500/30 text-red-500 rounded text-[10px] font-bold hover:bg-red-500/20">Ważne</button>
+        <button onClick={() => handleAddBlock('container', 'alert-cosmos', 'Alert Kosmos')} className="p-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded text-[10px] font-bold hover:bg-purple-500/20 col-span-2 text-center">✨ Kosmiczny Alert</button>
+      </div>
 
     </div>
   );

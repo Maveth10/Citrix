@@ -3,7 +3,7 @@ import React from 'react';
 const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, icon: string, onClick: () => void }) => (
   <button 
     onClick={onClick} 
-    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-amber-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm"
+    className="p-3 bg-[#1c1c21] hover:bg-[#25252b] border border-white/5 hover:border-amber-500/40 rounded-xl text-left transition-all w-full flex items-center gap-4 group shadow-sm mb-2"
   >
     <div className="w-10 h-10 rounded-lg bg-[#25252b] group-hover:bg-amber-500/20 group-hover:scale-105 flex items-center justify-center text-xl shrink-0 transition-all border border-white/5">
       {icon}
@@ -17,7 +17,7 @@ const UICard = ({ title, desc, icon, onClick }: { title: string, desc: string, i
 
 export default function DynamicElementsPanel({ handleAddBlock }: { handleAddBlock: any }) {
   return (
-    <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5">
+    <div className="flex flex-col gap-2 p-2 bg-black/20 rounded-b-xl border border-t-0 border-white/5 animate-in slide-in-from-top-2 duration-300">
        <UICard 
          icon="🎀" 
          title="Przewijana Wstęga" 
@@ -29,6 +29,19 @@ export default function DynamicElementsPanel({ handleAddBlock }: { handleAddBloc
          title="Organiczny Blob" 
          desc="Żywy, pulsujący kształt (CSS Morphing) z gradientem." 
          onClick={() => handleAddBlock('graphic', 'blob', 'Blob')} 
+       />
+       {/* 🔥 NOWE DO DYNAMIC ELEMENTS 🔥 */}
+       <UICard 
+         icon="🔴" 
+         title="Status Live (Kropka)" 
+         desc="Pulsujący punkt oznaczający aktywność / status online." 
+         onClick={() => handleAddBlock('graphic', 'status-dot', 'Status')} 
+       />
+       <UICard 
+         icon="🦴" 
+         title="Skeleton Loader" 
+         desc="Animowany, mieniący się blok symulujący ładowanie treści." 
+         onClick={() => handleAddBlock('graphic', 'skeleton', 'Skeleton')} 
        />
     </div>
   );
