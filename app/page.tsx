@@ -1,5 +1,11 @@
 'use client';
 
+console.log("🔍 TEST KOMPONENTÓW:", { 
+  TopHeader, LeftPanel, RightPanel, TextFormatToolbar, 
+  MediaManager, CanvasBlock, BottomBar, AICopilot, 
+  CosmicBackground, CyberTheme, ContextMenu 
+});
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { createBlock } from '../utils/blockFactory';
