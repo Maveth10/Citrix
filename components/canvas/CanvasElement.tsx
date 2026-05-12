@@ -52,6 +52,7 @@ export default function CanvasElement({
     );
   }
 
+  // --- GRAFIKI Z FACTORY (Wykresy, liczniki, itp.) ---
   if (b.type === 'graphic') {
     return <div style={{width:'100%', height:'100%', zIndex: 10, position: 'relative'}} dangerouslySetInnerHTML={{ __html: b.text || '' }}></div>;
   }
@@ -61,27 +62,28 @@ export default function CanvasElement({
   }
 
   // --- ELEMENTY TEKSTOWE I INTERAKTYWNE ---
+  // Obsługujemy wszystkie tagi z blockFactory (w tym listy i faqi)
   const isTextElement = ['h1', 'h2', 'h3', 'p', 'button', 'marquee', 'list', 'faq', 'social', 'alert', 'menu', 'text', 'span'].includes(b.type);
   
   if (isTextElement) {
     const Tag = b.type === 'marquee' ? 'h1' : (['list', 'faq', 'button', 'social', 'alert'].includes(b.type) ? 'div' : (b.type === 'menu' ? 'nav' : b.type));
     const ActualTag = (isPreviewMode && b.type === 'button') ? 'button' : Tag;
 
+    // Sprawdzamy, czy w tekście siedzi kod HTML (np. style dla wariantów typu glitch, typewriter).
+    // Jeśli tak, musimy uważać, by nie nadpisać tych specyficznych efektów "szarym" cieniem.
+    const hasCustomHtml = localText.includes('<style>') || localText.includes('<div') || localText.includes('<ul') || localText.includes('<ol');
+
     const textStyles: any = { 
       fontSize: currentStyles.fontSize || 'inherit', 
       fontWeight: currentStyles.fontWeight || 'inherit', 
-      // 🔥 ADAPTIVE COLOR: Jeśli nie ustawiono koloru w panelu, użyj zmiennej motywu
-      color: currentStyles.color || 'var(--canvas-text)', 
       textAlign: currentStyles.textAlign, 
       lineHeight: currentStyles.lineHeight || 'inherit', 
       letterSpacing: currentStyles.letterSpacing || 'inherit',
       textTransform: currentStyles.textTransform || 'none', 
       margin: 0, 
-      wordBreak:'break-word', 
+      wordBreak: 'break-word', 
       outline: 'none', 
       cursor: isEditing ? 'text' : 'inherit', 
-      // 🔥 ADAPTIVE SHADOW: Gwarantuje widoczność na każdym tle
-      textShadow: currentStyles.textShadow || '0 0 1px var(--text-shadow)', 
       width: '100%', 
       height: '100%', 
       display: 'block', 
@@ -89,24 +91,45 @@ export default function CanvasElement({
       zIndex: 10
     };
 
-    // Obsługa gradientowego tekstu
-    if (currentStyles.WebkitBackgroundClip === 'text') {
-      textStyles.backgroundImage = currentStyles.backgroundImage; 
-      textStyles.WebkitBackgroundClip = 'text'; 
-      textStyles.WebkitTextFillColor = 'transparent'; 
-      textStyles.color = 'transparent';
-      textStyles.textShadow = 'none'; // Gradienty nie lubią się z shadow
+    // 🔥 LOGIKA KONTRASTU I KOLORÓW 🔥
+    // 1. Jeśli element to wariant ze skomplikowanym HTML (glitch, typewriter), zachowujemy oryginalny kolor i ignorujemy cień.
+    // 2. Jeśli to zwykły tekst, stosujemy Adaptive Contrast.
+    if (!hasCustomHtml) {
+      textStyles.color = currentStyles.color || 'var(--canvas-text)';
+      textStyles.textShadow = currentStyles.textShadow || '0 0 1px var(--text-shadow)';
+    } else {
+      textStyles.color = currentStyles.color || 'inherit';
+      // Pozostawiamy textShadow jeśli był ręcznie wymuszony w panelu, w przeciwnym razie none
+      textStyles.textShadow = currentStyles.textShadow || 'none';
     }
 
+    // Specjalna obsługa gradientów tekstu i wariantów typu "stroke"
+    if (currentStyles.WebkitBackgroundClip === 'text' || currentStyles.WebkitTextStroke) {
+      textStyles.backgroundImage = currentStyles.backgroundImage; 
+      textStyles.WebkitBackgroundClip = currentStyles.WebkitBackgroundClip; 
+      textStyles.WebkitTextFillColor = currentStyles.WebkitTextFillColor || 'transparent'; 
+      textStyles.WebkitTextStroke = currentStyles.WebkitTextStroke;
+      textStyles.color = currentStyles.color || 'transparent';
+      textStyles.textShadow = 'none'; // Gradient i stroke gryzą się z cieniem
+    }
+
+    // --- BUTTON Z FACTORY ---
     if (ActualTag === 'button') {
       return (
         <button 
           id={`text-${b.id}`} 
+          className="transition-all pointer-events-auto overflow-hidden relative"
           style={{
             ...textStyles,
             backgroundColor: currentStyles.backgroundColor || 'transparent',
             borderRadius: currentStyles.borderRadius || '0px',
-            border: currentStyles.border || 'none'
+            border: currentStyles.border || 'none',
+            boxShadow: currentStyles.boxShadow,
+            display: currentStyles.display || 'flex',
+            alignItems: currentStyles.alignItems || 'center',
+            justifyContent: currentStyles.justifyContent || 'center',
+            padding: currentStyles.padding,
+            width: currentStyles.width || '100%',
           }} 
           type="button" 
           onDoubleClick={onDoubleClick}
@@ -117,11 +140,13 @@ export default function CanvasElement({
             onInput={(e: any) => { latestTextRef.current = e.currentTarget.innerHTML; }}
             onBlur={handleBlur}
             dangerouslySetInnerHTML={{ __html: localText }} 
+            className="w-full relative z-10" // Zapewnia, że tekst jest nad ewentualnymi efektami np. btn-shine
           />
         </button>
       );
     }
 
+    // --- ZWYKŁE ZNACZNIKI TEKSTOWE ---
     return (
       <ActualTag 
         id={`text-${b.id}`} 
@@ -132,7 +157,7 @@ export default function CanvasElement({
         onBlur={handleBlur}
         contentEditable={isEditing} 
         suppressContentEditableWarning={true} 
-        className="editable-text-field"
+        className={!hasCustomHtml ? "editable-text-field" : ""}
         dangerouslySetInnerHTML={{ __html: localText }} 
       />
     );
