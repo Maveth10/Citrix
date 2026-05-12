@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ActiveBlockOverlay from './ActiveBlockOverlay'; 
 import CanvasElement from './CanvasElement'; 
-import { loadGoogleFont } from '../../utils/fontsConfig'; // <-- Dodane ../
-import { applyRWD, buildHoverCSS } from '../../utils/styleBuilder'; // <-- Dodane ../
-import { getAnimationStyles, getGlobalKeyframes } from '../../utils/animationBuilder'; // <-- Dodane ../
-import { supabase } from '../../supabase'; // <-- Dodane ../
+import { loadGoogleFont } from '../../utils/fontsConfig'; 
+import { applyRWD, buildHoverCSS } from '../../utils/styleBuilder'; 
+import { getAnimationStyles, getGlobalKeyframes } from '../../utils/animationBuilder'; 
 
 export default function CanvasBlock({ 
   b, activeId, setActiveId, isEditing, setIsEditing, isMediaManagerOpen, setIsMediaManagerOpen, 
@@ -14,28 +13,34 @@ export default function CanvasBlock({
   copiedStyles, setCopiedStyles, setContextMenu, previewPopupId, setPreviewPopupId
 }: any) {
   
+  const [isVisible, setIsVisible] = useState(false);
+  const blockRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { 
+    if (b?.styles?.fontFamily) loadGoogleFont(b.styles.fontFamily); 
+  }, [b?.styles?.fontFamily]);
+
+  useEffect(() => {
+    if (!isPreviewMode || !b?.entranceAnim || b.entranceAnim === 'none') { setIsVisible(true); return; }
+    setIsVisible(false);
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.unobserve(entry.target); } }, { threshold: 0.15 });
+    if (blockRef.current) observer.observe(blockRef.current);
+    return () => observer.disconnect();
+  }, [isPreviewMode, b?.entranceAnim]);
+
+  if (!b) return null;
   if (hiddenBlocks.includes(b.id)) return null;
 
   const isActive = activeId === b.id;
   const isCurrentlyEdited = isActive && isEditing && !isPreviewMode;
   const isBeingDragged = interaction?.type === 'drag' && interaction?.hasMoved && draggedId === b.id;
   
-  const [isVisible, setIsVisible] = useState(false);
-  const blockRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { if (b.styles?.fontFamily) loadGoogleFont(b.styles.fontFamily); }, [b.styles?.fontFamily]);
-
-  useEffect(() => {
-    if (!isPreviewMode || !b.entranceAnim || b.entranceAnim === 'none') { setIsVisible(true); return; }
-    setIsVisible(false);
-    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.unobserve(entry.target); } }, { threshold: 0.15 });
-    if (blockRef.current) observer.observe(blockRef.current);
-    return () => observer.disconnect();
-  }, [isPreviewMode, b.entranceAnim]);
-  
   const currentStyles = applyRWD(b, viewport);
   const animStyles = getAnimationStyles(b, isVisible, isPreviewMode);
   const hoverCSS = buildHoverCSS(b.hoverStyles);
+
+  // 🔥 ZAGINIONA ZMIENNA PRZYWRÓCONA DO ŻYCIA 🔥
+  const currentZIndex = currentStyles.zIndex !== undefined ? currentStyles.zIndex : 1;
 
   const hasMediaBg = currentStyles.bgType === 'image' || currentStyles.bgType === 'video';
   const bgStyles = { ...currentStyles };
@@ -51,7 +56,7 @@ export default function CanvasBlock({
     filter: `blur(${currentStyles.filterBlur || 0}px) brightness(${currentStyles.filterBrightness ?? 100}%) contrast(${currentStyles.filterContrast ?? 100}%) saturate(${currentStyles.filterSaturate ?? 100}%)`, 
     backdropFilter: currentStyles.backdropBlur ? `blur(${currentStyles.backdropBlur}px)` : undefined,
     pointerEvents: isBeingDragged ? 'none' : 'auto', 
-    zIndex: isBeingDragged ? 99999 : (isActive && !isPreviewMode ? 9999 : (currentStyles.zIndex || 1)),
+    zIndex: isBeingDragged ? 99999 : (isActive && !isPreviewMode ? 9999 : currentZIndex),
     transition: isBeingDragged ? 'none' : (currentStyles.transition || 'all 0.3s ease'), overflow: currentStyles.overflow || 'visible', ...animStyles 
   };
 
@@ -64,6 +69,20 @@ export default function CanvasBlock({
     if (activeId !== b.id) { setActiveId(b.id); setIsEditing(false); } 
     if ((isActive && isEditing) || isMediaManagerOpen) return; 
     setInteraction({ type: 'drag', startX: e.pageX, startY: e.pageY, blockId: b.id, hasMoved: false, initialLeft: parseFloat(b.styles.left) || 0, initialTop: parseFloat(b.styles.top) || 0 });
+  };
+
+  const handleResizeStart = (e: React.MouseEvent, dir: string) => {
+    e.stopPropagation(); e.preventDefault(); 
+    if (isPreviewMode) return;
+    const el = document.getElementById(`block-${b.id}`);
+    const compStyle = el ? window.getComputedStyle(el) : null;
+    setInteraction({ 
+      type: 'resize', dir, startX: e.pageX, startY: e.pageY, blockId: b.id,
+      initialLeft: el?.offsetLeft || 0, initialTop: el?.offsetTop || 0, 
+      initialWidth: el?.offsetWidth || 0, initialHeight: el?.offsetHeight || 0,
+      initialMarginLeft: compStyle ? parseFloat(compStyle.marginLeft) || 0 : 0,
+      initialMarginTop: compStyle ? parseFloat(compStyle.marginTop) || 0 : 0
+    });
   };
 
   const blockContent = (
@@ -84,16 +103,10 @@ export default function CanvasBlock({
         {currentStyles.bgType === 'video' && currentStyles.bgVideo && <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover pointer-events-none" style={{ zIndex: 0 }} src={currentStyles.bgVideo} />}
         
         <CanvasElement 
-          b={b} 
-          currentStyles={currentStyles} 
-          isEditing={isCurrentlyEdited} 
-          isPreviewMode={isPreviewMode}
-          updateActiveBlock={updateActiveBlock}
+          b={b} currentStyles={currentStyles} isEditing={isCurrentlyEdited} isPreviewMode={isPreviewMode} updateActiveBlock={updateActiveBlock}
           onDoubleClick={(e: any) => { 
-            if (isPreviewMode) return; 
-            e.stopPropagation(); 
-            if (b.type === 'img') { setIsMediaManagerOpen(true); } 
-            else { setIsEditing(true); setTimeout(() => e.target?.focus(), 10); } 
+            if (isPreviewMode) return; e.stopPropagation(); 
+            if (b.type === 'img') { setIsMediaManagerOpen(true); } else { setIsEditing(true); setTimeout(() => e.target?.focus(), 10); } 
           }}
         />
         
@@ -106,7 +119,8 @@ export default function CanvasBlock({
              </div>
           </div>
         )}
-        {isActive && !isEditing && !isPreviewMode && ( <ActiveBlockOverlay block={b} currentZIndex={currentZIndex} updateActiveBlock={updateActiveBlock} copiedStyles={copiedStyles} setCopiedStyles={setCopiedStyles} handleDuplicate={handleDuplicate} removeActiveBlock={removeActiveBlock} handleResizeStart={()=>{}} /> )}
+        
+        {isActive && !isEditing && !isPreviewMode && ( <ActiveBlockOverlay block={b} currentZIndex={currentZIndex} updateActiveBlock={updateActiveBlock} copiedStyles={copiedStyles} setCopiedStyles={setCopiedStyles} handleDuplicate={handleDuplicate} removeActiveBlock={removeActiveBlock} handleResizeStart={handleResizeStart} /> )}
       </div>
     </>
   );

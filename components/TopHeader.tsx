@@ -17,13 +17,17 @@ interface TopHeaderProps {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  onPreviewClick: () => void; // <-- Dodany nowy prop
+  onPreviewClick: () => void;
+  // 🔥 NOWE PROPSY DLA MOTYWU
+  canvasTheme: 'light' | 'dark';
+  setCanvasTheme: (val: 'light' | 'dark') => void;
 }
 
 export default function TopHeader({ 
   canvasZoom, setCanvasZoom, showGrid, setShowGrid, pageSlug, setPageSlug, handlePublish, 
   activeBlock, updateActiveBlock, viewport, setViewport, handleAddSection, handleChangeLayout,
-  isAiOpen, setIsAiOpen, undo, redo, canUndo, canRedo, onPreviewClick
+  isAiOpen, setIsAiOpen, undo, redo, canUndo, canRedo, onPreviewClick,
+  canvasTheme, setCanvasTheme // 🔥
 }: TopHeaderProps) {
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [showBgMenu, setShowBgMenu] = useState(false);
@@ -160,6 +164,22 @@ export default function TopHeader({
            </button>
          </div>
 
+         {/* 🔥 NOWY PRZEŁĄCZNIK DARK/LIGHT 🔥 */}
+         <div className="flex bg-black/40 p-1 rounded-full border border-white/10 shadow-inner">
+           <button 
+             onClick={() => setCanvasTheme('light')}
+             className={`px-3 py-1.5 rounded-full text-[9px] font-black transition-all ${canvasTheme === 'light' ? 'bg-white text-black' : 'text-neutral-500 hover:text-white'}`}
+           >
+             LIGHT
+           </button>
+           <button 
+             onClick={() => setCanvasTheme('dark')}
+             className={`px-3 py-1.5 rounded-full text-[9px] font-black transition-all ${canvasTheme === 'dark' ? 'bg-[#ff4500] text-white shadow-[0_0_10px_#ff4500]' : 'text-neutral-500 hover:text-white'}`}
+           >
+             DARK
+           </button>
+         </div>
+
          <div className="flex items-center bg-white/5 rounded-full border border-white/10 text-xs shadow-inner">
            <button onClick={() => setCanvasZoom(Math.max(0.25, canvasZoom - 0.25))} className="px-4 py-2 hover:bg-white/10 text-neutral-400 hover:text-white rounded-l-full transition-colors">−</button>
            <span className="px-2 font-mono w-12 text-center text-white font-bold">{Math.round(canvasZoom * 100)}%</span>
@@ -169,7 +189,6 @@ export default function TopHeader({
          
          <div className="w-px h-6 bg-white/10 mx-1"></div>
 
-         {/* PODGLĄD */}
          <button 
            onClick={onPreviewClick}
            className="flex items-center gap-2 bg-white/5 hover:bg-[#ff4500]/20 hover:text-[#ff4500] hover:border-[#ff4500]/50 text-white border border-white/10 text-xs px-4 py-2 rounded-full transition-all shadow-inner"

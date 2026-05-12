@@ -72,6 +72,7 @@ export default function Home() {
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
   
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+  const [canvasTheme, setCanvasTheme] = useState<'light' | 'dark'>('light'); // 🔥 PRZEŁĄCZNIK THEME
   const [copiedStyles, setCopiedStyles] = useState<any>(null);
   const [previewPopupId, setPreviewPopupId] = useState<number | null>(null);
 
@@ -219,7 +220,7 @@ export default function Home() {
       flexDirection: layout === 'flex-col' ? 'column' : 'row',
       gap: '20px', 
       padding: '30px', 
-      backgroundColor: '#transparent', // #ffffff
+      backgroundColor: 'transparent',
       width: '100%', 
       minHeight: 'min-content', 
       clearRow: true,
@@ -286,7 +287,7 @@ export default function Home() {
         if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
            autoWrapper.id = Date.now() + Math.floor(Math.random() * 100000);
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: '#transparent', border: '1px solid #e2e8f0', clearRow: true, justifyContent: 'stretch', alignItems: 'stretch' };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: 'transparent', border: '1px solid #e2e8f0', clearRow: true, justifyContent: 'stretch', alignItems: 'stretch' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
@@ -719,9 +720,8 @@ export default function Home() {
                 res[res.length - 1] = { ...res[res.length - 1], styles: { ...res[res.length - 1].styles, clearRow: true } };
               }
 
-              return res.map(b => ({ ...b, children: b.children ? sanitizeRecursive(b.children, b.styles.display === 'flex' || b.styles.display === 'grid') : undefined }));
+              return res.map(b => ({ ...b, children: b.children ? removeRecursive(b.children) : undefined }));
             };
-            
             return sanitizeRecursive(prevBlocks);
           });
         }
@@ -761,23 +761,14 @@ export default function Home() {
   }, [activeId, isMediaManagerOpen, isPreviewMode]);
 
   return (
-    <div 
-      className="flex h-screen w-screen bg-[#000] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30 z-0"
-      onContextMenu={(e) => { 
-         closeContextMenu(); 
-      }}
-    >
-      
+    <div className="flex h-screen w-screen bg-[#000] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30 z-0" onContextMenu={() => closeContextMenu()}>
       <CyberTheme />
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#070709]"></div>
       <CosmicBackground />
 
       {contextMenu && activeBlock && (
         <ContextMenu 
-          x={contextMenu.x}
-          y={contextMenu.y}
-          blockType={contextMenu.blockType || activeBlock.type}
-          onClose={closeContextMenu}
+          x={contextMenu.x} y={contextMenu.y} blockType={activeBlock.type} onClose={closeContextMenu}
           onLayerUp={() => updateActiveBlock({ styles: { zIndex: (activeBlock.styles?.zIndex || 1) + 1 } }, true, contextMenu.blockId)}
           onLayerDown={() => updateActiveBlock({ styles: { zIndex: Math.max(0, (activeBlock.styles?.zIndex || 1) - 1) } }, true, contextMenu.blockId)}
           onCopyStyles={() => setCopiedStyles(activeBlock.styles)}
@@ -792,81 +783,39 @@ export default function Home() {
         />
       )}
 
-      {/* LEWY PANEL (Został jak był) */}
       {!isPreviewMode && (
-        <div 
-          className="flex h-full relative z-50 transition-all duration-300"
-          onMouseLeave={() => setAddCategory(null)}
-        >
-          <LeftPanel 
-            leftTab={leftTab} setLeftTab={setLeftTab} 
-            addCategory={addCategory} setAddCategory={setAddCategory} 
-            blocks={blocks} pageSlug={pageSlug} 
-            handleAddBlock={handleAddBlock} handleInsertTemplate={handleInsertTemplate} 
-            handleExportJSON={handleExportJSON} handleImportJSON={handleImportJSON} 
-            activeId={activeId} setActiveId={setActiveId} 
-            setIsEditing={setIsEditing} hiddenBlocks={hiddenBlocks} 
-            toggleBlockVisibility={toggleBlockVisibility} moveBlockTree={moveBlockTree}
-          />
+        <div className="flex h-full relative z-50 transition-all duration-300" onMouseLeave={() => setAddCategory(null)}>
+          <LeftPanel leftTab={leftTab} setLeftTab={setLeftTab} addCategory={addCategory} setAddCategory={setAddCategory} blocks={blocks} pageSlug={pageSlug} handleAddBlock={handleAddBlock} handleInsertTemplate={handleInsertTemplate} handleExportJSON={handleExportJSON} handleImportJSON={handleImportJSON} activeId={activeId} setActiveId={setActiveId} setIsEditing={setIsEditing} hiddenBlocks={hiddenBlocks} toggleBlockVisibility={toggleBlockVisibility} moveBlockTree={moveBlockTree} />
         </div>
       )}
 
-      {/* GŁÓWNA OBSZAR ROBOCZY */}
       <div className="flex-1 flex flex-col relative z-30 bg-transparent transition-all duration-300">
-        
-        {/* 🔥 TOP HEADER (Niewidzialny Hover Area - Tryb Zen) 🔥 */}
         {!isPreviewMode && (
           <div className="absolute top-0 left-0 w-full z-50 group">
-             {/* To jest strefa wykrywania myszki na górze (wysokość 20px) */}
              <div className="absolute top-0 left-0 w-full h-[30px] z-40 bg-transparent"></div>
-             {/* Sam pasek TopHeader - domyślnie schowany do góry, wyjeżdża na hover */}
              <div className="absolute top-0 left-0 w-full transition-transform duration-300 ease-in-out -translate-y-full group-hover:translate-y-0 z-50">
                <TopHeader 
-                 canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} 
-                 showGrid={showGrid} setShowGrid={setShowGrid} 
-                 pageSlug={pageSlug} setPageSlug={setPageSlug} 
-                 handlePublish={handlePublish} activeBlock={activeBlock} 
-                 updateActiveBlock={updateActiveBlock} viewport={viewport} 
-                 setViewport={setViewport} handleAddSection={handleAddSection} 
-                 handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} 
-                 setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} 
-                 canUndo={past.length > 0} canRedo={future.length > 0} 
-                 onPreviewClick={() => { setActiveId(null); setIsPreviewMode(true); }}
+                 canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} onPreviewClick={() => { setActiveId(null); setIsPreviewMode(true); }}
+                 canvasTheme={canvasTheme} setCanvasTheme={setCanvasTheme} // 🔥 DODANE
                />
              </div>
           </div>
         )}
         
         {isAiOpen && !isPreviewMode && (
-          <AICopilot 
-            activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsAiOpen={setIsAiOpen} 
-            handleAddSection={handleAddSection} handleAddComplexSection={handleAddComplexSection}
-          />
+          <AICopilot activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsAiOpen={setIsAiOpen} handleAddSection={handleAddSection} handleAddComplexSection={handleAddComplexSection} />
         )}
         
         {!isPreviewMode && <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} isEditing={isEditing} />}
         
-        {/* PŁÓTNO (CANVAS) */}
-        <main 
-          className="flex-1 overflow-auto flex justify-center p-10 pt-[60px] z-10 Selection:bg-blue-600/20 bg-transparent relative" 
-          onClick={() => { 
-            if (interaction) return;
-            setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); 
-            closeContextMenu();
-          }}
-        >
+        <main data-canvas-workspace="true" className="flex-1 overflow-auto flex justify-center p-10 pt-[60px] z-10 bg-transparent relative" onClick={() => { if (interaction) return; setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); closeContextMenu(); }}>
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5 overflow-hidden">
+               className={`min-h-screen h-fit shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border overflow-hidden transition-colors duration-300 ${canvasTheme === 'dark' ? 'bg-[#050505] text-white border-white/5' : 'bg-white text-black border-neutral-200'}`}>
              
              {showGrid && !isPreviewMode && (
                <div className="absolute inset-0 pointer-events-none z-0 rounded-b-xl overflow-hidden opacity-30">
                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)', backgroundSize: '100px 100px' }}></div>
-                 <div className="absolute inset-0 flex justify-center w-full h-full">
-                   <div className="w-full h-full flex gap-5 px-5">
-                     {Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500/[0.04] border-x border-blue-500/10 h-full"></div>)}
-                   </div>
-                 </div>
+                 <div className="absolute inset-0 flex justify-center w-full h-full"><div className="w-full h-full flex gap-5 px-5">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500/[0.04] border-x border-blue-500/10 h-full"></div>)}</div></div>
                </div>
              )}
              
@@ -874,61 +823,24 @@ export default function Home() {
                 const widthVal = parseFloat(b.styles.width || '100');
                 const isBreak = b.styles.clearRow !== false;
                 const showGhost = draggedId && draggedId !== b.id && isBreak && widthVal < 98;
-
                 return (
                   <React.Fragment key={b.id}>
-                    <CanvasBlock 
-                      b={b} activeId={activeId} setActiveId={setActiveId} 
-                      isEditing={isEditing} setIsEditing={setIsEditing} 
-                      isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} 
-                      setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} 
-                      interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop}
-                      hiddenBlocks={hiddenBlocks}
-                      viewport={viewport}
-                      handleDuplicate={handleDuplicate}
-                      removeActiveBlock={removeActiveBlock}
-                      isPreviewMode={isPreviewMode}
-                      copiedStyles={copiedStyles}
-                      setCopiedStyles={setCopiedStyles}
-                      previewPopupId={previewPopupId}
-                      setPreviewPopupId={setPreviewPopupId}
-                      setContextMenu={handleSetContextMenu} 
-                    />
-                    
+                    <CanvasBlock b={b} activeId={activeId} setActiveId={setActiveId} isEditing={isEditing} setIsEditing={setIsEditing} isMediaManagerOpen={isMediaManagerOpen} setIsMediaManagerOpen={setIsMediaManagerOpen} setInteraction={setInteraction} updateActiveBlock={updateActiveBlock} interaction={interaction} draggedId={draggedId} setDraggedId={setDraggedId} handleDrop={handleDrop} hiddenBlocks={hiddenBlocks} viewport={viewport} handleDuplicate={handleDuplicate} removeActiveBlock={removeActiveBlock} isPreviewMode={isPreviewMode} copiedStyles={copiedStyles} setCopiedStyles={setCopiedStyles} setContextMenu={handleSetContextMenu} previewPopupId={previewPopupId} setPreviewPopupId={setPreviewPopupId} />
                     {showGhost && !hiddenBlocks.includes(b.id) && !isPreviewMode && (
-                      <div 
-                        data-dropzone-target={b.id}
-                        data-dropzone-type="inline"
-                        className="dropzone-area flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 transition-all cursor-pointer pointer-events-auto z-[99999]"
-                      >
-                        <span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(255,69,0,0.5)] pointer-events-none">+ Wstaw Obok</span>
-                      </div>
+                      <div data-dropzone-target={b.id} data-dropzone-type="inline" className="dropzone-area flex-1 min-h-[100px] border-2 border-dashed border-[#ff4500] bg-[#ff4500]/10 rounded-xl m-2 flex items-center justify-center opacity-50 transition-all cursor-pointer pointer-events-auto z-[99999]"><span className="text-[#ff4500] font-bold text-[10px] uppercase tracking-widest pointer-events-none">+ Wstaw Obok</span></div>
                     )}
-
                     {isBreak && !hiddenBlocks.includes(b.id) && <div className="basis-full h-0 m-0 p-0 pointer-events-none"></div>}
                   </React.Fragment>
                 );
              })}
 
-             {!isPreviewMode && (
-               <div 
-                 data-dropzone-target="-1"
-                 data-dropzone-type="bottom"
-                 className="dropzone-area w-full h-32 mt-4 border-2 border-transparent hover:border-dashed hover:border-[#ff4500] hover:bg-[#ff4500]/10 hover:text-[#ff4500] rounded-xl transition-all flex items-center justify-center text-transparent font-bold tracking-widest uppercase text-[10px] pointer-events-auto z-[99999]"
-               >
-                 Upuść tutaj (Na koniec)
-               </div>
-             )}
-
+             {!isPreviewMode && <div data-dropzone-target="-1" data-dropzone-type="bottom" className="dropzone-area w-full h-32 mt-4 border-2 border-transparent hover:border-dashed hover:border-[#ff4500] hover:bg-[#ff4500]/10 hover:text-[#ff4500] rounded-xl transition-all flex items-center justify-center text-transparent font-bold tracking-widest uppercase text-[10px] pointer-events-auto z-[99999]">Upuść tutaj (Na koniec)</div>}
           </div>
         </main>
         
-        {/* 🔥 BOTTOM BAR (Niewidzialny Hover Area - Tryb Zen) 🔥 */}
         {!isPreviewMode && (
           <div className="absolute bottom-0 left-0 w-full z-50 group">
-             {/* Strefa wykrywania myszki na dole ekranu */}
              <div className="absolute bottom-0 left-0 w-full h-[30px] z-40 bg-transparent"></div>
-             {/* Sam pasek BottomBar - domyślnie w dół, wyjeżdża na hover */}
              <div className="absolute bottom-0 left-0 w-full transition-transform duration-300 ease-in-out translate-y-full group-hover:translate-y-0 z-50">
                <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
              </div>
@@ -936,32 +848,12 @@ export default function Home() {
         )}
       </div>
       
-      {/* PRAWY PANEL (Został jak był) */}
-      {!isPreviewMode && (
-        <RightPanel 
-          blocks={blocks}
-          activeBlock={(leftTab !== null || addCategory !== null) ? null : activeBlock} 
-          rightTab={rightTab} 
-          setRightTab={setRightTab as any} 
-          updateActiveBlock={updateActiveBlock} 
-          removeActiveBlock={removeActiveBlock} 
-          setIsMediaManagerOpen={setIsMediaManagerOpen} 
-          viewport={viewport}
-        />
-      )}
-      
+      {!isPreviewMode && <RightPanel blocks={blocks} activeBlock={(leftTab || addCategory) ? null : activeBlock} rightTab={rightTab} setRightTab={setRightTab as any} updateActiveBlock={updateActiveBlock} removeActiveBlock={removeActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} viewport={viewport} />}
       {isMediaManagerOpen && <MediaManager activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} setIsMediaManagerOpen={setIsMediaManagerOpen} />}
 
       {isPreviewMode && (
-        <button 
-          onClick={() => setIsPreviewMode(false)}
-          className="fixed bottom-6 right-6 z-[9999999] bg-[#ff4500] text-white font-bold w-12 h-12 rounded-full shadow-[0_10px_30px_rgba(255,69,0,0.4)] hover:scale-110 transition-transform flex items-center justify-center outline outline-2 outline-white/20"
-          title="Wróć do edycji"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-        </button>
+        <button onClick={() => setIsPreviewMode(false)} className="fixed bottom-6 right-6 z-[9999999] bg-[#ff4500] text-white font-bold w-12 h-12 rounded-full shadow-[0_10px_30px_rgba(255,69,0,0.4)] hover:scale-110 transition-transform flex items-center justify-center outline outline-2 outline-white/20" title="Wróć do edycji"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
       )}
-
     </div>
   );
 }
