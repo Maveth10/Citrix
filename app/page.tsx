@@ -12,7 +12,7 @@ import LeftPanel from '../components/LeftPanel';
 import RightPanel from '../components/RightPanel';
 import TextFormatToolbar from '../components/TextFormatToolbar';
 import MediaManager from '../components/MediaManager';
-import CanvasBlock from '../components/CanvasBlock';
+import CanvasBlock from '../components/canvas/CanvasBlock';
 import BottomBar from '../components/BottomBar';
 import AICopilot from '../components/AICopilot';
 
@@ -219,7 +219,7 @@ export default function Home() {
       flexDirection: layout === 'flex-col' ? 'column' : 'row',
       gap: '20px', 
       padding: '30px', 
-      backgroundColor: '#ffffff', 
+      backgroundColor: '#transparent', // #ffffff
       width: '100%', 
       minHeight: 'min-content', 
       clearRow: true,
@@ -286,7 +286,7 @@ export default function Home() {
         if (type !== 'section' && type !== 'popup') {
            const autoWrapper = createBlock('section', '', 'Sekcja (Auto)');
            autoWrapper.id = Date.now() + Math.floor(Math.random() * 100000);
-           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', clearRow: true, justifyContent: 'stretch', alignItems: 'stretch' };
+           autoWrapper.styles = { ...autoWrapper.styles, display: 'flex', flexDirection: 'column', gap: '20px', padding: '30px', minHeight: 'min-content', height: 'auto', width: '100%', backgroundColor: '#transparent', border: '1px solid #e2e8f0', clearRow: true, justifyContent: 'stretch', alignItems: 'stretch' };
            autoWrapper.children = [newBlock];
            return [...prevBlocks, autoWrapper];
         }
@@ -852,6 +852,7 @@ export default function Home() {
           onClick={() => { 
             if (interaction) return;
             setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); 
+            closeContextMenu();
           }}
         >
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 

@@ -1,87 +1,139 @@
 import React, { useState } from 'react';
-import PrimaryButtonsPanel from './button-panels/PrimaryButtonsPanel';
-import SecondaryButtonsPanel from './button-panels/SecondaryButtonsPanel';
-import AnimatedButtonsPanel from './button-panels/AnimatedButtonsPanel';
-import BrutalismButtonsPanel from './button-panels/BrutalismButtonsPanel';
 
 interface ButtonPanelProps {
   handleAddBlock: (type: string, variant: string, label: string) => void;
 }
 
-// 🔥 Rozszerzamy typ o dwie nowe kategorie!
-type TabType = 'primary' | 'secondary' | 'animated' | 'brutalism' | null;
-
 export default function ButtonPanel({ handleAddBlock }: ButtonPanelProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('primary');
+  const [activeSection, setActiveSection] = useState<string | null>('luxury');
 
-  const toggleTab = (tab: TabType) => {
-    setActiveTab(activeTab === tab ? null : tab);
+  const toggleSection = (section: string) => {
+    setActiveSection(prev => prev === section ? null : section);
   };
 
-  const getTabStyle = (tab: TabType) => {
-    const isActive = activeTab === tab;
-    return `flex items-center justify-between p-3 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest ${
-      isActive 
-        ? 'bg-violet-500/10 text-violet-400 border border-violet-500/30 rounded-b-none' 
-        : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white border border-white/5'
-    }`;
-  };
+  // 🔥 PRZYCISKI, KTÓRE WYRYWAJĄ Z BUTÓW 🔥
+  const buttonCategories = [
+    {
+      id: 'luxury',
+      title: '💎 Luksus & Apple (Minimal)',
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>,
+      items: [
+        { type: 'button', variant: 'apple', label: 'Cupertino Sleek', desc: 'Szkło mrożone, perfekcyjne zaokrąglenie, blur' },
+        { type: 'button', variant: 'prada', label: 'Prada Brutal', desc: 'Ekstremalnie ostry, czarno-biały sznyt haute couture' },
+        { type: 'button', variant: 'luxury', label: 'Royal Outline', desc: 'Cienka złota linia z powolnym, miękkim wypełnieniem' },
+        { type: 'button', variant: 'glass', label: 'Czyste Szkło (Glass)', desc: 'Całkowicie przezroczysty z załamaniem światła' },
+      ]
+    },
+    {
+      id: 'cyber',
+      title: '🚀 Sci-Fi & Cyberpunk',
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>,
+      items: [
+        { type: 'button', variant: 'neon', label: 'Neon Glow', desc: 'Oddychający, toksyczny blask wokół przycisku' },
+        { type: 'button', variant: 'glitch', label: 'Cyber Glitch', desc: 'Efekt zerwanego sygnału wideo przy najechaniu' },
+        { type: 'button', variant: 'hologram', label: 'Hologram', desc: 'Mieniące się przejścia kolorów jak na karcie tarota' },
+        { type: 'button', variant: 'matrix', label: 'Matrix Code', desc: 'Rozsypujące się litery składające się w słowo' },
+      ]
+    },
+    {
+      id: 'kinetic',
+      title: '🕹️ Kinetyczne & 3D',
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>,
+      items: [
+        { type: 'button', variant: '3d', label: 'Głębokie 3D', desc: 'Fizycznie wciskany blok o twardych cieniach' },
+        { type: 'button', variant: 'shine', label: 'Shimmer Sweep', desc: 'Snop światła przelatujący przez powierzchnię' },
+        { type: 'button', variant: 'pulse', label: 'Radar Pulse', desc: 'Wypuszczający okręgi na zewnątrz (idealny do akcji)' },
+        { type: 'button', variant: 'magnetic', label: 'Magnetyczny (Hover)', desc: 'Przykleja się do kursora przy zbliżeniu' },
+      ]
+    },
+    {
+      id: 'trendy',
+      title: '🎨 Nowoczesny Web',
+      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>,
+      items: [
+        { type: 'button', variant: 'brutal', label: 'Neo-Brutalizm', desc: 'Grube, czarne ramki i mocny płaski cień' },
+        { type: 'button', variant: 'gradient', label: 'Modern Gradient', desc: 'Płynne przejście wielokolorowe z rozmyciem' },
+        { type: 'button', variant: 'rounded', label: 'Pill Shape', desc: 'Klasyczna, maksymalnie zaokrąglona pigułka' },
+        { type: 'button', variant: 'classic', label: 'Zwykły Przycisk', desc: 'Klasyka bez wodotrysków dla spokoju ducha' },
+      ]
+    }
+  ];
 
   return (
     <div className="flex flex-col gap-3 pb-10">
       
-      {/* KATEGORIA 1: GŁÓWNE AKCJE */}
-      <div className="flex flex-col drop-shadow-lg">
-        <button onClick={() => toggleTab('primary')} className={getTabStyle('primary')}>
-          <span>Główne Akcje (CTA)</span>
-          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'primary' ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
-        </button>
-        {activeTab === 'primary' && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-            <PrimaryButtonsPanel handleAddBlock={handleAddBlock} />
-          </div>
-        )}
-      </div>
+      {/* Dynamiczna animacja korzystająca z var(--theme-color) */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes themeBreathe {
+          0%, 100% { 
+            box-shadow: 0 0 10px color-mix(in srgb, var(--theme-color) 10%, transparent), 
+                        inset 0 0 5px color-mix(in srgb, var(--theme-color) 5%, transparent); 
+            border-color: color-mix(in srgb, var(--theme-color) 30%, transparent);
+          }
+          50% { 
+            box-shadow: 0 0 25px color-mix(in srgb, var(--theme-color) 50%, transparent), 
+                        inset 0 0 10px color-mix(in srgb, var(--theme-color) 20%, transparent); 
+            border-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
+          }
+        }
+        .active-theme-breathe {
+          animation: themeBreathe 3s ease-in-out infinite;
+          background-color: color-mix(in srgb, var(--theme-color) 5%, transparent);
+          color: var(--theme-color);
+        }
+      `}} />
 
-      {/* KATEGORIA 2: POBOCZNE & SSO */}
-      <div className="flex flex-col drop-shadow-lg">
-        <button onClick={() => toggleTab('secondary')} className={getTabStyle('secondary')}>
-          <span>Poboczne & Logowanie</span>
-          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'secondary' ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
-        </button>
-        {activeTab === 'secondary' && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-            <SecondaryButtonsPanel handleAddBlock={handleAddBlock} />
-          </div>
-        )}
-      </div>
+      {buttonCategories.map((category) => {
+        const isActive = activeSection === category.id;
 
-      {/* 🔥 KATEGORIA 3: ANIMOWANE & SHINE */}
-      <div className="flex flex-col drop-shadow-lg">
-        <button onClick={() => toggleTab('animated')} className={getTabStyle('animated')}>
-          <span>Animowane & Shine ✨</span>
-          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'animated' ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
-        </button>
-        {activeTab === 'animated' && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-            <AnimatedButtonsPanel handleAddBlock={handleAddBlock} />
-          </div>
-        )}
-      </div>
+        return (
+          <div key={category.id} className="flex flex-col">
+            
+            <button
+              onClick={() => toggleSection(category.id)}
+              className={`flex items-center justify-between p-3 rounded-xl transition-all duration-300 border ${
+                isActive 
+                  ? 'active-theme-breathe rounded-b-none' 
+                  : 'bg-black/20 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="transition-colors duration-300" style={isActive ? { color: 'var(--theme-color)' } : {}}>
+                  {category.icon}
+                </span>
+                <span className="font-bold text-[10px] uppercase tracking-widest">{category.title}</span>
+              </div>
+              <span className={`text-xs transition-transform duration-300 ${isActive ? 'rotate-180' : 'rotate-0'}`}>
+                ▼
+              </span>
+            </button>
 
-      {/* 🔥 KATEGORIA 4: NEO-BRUTALIZM & 3D */}
-      <div className="flex flex-col drop-shadow-lg">
-        <button onClick={() => toggleTab('brutalism')} className={getTabStyle('brutalism')}>
-          <span>Neo-Brutalizm & 3D 🧱</span>
-          <span className="text-lg leading-none transition-transform duration-300" style={{ transform: activeTab === 'brutalism' ? 'rotate(0deg)' : 'rotate(-90deg)' }}>▾</span>
-        </button>
-        {activeTab === 'brutalism' && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-            <BrutalismButtonsPanel handleAddBlock={handleAddBlock} />
-          </div>
-        )}
-      </div>
+            {isActive && (
+              <div className="flex flex-col gap-2 p-3 bg-[#0a0a0c]/80 border border-t-0 border-white/5 rounded-b-xl animate-in slide-in-from-top-2 duration-200">
+                {category.items.map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleAddBlock(item.type, item.variant, item.label)}
+                    className="group relative flex flex-col items-start p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg transition-all text-left w-full overflow-hidden"
+                  >
+                    {/* Delikatne podświetlenie ramki klocka przy najechaniu */}
+                    <div className="absolute inset-0 border border-transparent group-hover:border-solid rounded-lg pointer-events-none transition-colors duration-300" style={{ borderColor: 'color-mix(in srgb, var(--theme-color) 50%, transparent)' }}></div>
 
+                    <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white transition-colors flex items-center gap-2 relative z-10">
+                      <span className="w-1.5 h-1.5 rounded-full transition-all duration-300 bg-white/20 group-hover:shadow-[0_0_8px_var(--theme-color)]" style={{ backgroundColor: 'var(--theme-color)' }}></span>
+                      {item.label}
+                    </span>
+                    <span className="text-[9px] text-neutral-500 mt-1 pl-3.5 group-hover:text-neutral-400 transition-colors relative z-10">
+                      {item.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+          </div>
+        );
+      })}
     </div>
   );
 }

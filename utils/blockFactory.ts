@@ -44,9 +44,13 @@ export const createBlock = (type: string, variant: string, label: string) => {
 
   // ROUTER: Kierujemy blok do mik-fabryki na podstawie ścisłego typu
   switch (type) {
+    case 'text':
     case 'h1':
     case 'h2':
-    case 'p': return buildText(newBlock, variant, ctx);
+    case 'h3':
+    case 'p':
+    case 'marquee': 
+      return buildText(newBlock, variant, ctx); // 🔥 DODANE KRYTYCZNE TYPY 🔥
     case 'button': return buildButton(newBlock, variant, ctx);
     case 'input': return buildInput(newBlock, variant, ctx);
     case 'form': return buildForm(newBlock, variant, ctx);
