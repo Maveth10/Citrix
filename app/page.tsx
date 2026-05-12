@@ -72,7 +72,7 @@ export default function Home() {
   const [isAiOpen, setIsAiOpen] = useState<boolean>(false);
   
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
-  const [canvasTheme, setCanvasTheme] = useState<'light' | 'dark'>('light'); // 🔥 PRZEŁĄCZNIK THEME
+  const [canvasTheme, setCanvasTheme] = useState<'light' | 'dark'>('light'); 
   const [copiedStyles, setCopiedStyles] = useState<any>(null);
   const [previewPopupId, setPreviewPopupId] = useState<number | null>(null);
 
@@ -762,6 +762,20 @@ export default function Home() {
 
   return (
     <div className="flex h-screen w-screen bg-[#000] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30 z-0" onContextMenu={() => closeContextMenu()}>
+      {/* 🔥 INJECTOWANE STYLE DLA TEKSTÓW 🔥 */}
+      <style>{`
+        .editable-text-field {
+          color: var(--canvas-text);
+          text-shadow: 0 0 1px var(--text-shadow), 0 0 2px var(--text-shadow);
+          outline: none;
+          transition: color 0.3s ease;
+        }
+        .editable-text-field:focus {
+          background: rgba(155, 155, 155, 0.1);
+          border-radius: 4px;
+        }
+      `}</style>
+      
       <CyberTheme />
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#070709]"></div>
       <CosmicBackground />
@@ -796,7 +810,7 @@ export default function Home() {
              <div className="absolute top-0 left-0 w-full transition-transform duration-300 ease-in-out -translate-y-full group-hover:translate-y-0 z-50">
                <TopHeader 
                  canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} showGrid={showGrid} setShowGrid={setShowGrid} pageSlug={pageSlug} setPageSlug={setPageSlug} handlePublish={handlePublish} activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} viewport={viewport} setViewport={setViewport} handleAddSection={handleAddSection} handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} canUndo={past.length > 0} canRedo={future.length > 0} onPreviewClick={() => { setActiveId(null); setIsPreviewMode(true); }}
-                 canvasTheme={canvasTheme} setCanvasTheme={setCanvasTheme} // 🔥 DODANE
+                 canvasTheme={canvasTheme} setCanvasTheme={setCanvasTheme} 
                />
              </div>
           </div>
@@ -809,12 +823,23 @@ export default function Home() {
         {!isPreviewMode && <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} isEditing={isEditing} />}
         
         <main data-canvas-workspace="true" className="flex-1 overflow-auto flex justify-center p-10 pt-[60px] z-10 bg-transparent relative" onClick={() => { if (interaction) return; setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); closeContextMenu(); }}>
-          <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
-               className={`min-h-screen h-fit shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border overflow-hidden transition-colors duration-300 ${canvasTheme === 'dark' ? 'bg-[#050505] text-white border-white/5' : 'bg-white text-black border-neutral-200'}`}>
+          <div 
+            style={{ 
+              width: getCanvasWidth(), 
+              transform: `scale(${canvasZoom})`, 
+              transformOrigin: 'top center', 
+              transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out',
+              // 🔥 DYNAMICZNE ZMIENNE KONTRASTU 🔥
+              ['--canvas-text' as any]: canvasTheme === 'dark' ? '#ffffff' : '#000000',
+              ['--text-shadow' as any]: canvasTheme === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'
+            }} 
+            className={`min-h-screen h-fit shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border overflow-hidden transition-colors duration-300 ${canvasTheme === 'dark' ? 'bg-[#050505] text-white border-white/5' : 'bg-white text-black border-neutral-200'}`}
+          >
              
              {showGrid && !isPreviewMode && (
                <div className="absolute inset-0 pointer-events-none z-0 rounded-b-xl overflow-hidden opacity-30">
                  <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)', backgroundSize: '100px 100px' }}></div>
                  <div className="absolute inset-0 flex justify-center w-full h-full"><div className="w-full h-full flex gap-5 px-5">{Array(12).fill(0).map((_,i) => <div key={i} className="flex-1 bg-blue-500/[0.04] border-x border-blue-500/10 h-full"></div>)}</div></div>
                </div>
              )}
