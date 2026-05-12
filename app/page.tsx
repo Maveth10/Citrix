@@ -1,18 +1,11 @@
 'use client';
 
-console.log("🔍 TEST KOMPONENTÓW:", { 
-  TopHeader, LeftPanel, RightPanel, TextFormatToolbar, 
-  MediaManager, CanvasBlock, BottomBar, AICopilot, 
-  CosmicBackground, CyberTheme, ContextMenu 
-});
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { createBlock } from '../utils/blockFactory';
-
 import { generateTemplate } from '../utils/editorConfig';
 import { useEditorShortcuts } from '../hooks/useEditorShortcuts';
-import { useContextMenu } from '../hooks/useContextMenu'; // 🔥 DODANY IMPORT HOOKA
+import { useContextMenu } from '../hooks/useContextMenu';
 
 import TopHeader from '../components/TopHeader';
 import LeftPanel from '../components/LeftPanel'; 
@@ -82,10 +75,8 @@ export default function Home() {
   const [copiedStyles, setCopiedStyles] = useState<any>(null);
   const [previewPopupId, setPreviewPopupId] = useState<number | null>(null);
 
-  // 🔥 ZMIANA: Użycie Hooka zamiast zwykłego useState 🔥
   const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
 
-  // Adapter dla starego propa w CanvasBlock (aby nie modyfikować CanvasBlock.tsx)
   const handleSetContextMenu = (val: {x: number, y: number, blockId: number} | null) => {
     if (val) {
       const b = findBlockById(blocks, val.blockId);
@@ -573,7 +564,6 @@ export default function Home() {
     e.target.value = null; 
   };
 
-  // 🔥 NOWOŚĆ: LOGIKA SZYBKICH AKCJI Z MENU KONTEKSTOWEGO 🔥
   const handleQuickAction = (action: string, blockId: number) => {
     if (action === 'fill-100') {
       updateActiveBlock({ styles: { width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: '0px', left: '0px', zIndex: 0 } }, true, blockId);
@@ -656,7 +646,6 @@ export default function Home() {
 
         let percentWidth = (newWidthPx / parentWidth) * 100;
         
-        // Zabezpieczenie: Max 100% szerokości
         percentWidth = Math.min(100, Math.max(10, percentWidth)); 
 
         const snaps = [20, 25, 30, 31, 33.33, 40, 48, 50, 60, 66, 66.66, 70, 75, 80, 85, 90, 100];
@@ -775,7 +764,7 @@ export default function Home() {
     <div 
       className="flex h-screen w-screen bg-[#000] text-white font-sans overflow-hidden relative selection:bg-[#ff4500]/30 z-0"
       onContextMenu={(e) => { 
-         closeContextMenu(); // 🔥 ZMIANA: użycie Hooka do zamykania
+         closeContextMenu(); 
       }}
     >
       
@@ -783,7 +772,6 @@ export default function Home() {
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none bg-[#070709]"></div>
       <CosmicBackground />
 
-      {/* 🔥 NOWE MENU KONTEKSTOWE Z PODPIĘTYM HOOKIEM I AKCJAMI 🔥 */}
       {contextMenu && activeBlock && (
         <ContextMenu 
           x={contextMenu.x}
@@ -804,6 +792,7 @@ export default function Home() {
         />
       )}
 
+      {/* LEWY PANEL (Został jak był) */}
       {!isPreviewMode && (
         <div 
           className="flex h-full relative z-50 transition-all duration-300"
@@ -822,21 +811,29 @@ export default function Home() {
         </div>
       )}
 
+      {/* GŁÓWNA OBSZAR ROBOCZY */}
       <div className="flex-1 flex flex-col relative z-30 bg-transparent transition-all duration-300">
+        
+        {/* 🔥 TOP HEADER (Niewidzialny Hover Area - Tryb Zen) 🔥 */}
         {!isPreviewMode && (
-          <div className="relative w-full z-50">
-             <TopHeader 
-               canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} 
-               showGrid={showGrid} setShowGrid={setShowGrid} 
-               pageSlug={pageSlug} setPageSlug={setPageSlug} 
-               handlePublish={handlePublish} activeBlock={activeBlock} 
-               updateActiveBlock={updateActiveBlock} viewport={viewport} 
-               setViewport={setViewport} handleAddSection={handleAddSection} 
-               handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} 
-               setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} 
-               canUndo={past.length > 0} canRedo={future.length > 0} 
-               onPreviewClick={() => { setActiveId(null); setIsPreviewMode(true); }}
-             />
+          <div className="absolute top-0 left-0 w-full z-50 group">
+             {/* To jest strefa wykrywania myszki na górze (wysokość 20px) */}
+             <div className="absolute top-0 left-0 w-full h-[30px] z-40 bg-transparent"></div>
+             {/* Sam pasek TopHeader - domyślnie schowany do góry, wyjeżdża na hover */}
+             <div className="absolute top-0 left-0 w-full transition-transform duration-300 ease-in-out -translate-y-full group-hover:translate-y-0 z-50">
+               <TopHeader 
+                 canvasZoom={canvasZoom} setCanvasZoom={setCanvasZoom} 
+                 showGrid={showGrid} setShowGrid={setShowGrid} 
+                 pageSlug={pageSlug} setPageSlug={setPageSlug} 
+                 handlePublish={handlePublish} activeBlock={activeBlock} 
+                 updateActiveBlock={updateActiveBlock} viewport={viewport} 
+                 setViewport={setViewport} handleAddSection={handleAddSection} 
+                 handleChangeLayout={handleChangeLayout} isAiOpen={isAiOpen} 
+                 setIsAiOpen={setIsAiOpen} undo={undo} redo={redo} 
+                 canUndo={past.length > 0} canRedo={future.length > 0} 
+                 onPreviewClick={() => { setActiveId(null); setIsPreviewMode(true); }}
+               />
+             </div>
           </div>
         )}
         
@@ -849,14 +846,14 @@ export default function Home() {
         
         {!isPreviewMode && <TextFormatToolbar activeBlock={activeBlock} updateActiveBlock={updateActiveBlock} isEditing={isEditing} />}
         
+        {/* PŁÓTNO (CANVAS) */}
         <main 
-          className="flex-1 overflow-auto flex justify-center p-10 z-10 Selection:bg-blue-600/20 bg-transparent relative" 
+          className="flex-1 overflow-auto flex justify-center p-10 pt-[60px] z-10 Selection:bg-blue-600/20 bg-transparent relative" 
           onClick={() => { 
             if (interaction) return;
             setActiveId(null); setIsEditing(false); setLeftTab(null); setAddCategory(null); setIsAiOpen(false); 
           }}
         >
-          {/* Maska chroniąca układ (overflow-hidden wyłapuje dzieci) */}
           <div style={{ width: getCanvasWidth(), transform: `scale(${canvasZoom})`, transformOrigin: 'top center', transition: interaction ? 'none' : 'width 0.3s ease-in-out, transform 0.2s ease-out' }} 
                className="min-h-screen h-fit bg-white text-black shadow-[0_40px_100px_rgba(0,0,0,0.9)] rounded-b-xl relative z-30 flex flex-row flex-wrap content-start items-start pb-40 border border-white/5 overflow-hidden">
              
@@ -894,7 +891,7 @@ export default function Home() {
                       setCopiedStyles={setCopiedStyles}
                       previewPopupId={previewPopupId}
                       setPreviewPopupId={setPreviewPopupId}
-                      setContextMenu={handleSetContextMenu} // 🔥 ZMIANA: użycie adaptera pod CanvasBlock
+                      setContextMenu={handleSetContextMenu} 
                     />
                     
                     {showGhost && !hiddenBlocks.includes(b.id) && !isPreviewMode && (
@@ -925,13 +922,20 @@ export default function Home() {
           </div>
         </main>
         
+        {/* 🔥 BOTTOM BAR (Niewidzialny Hover Area - Tryb Zen) 🔥 */}
         {!isPreviewMode && (
-          <div className="absolute bottom-0 left-0 w-full z-50">
-            <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
+          <div className="absolute bottom-0 left-0 w-full z-50 group">
+             {/* Strefa wykrywania myszki na dole ekranu */}
+             <div className="absolute bottom-0 left-0 w-full h-[30px] z-40 bg-transparent"></div>
+             {/* Sam pasek BottomBar - domyślnie w dół, wyjeżdża na hover */}
+             <div className="absolute bottom-0 left-0 w-full transition-transform duration-300 ease-in-out translate-y-full group-hover:translate-y-0 z-50">
+               <BottomBar blocks={blocks} activeId={activeId} setActiveId={setActiveId} />
+             </div>
           </div>
         )}
       </div>
       
+      {/* PRAWY PANEL (Został jak był) */}
       {!isPreviewMode && (
         <RightPanel 
           blocks={blocks}
