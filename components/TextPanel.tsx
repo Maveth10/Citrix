@@ -6,10 +6,9 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
   const [activeSection, setActiveSection] = useState<string | null>('headers');
   const toggleSection = (section: string) => setActiveSection(prev => prev === section ? null : section);
 
-  // 💎 POTĘŻNA BAZA TYPOGRAFII I EFEKTÓW (Ponad 30 wariantów) 💎
   const textCategories = [
     {
-      id: 'headers', title: '👑 Tytuły (Hero & Headings)',
+      id: 'headers', title: 'Tytuły (Hero & Headings)',
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 12h16M4 4v16M20 4v16"/></svg>,
       items: [
         { type: 'h1', variant: 'hero', label: 'Hero Headline', desc: 'Masywny, klasyczny tytuł główny o wysokim kontraście.' },
@@ -25,7 +24,7 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
       ]
     },
     {
-      id: 'paragraphs', title: '📰 Akapity i Forma',
+      id: 'paragraphs', title: 'Akapity i Forma',
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>,
       items: [
         { type: 'p', variant: 'body', label: 'Perfect Body', desc: 'Standardowy tekst z idealnie wyliczoną czytelnością.' },
@@ -36,7 +35,7 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
       ]
     },
     {
-      id: 'quotes', title: '💬 Cytaty i Wyróżnienia',
+      id: 'quotes', title: 'Cytaty i Wyróżnienia',
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
       items: [
         { type: 'p', variant: 'quote', label: 'Minimal Quote', desc: 'Elegancki cytat z subtelną linią boczną i italikiem.' },
@@ -47,7 +46,7 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
       ]
     },
     {
-      id: 'effects', title: '🎬 Display & Efekty Specjalne',
+      id: 'effects', title: 'Display & Efekty',
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>,
       items: [
         { type: 'h1', variant: 'blackmirror', label: 'Digital Static', desc: 'Kinematograficzny efekt szumu i interferencji sygnału.' },
@@ -61,7 +60,7 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
       ]
     },
     {
-      id: 'kinetic', title: '🌀 Interaktywne (Kinetic)',
+      id: 'kinetic', title: 'Interaktywne (Kinetic)',
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M16 12a4 4 0 0 1-8 0"/></svg>,
       items: [
         { type: 'h1', variant: 'marquee-text', label: 'Infinite Marquee', desc: 'Nieskończony, animowany pasek przesuwający tekst.' },
@@ -72,7 +71,7 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
       ]
     },
     {
-      id: 'ui', title: '🛠️ Użytkowe i UI',
+      id: 'ui', title: 'Użytkowe i UI',
       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18M15 3v18"/></svg>,
       items: [
         { type: 'p', variant: 'badge', label: 'Plakietka (Badge)', desc: 'Wyróżniona etykietka promocyjna, np. "NOWOŚĆ".' },
@@ -85,25 +84,42 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
 
   return (
     <div className="flex flex-col gap-3 pb-10">
+      {/* 🔥 NOWY, SUBTELNY EFEKT "TLENIA SIĘ" 🔥 */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes themeBreathe { 0%, 100% { border-color: color-mix(in srgb, var(--theme-color) 30%, transparent); } 50% { border-color: color-mix(in srgb, var(--theme-color) 80%, transparent); } }
-        .active-theme-breathe { animation: themeBreathe 3s ease-in-out infinite; background-color: color-mix(in srgb, var(--theme-color) 5%, transparent); color: var(--theme-color); }
+        @keyframes smolder { 
+          0%, 100% { 
+            box-shadow: inset 0 0 10px color-mix(in srgb, var(--theme-color) 5%, transparent), 0 0 5px color-mix(in srgb, var(--theme-color) 10%, transparent); 
+            border-color: color-mix(in srgb, var(--theme-color) 20%, transparent); 
+          } 
+          50% { 
+            box-shadow: inset 0 0 20px color-mix(in srgb, var(--theme-color) 15%, transparent), 0 0 15px color-mix(in srgb, var(--theme-color) 15%, transparent); 
+            border-color: color-mix(in srgb, var(--theme-color) 50%, transparent); 
+          } 
+        }
+        .active-accordion { 
+          animation: smolder 4s ease-in-out infinite; 
+          background: linear-gradient(180deg, color-mix(in srgb, var(--theme-color) 8%, transparent) 0%, transparent 100%);
+          color: white;
+        }
       `}} />
       
       {textCategories.map((category) => {
         const isActive = activeSection === category.id;
         return (
           <div key={category.id} className="flex flex-col">
-            <button onClick={() => toggleSection(category.id)} className={`flex items-center justify-between p-3 rounded-xl transition-all duration-300 border ${isActive ? 'active-theme-breathe rounded-b-none' : 'bg-black/20 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white'}`}>
-              <div className="flex items-center gap-2">
-                <span style={isActive ? { color: 'var(--theme-color)' } : {}}>{category.icon}</span>
+            <button 
+              onClick={() => toggleSection(category.id)} 
+              className={`flex items-center justify-between p-3 rounded-xl transition-all duration-500 border ${isActive ? 'active-accordion rounded-b-none' : 'bg-black/20 border-white/5 text-neutral-400 hover:bg-white/5 hover:text-white'}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="opacity-80 transition-colors" style={isActive ? { color: 'var(--theme-color)' } : {}}>{category.icon}</span>
                 <span className="font-bold text-[10px] uppercase tracking-widest">{category.title}</span>
               </div>
-              <span className={`text-xs transition-transform duration-300 ${isActive ? 'rotate-180' : 'rotate-0'}`}>▼</span>
+              <span className={`text-xs transition-transform duration-300 opacity-50 ${isActive ? 'rotate-180 text-white' : 'rotate-0'}`}>▼</span>
             </button>
             
             {isActive && (
-              <div className="flex flex-col gap-2 p-3 bg-[#0a0a0c]/80 border border-t-0 border-white/5 rounded-b-xl animate-in slide-in-from-top-2 duration-200">
+              <div className="flex flex-col gap-2 p-3 bg-[#0a0a0c]/90 border border-t-0 border-white/5 rounded-b-xl animate-in slide-in-from-top-2 duration-200 shadow-inner">
                 {category.items.map((item, idx) => (
                   <button 
                     key={idx} 
@@ -111,7 +127,7 @@ export default function TextPanel({ handleAddBlock }: TextPanelProps) {
                     className="group relative flex flex-col items-start p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg transition-all text-left w-full"
                   >
                     <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[var(--theme-color)] transition-colors"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[var(--theme-color)] transition-colors shadow-[0_0_5px_transparent] group-hover:shadow-[0_0_8px_var(--theme-color)]"></span>
                       {item.label}
                     </span>
                     <span className="text-[9px] text-neutral-500 mt-1 pl-3.5 group-hover:text-neutral-400">{item.desc}</span>
