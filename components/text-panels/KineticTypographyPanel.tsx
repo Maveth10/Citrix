@@ -1,57 +1,47 @@
 import React from 'react';
 
-interface PanelProps {
-  handleAddBlock: (type: string, variant: string, label: string) => void;
-}
+const btnWrapper = "group relative w-full text-left p-3.5 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-black/40 overflow-hidden flex flex-col";
+const activeLine = "absolute left-0 top-0 bottom-0 w-[2px] bg-[color:var(--theme-color)] scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow-[0_0_10px_var(--theme-color)]";
+const dot = "w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[color:var(--theme-color)] group-hover:shadow-[0_0_8px_var(--theme-color)] transition-all duration-300 shrink-0";
 
-export default function KineticTypographyPanel({ handleAddBlock }: PanelProps) {
+export default function KineticTypographyPanel({ handleAddBlock }: { handleAddBlock: any }) {
   return (
-    <div className="flex flex-col gap-2 p-3 bg-white/5 border-x border-b border-[color:var(--theme-color)]/20 rounded-b-xl border-t-0 animate-in slide-in-from-top-2 duration-300">
-      
-      {/* 1. Maszyna do pisania */}
-      <button 
-        onClick={() => handleAddBlock('p', 'typewriter', 'Maszyna do pisania')}
-        className="w-full flex flex-col items-center justify-center p-4 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group shadow-sm overflow-hidden"
-      >
-        <span className="text-lg font-mono font-bold text-white border-r-2 border-[#ff4500] pr-1 group-hover:animate-pulse">
-          C:\&gt; HELLO_
-        </span>
-        <span className="text-[9px] text-neutral-500 mt-2 uppercase tracking-widest group-hover:text-neutral-300">
-          Pisanie na żywo
-        </span>
-      </button>
-
-      {/* 2. Glitch */}
-      <button 
-        onClick={() => handleAddBlock('h2', 'glitch', 'Cyber Glitch')}
-        className="w-full flex flex-col items-center justify-center p-4 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group shadow-sm"
-      >
-        <span 
-          className="text-2xl font-black tracking-widest uppercase transition-transform group-hover:scale-105 text-white relative"
-          style={{ textShadow: '2px 0 red, -2px 0 cyan' }}
-        >
-          GLITCH
-        </span>
-        <span className="text-[9px] text-neutral-500 mt-2 uppercase tracking-widest group-hover:text-neutral-300">
-          Zakłócenia RGB
-        </span>
-      </button>
-
-      {/* 3. Marquee (Nieskończony Scroll) */}
-      <button 
-        onClick={() => handleAddBlock('h1', 'marquee-text', 'Pasek Marquee')}
-        className="w-full flex flex-col items-center justify-center p-4 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group shadow-sm overflow-hidden"
-      >
-        <div className="w-full overflow-hidden flex whitespace-nowrap">
-           <span className="text-xl font-black italic text-transparent opacity-50 group-hover:opacity-100 transition-opacity" style={{ WebkitTextStroke: '1px #ff4500' }}>
-             PRZEWIJANY TEKST • PRZEWIJANY TEKST
-           </span>
+    <div className="flex flex-col">
+      <button onClick={() => handleAddBlock('h1', 'marquee-text', 'Infinite Marquee')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Infinite Marquee</span>
         </div>
-        <span className="text-[9px] text-neutral-500 mt-2 uppercase tracking-widest group-hover:text-neutral-300">
-          Nieskończony scroll
-        </span>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Nieskończony pasek tekstu (100vw).</span>
       </button>
 
+      <button onClick={() => handleAddBlock('h1', 'sliced', 'Kinetic Split')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Kinetic Split</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Tekst rozcinający się w poziomie na hover.</span>
+      </button>
+
+      <button onClick={() => handleAddBlock('h2', 'glitch', 'Cyber Glitch')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Cyber Glitch</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Agresywne aberracje RGB przy najechaniu.</span>
+      </button>
+
+      <button onClick={() => handleAddBlock('p', 'typewriter', 'Terminal Console')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Terminal Console</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Zainicjowane pisanie z kursorem OS.</span>
+      </button>
     </div>
   );
 }

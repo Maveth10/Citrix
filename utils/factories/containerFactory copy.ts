@@ -1,0 +1,314 @@
+import { FactoryContext } from '../blockFactory';
+
+export const buildContainer = (block: any, variant: string, ctx: FactoryContext) => {
+  block.styles.width = '100%';
+  block.styles.display = 'flex';
+  block.styles.flexDirection = 'column';
+  block.styles.gap = '20px';
+  
+  if (variant === 'empty') { 
+    block.styles.border = '2px dashed var(--theme-color, #cbd5e1)'; 
+    block.styles.backgroundColor = 'rgba(255,255,255,0.05)'; 
+    block.styles.minHeight = '120px'; 
+    block.styles.width = '100%'; 
+    block.styles.borderRadius = '12px'; 
+    block.styles.display = 'flex'; 
+    block.styles.flexDirection = 'column'; 
+    block.styles.gap = '10px'; 
+    block.styles.padding = '20px';
+  }
+  else if (variant === 'glass') { 
+    block.styles.backgroundColor = 'rgba(255, 255, 255, 0.1)'; 
+    block.styles.backdropFilter = 'blur(10px)'; 
+    block.styles.WebkitBackdropFilter = 'blur(10px)';
+    block.styles.border = '1px solid rgba(255, 255, 255, 0.2)'; 
+    block.styles.borderRadius = '24px'; 
+    block.styles.padding = '30px';
+  }
+  else if (variant === 'neon') { 
+    block.styles.backgroundColor = '#000'; 
+    block.styles.border = '2px solid var(--theme-color, #00f2ff)'; 
+    block.styles.boxShadow = '0 0 15px var(--theme-color, #00f2ff), inset 0 0 10px var(--theme-color, #00f2ff)'; 
+    block.styles.borderRadius = '12px'; 
+    block.styles.padding = '30px';
+  }
+  else if (variant === 'pill') { 
+    block.styles.backgroundColor = 'var(--canvas-text)'; 
+    block.styles.borderRadius = '999px'; 
+    block.styles.height = '80px'; 
+    block.styles.width = '400px'; 
+    block.styles.padding = '0 40px'; 
+    block.styles.alignItems = 'center'; 
+    block.styles.justifyContent = 'center'; 
+  }
+  else if (variant === 'shadow-pro') { 
+    block.styles.backgroundColor = 'var(--canvas-text)'; 
+    block.styles.borderRadius = '32px'; 
+    block.styles.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)'; 
+    block.styles.padding = '30px';
+  }
+  else if (variant === 'text-combo') { 
+    block.styles.width = '100%'; 
+    block.children = [
+      {id:ctx.generateId(), type:'p', name:'ETYKIETA', text:'NOWOŚĆ', styles:{fontSize:'14px', fontWeight:'bold', color:'var(--theme-color)', letterSpacing:'0.1em', textTransform:'uppercase', margin:'0 0 10px 0', clearRow: true}}, 
+      {id:ctx.generateId(), type:'h2', name:'TYTUŁ', text:'Czysta Architektura', styles:{fontSize:'36px', fontWeight:'900', letterSpacing:'-0.02em', lineHeight:'1.1', color:'var(--canvas-text)', margin:'0 0 15px 0', clearRow: true}}, 
+      {id:ctx.generateId(), type:'p', name:'AKAPIT', text:'Odkryj nowy wymiar projektowania stron internetowych.', styles:{fontSize:'18px', color:'#64748b', lineHeight:'1.6', clearRow: true}}
+    ]; 
+  }
+  
+  // ==========================================
+  // 🔥 NAWIGACJE I STOPKI 🔥
+  // ==========================================
+  else if (variant === 'nav-classic') { 
+    block.name = 'NAVBAR'; block.styles.display = 'flex'; block.styles.flexDirection = 'row'; block.styles.alignItems = 'center'; block.styles.justifyContent = 'space-between'; block.styles.padding = '20px 40px'; block.styles.backgroundColor = '#ffffff'; block.styles.borderBottom = '1px solid #e2e8f0'; block.styles.width = '100%'; 
+    const logo = ctx.createBlock('h2', 'brand', 'Logo'); logo.text = 'LOGO'; logo.styles.fontSize = '24px'; logo.styles.margin = '0'; logo.styles.color = '#0f172a'; logo.styles.borderBottom = 'none'; 
+    const links = ctx.createBlock('container', 'empty', 'Linki'); links.styles.display = 'flex'; links.styles.flexDirection = 'row'; links.styles.gap = '30px'; links.styles.backgroundColor = 'transparent'; links.styles.padding = '0'; links.styles.minHeight = 'auto'; links.styles.width = 'auto'; links.styles.border = 'none'; 
+    const l1 = ctx.createBlock('p', 'classic', 'Link'); l1.text = 'O nas'; l1.styles.margin = '0'; l1.styles.fontWeight = '600'; l1.styles.cursor = 'pointer'; 
+    const l2 = ctx.createBlock('p', 'classic', 'Link'); l2.text = 'Usługi'; l2.styles.margin = '0'; l2.styles.fontWeight = '600'; l2.styles.cursor = 'pointer'; 
+    const l3 = ctx.createBlock('p', 'classic', 'Link'); l3.text = 'Kontakt'; l3.styles.margin = '0'; l3.styles.fontWeight = '600'; l3.styles.cursor = 'pointer'; 
+    links.children = [l1, l2, l3]; 
+    const btn = ctx.createBlock('button', 'classic', 'Akcja'); btn.text = 'Rozpocznij'; 
+    block.children = [logo, links, btn]; 
+  }
+  else if (variant === 'nav-pill') { 
+    block.name = 'FLOATING NAV'; block.styles.display = 'flex'; block.styles.flexDirection = 'row'; block.styles.alignItems = 'center'; block.styles.justifyContent = 'space-between'; block.styles.padding = '10px 20px'; block.styles.backgroundColor = 'rgba(255, 255, 255, 0.8)'; block.styles.backdropFilter = 'blur(12px)'; block.styles.WebkitBackdropFilter = 'blur(12px)'; block.styles.borderRadius = '999px'; block.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)'; block.styles.width = '90%'; block.styles.margin = '20px auto'; block.styles.border = '1px solid rgba(255, 255, 255, 0.3)'; 
+    const logo = ctx.createBlock('h2', 'brand', 'Logo'); logo.text = 'LOGO'; logo.styles.fontSize = '20px'; logo.styles.margin = '0'; logo.styles.color = '#0f172a'; logo.styles.borderBottom = 'none'; 
+    const links = ctx.createBlock('container', 'empty', 'Linki'); links.styles.display = 'flex'; links.styles.flexDirection = 'row'; links.styles.gap = '25px'; links.styles.backgroundColor = 'transparent'; links.styles.padding = '0'; links.styles.minHeight = 'auto'; links.styles.width = 'auto'; links.styles.border = 'none'; 
+    const l1 = ctx.createBlock('p', 'classic', 'Link'); l1.text = 'Home'; l1.styles.margin = '0'; l1.styles.fontWeight = '600'; l1.styles.color = '#334155'; l1.styles.cursor = 'pointer'; 
+    const l2 = ctx.createBlock('p', 'classic', 'Link'); l2.text = 'Cennik'; l2.styles.margin = '0'; l2.styles.fontWeight = '600'; l2.styles.color = '#334155'; l2.styles.cursor = 'pointer'; 
+    links.children = [l1, l2]; 
+    const btn = ctx.createBlock('button', 'rounded', 'Akcja'); btn.text = 'Zaloguj'; btn.styles.padding = '10px 24px'; 
+    block.children = [logo, links, btn]; 
+  }
+  else if (variant === 'nav-mega') {
+    block.name = 'MEGA MENU'; block.styles.display = 'flex'; block.styles.flexDirection = 'row'; block.styles.alignItems = 'center'; block.styles.justifyContent = 'space-between'; block.styles.padding = '20px 40px'; block.styles.backgroundColor = '#ffffff'; block.styles.borderBottom = '1px solid #e2e8f0'; block.styles.width = '100%'; block.styles.position = 'relative';
+    const logo = ctx.createBlock('h2', 'brand', 'Logo'); logo.text = 'MEGA.'; logo.styles.fontSize = '24px'; logo.styles.margin = '0'; logo.styles.color = '#0f172a'; logo.styles.borderBottom = 'none';
+    const links = ctx.createBlock('container', 'empty', 'Nawigacja'); links.styles.display = 'flex'; links.styles.flexDirection = 'row'; links.styles.gap = '30px'; links.styles.padding = '0'; links.styles.border = 'none'; links.styles.backgroundColor = 'transparent'; links.styles.minHeight = 'auto'; links.styles.alignItems = 'center';
+    links.text = `<style>.mega-parent-${ctx.rnd} { position: relative; cursor: pointer; padding: 20px 0; font-weight: 600; color: #0f172a; } .mega-menu-${ctx.rnd} { position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(10px); background: #fff; width: 600px; padding: 30px; border-radius: 16px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 100; pointer-events: none; } .mega-parent-${ctx.rnd}:hover .mega-menu-${ctx.rnd} { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); pointer-events: auto; } .mega-col-${ctx.rnd} { display: flex; flex-direction: column; gap: 15px; } .mega-title-${ctx.rnd} { font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; } .mega-link-${ctx.rnd} { display: flex; align-items: flex-start; gap: 12px; text-decoration: none; padding: 8px; border-radius: 8px; transition: background 0.2s; color: #334155; } .mega-link-${ctx.rnd}:hover { background: #f8fafc; } .mega-link-icon-${ctx.rnd} { font-size: 20px; } .mega-link-text-${ctx.rnd} h4 { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; } .mega-link-text-${ctx.rnd} p { margin: 4px 0 0 0; font-size: 12px; color: #64748b; line-height: 1.4; }</style><div style="display:flex; gap:30px; align-items:center;"><div style="font-weight: 600; color: #64748b; cursor: pointer;">Strona Główna</div><div class="mega-parent-${ctx.rnd}">Produkty ▾<div class="mega-menu-${ctx.rnd}"><div class="mega-col-${ctx.rnd}"><div class="mega-title-${ctx.rnd}">Dla Biznesu</div><a href="#" class="mega-link-${ctx.rnd}"><div class="mega-link-icon-${ctx.rnd}">🚀</div><div class="mega-link-text-${ctx.rnd}"><h4>Platforma SaaS</h4><p>Kompleksowe rozwiązanie dla Twojej firmy.</p></div></a><a href="#" class="mega-link-${ctx.rnd}"><div class="mega-link-icon-${ctx.rnd}">📊</div><div class="mega-link-text-${ctx.rnd}"><h4>Analityka AI</h4><p>Podejmuj decyzje na podstawie danych.</p></div></a></div><div class="mega-col-${ctx.rnd}"><div class="mega-title-${ctx.rnd}">Zasoby</div><a href="#" class="mega-link-${ctx.rnd}"><div class="mega-link-icon-${ctx.rnd}">📚</div><div class="mega-link-text-${ctx.rnd}"><h4>Baza Wiedzy</h4><p>Dokumentacja i poradniki wideo.</p></div></a><a href="#" class="mega-link-${ctx.rnd}"><div class="mega-link-icon-${ctx.rnd}">💬</div><div class="mega-link-text-${ctx.rnd}"><h4>Społeczność</h4><p>Dołącz do forum naszych użytkowników.</p></div></a></div></div></div><div style="font-weight: 600; color: #64748b; cursor: pointer;">Cennik</div></div>`;
+    const btn = ctx.createBlock('button', 'classic', 'Akcja'); btn.text = 'Rozpocznij';
+    block.children = [logo, links, btn];
+  }
+  else if (variant === 'footer-columns' || variant === 'footer-pro') { 
+    block.name = 'FOOTER PRO'; block.styles.display = 'grid'; block.styles.gridTemplateColumns = '2fr 1fr 1fr 1fr'; block.styles.gap = '40px'; block.styles.padding = '60px 40px'; block.styles.backgroundColor = '#0f172a'; block.styles.width = '100%'; 
+    const col1 = ctx.createBlock('container', 'empty', 'Kolumna'); col1.styles.border = 'none'; col1.styles.backgroundColor = 'transparent'; col1.styles.padding = '0'; col1.styles.gap = '15px'; 
+    const logo = ctx.createBlock('h2', 'classic', 'Logo'); logo.text = 'FIRMA'; logo.styles.color = '#ffffff'; logo.styles.margin = '0'; 
+    const desc = ctx.createBlock('p', 'classic', 'Opis'); desc.text = 'Tworzymy najlepsze rozwiązania dla Twojego biznesu.'; desc.styles.color = '#94a3b8'; desc.styles.margin = '0'; 
+    col1.children = [logo, desc]; 
+    const col2 = ctx.createBlock('container', 'empty', 'Kolumna'); col2.styles.border = 'none'; col2.styles.backgroundColor = 'transparent'; col2.styles.padding = '0'; col2.styles.gap = '10px'; 
+    const hProduct = ctx.createBlock('p', 'eyebrow', 'Nagłówek'); hProduct.text = 'PRODUKT'; hProduct.styles.color = '#ffffff'; hProduct.styles.margin = '0'; 
+    const l1 = ctx.createBlock('p', 'classic', 'Link'); l1.text = 'Funkcje'; l1.styles.color = '#94a3b8'; l1.styles.margin = '0'; 
+    const l2 = ctx.createBlock('p', 'classic', 'Link'); l2.text = 'Cennik'; l2.styles.color = '#94a3b8'; l2.styles.margin = '0'; 
+    col2.children = [hProduct, l1, l2]; 
+    const col3 = ctx.createBlock('container', 'empty', 'Kolumna'); col3.styles.border = 'none'; col3.styles.backgroundColor = 'transparent'; col3.styles.padding = '0'; col3.styles.gap = '10px'; 
+    const hCompany = ctx.createBlock('p', 'eyebrow', 'Nagłówek'); hCompany.text = 'FIRMA'; hCompany.styles.color = '#ffffff'; hCompany.styles.margin = '0'; 
+    const l3 = ctx.createBlock('p', 'classic', 'Link'); l3.text = 'O nas'; l3.styles.color = '#94a3b8'; l3.styles.margin = '0'; 
+    const l4 = ctx.createBlock('p', 'classic', 'Link'); l4.text = 'Kariera'; l4.styles.color = '#94a3b8'; l4.styles.margin = '0'; 
+    col3.children = [hCompany, l3, l4]; 
+    const col4 = ctx.createBlock('container', 'empty', 'Kolumna'); col4.styles.border = 'none'; col4.styles.backgroundColor = 'transparent'; col4.styles.padding = '0'; col4.styles.gap = '10px'; 
+    const hLegal = ctx.createBlock('p', 'eyebrow', 'Nagłówek'); hLegal.text = 'PRAWNE'; hLegal.styles.color = '#ffffff'; hLegal.styles.margin = '0'; 
+    const l5 = ctx.createBlock('p', 'classic', 'Link'); l5.text = 'Prywatność'; l5.styles.color = '#94a3b8'; l5.styles.margin = '0'; 
+    const l6 = ctx.createBlock('p', 'classic', 'Link'); l6.text = 'Regulamin'; l6.styles.color = '#94a3b8'; l6.styles.margin = '0'; 
+    col4.children = [hLegal, l5, l6]; 
+    block.children = [col1, col2, col3, col4]; 
+  }
+  else if (variant === 'footer-newsletter') {
+    block.name = 'FOOTER NEWSLETTER'; block.styles.display = 'flex'; block.styles.flexDirection = 'column'; block.styles.alignItems = 'center'; block.styles.padding = '80px 20px 40px 20px'; block.styles.backgroundColor = '#f8fafc'; block.styles.borderTop = '1px solid #e2e8f0'; block.styles.gap = '40px';
+    const topPart = ctx.createBlock('container', 'empty', 'Newsletter Box'); topPart.styles.backgroundColor = '#0f172a'; topPart.styles.borderRadius = '24px'; topPart.styles.padding = '50px'; topPart.styles.width = '100%'; topPart.styles.maxWidth = '1000px'; topPart.styles.flexDirection = 'row'; topPart.styles.alignItems = 'center'; topPart.styles.justifyContent = 'space-between'; topPart.styles.gap = '30px';
+    const textCol = ctx.createBlock('container', 'empty', 'Text'); textCol.styles.padding = '0'; textCol.styles.backgroundColor = 'transparent'; textCol.styles.border = 'none';
+    const h2 = ctx.createBlock('h2', 'classic', 'Nagłówek'); h2.text = 'Zapisz się do newslettera'; h2.styles.color = '#fff'; h2.styles.margin = '0 0 10px 0';
+    const p = ctx.createBlock('p', 'classic', 'Opis'); p.text = 'Otrzymuj najnowsze informacje o produkcie prosto na skrzynkę.'; p.styles.color = '#94a3b8'; p.styles.margin = '0';
+    textCol.children = [h2, p];
+    const form = ctx.createBlock('form', 'waitlist', 'Formularz');
+    topPart.children = [textCol, form];
+    const bottomPart = ctx.createBlock('container', 'empty', 'Linki'); bottomPart.styles.flexDirection = 'row'; bottomPart.styles.justifyContent = 'space-between'; bottomPart.styles.width = '100%'; bottomPart.styles.maxWidth = '1000px'; bottomPart.styles.padding = '0'; bottomPart.styles.backgroundColor = 'transparent'; bottomPart.styles.border = 'none';
+    const logo = ctx.createBlock('h2', 'brand', 'Logo'); logo.text = 'FIRMA'; logo.styles.margin = '0';
+    const copy = ctx.createBlock('p', 'classic', 'Copyright'); copy.text = '© 2026 Wszelkie prawa zastrzeżone.'; copy.styles.color = '#64748b'; copy.styles.fontSize = '14px';
+    bottomPart.children = [logo, copy];
+    block.children = [topPart, bottomPart];
+  }
+  else if (variant === 'footer-minimal') {
+    block.name = 'FOOTER MINIMAL'; block.styles.display = 'flex'; block.styles.alignItems = 'center'; block.styles.justifyContent = 'center'; block.styles.padding = '40px 20px'; block.styles.backgroundColor = '#ffffff'; block.styles.borderTop = '1px solid #e2e8f0';
+    const links = ctx.createBlock('container', 'empty', 'Linki'); links.styles.display = 'flex'; links.styles.flexDirection = 'row'; links.styles.gap = '20px'; links.styles.padding = '0'; links.styles.backgroundColor = 'transparent'; links.styles.border = 'none'; links.styles.marginBottom = '20px';
+    const l1 = ctx.createBlock('p', 'classic', 'Link'); l1.text = 'Polityka prywatności'; l1.styles.color = '#64748b'; l1.styles.fontSize = '14px'; l1.styles.margin = '0';
+    const l2 = ctx.createBlock('p', 'classic', 'Link'); l2.text = 'Regulamin'; l2.styles.color = '#64748b'; l2.styles.fontSize = '14px'; l2.styles.margin = '0';
+    const l3 = ctx.createBlock('p', 'classic', 'Link'); l3.text = 'Kontakt'; l3.styles.color = '#64748b'; l3.styles.fontSize = '14px'; l3.styles.margin = '0';
+    links.children = [l1, l2, l3];
+    const p = ctx.createBlock('p', 'classic', 'Tekst'); p.text = '© 2026 Twoja Firma. Wszelkie prawa zastrzeżone.'; p.styles.color = '#94a3b8'; p.styles.fontSize = '14px'; p.styles.textAlign = 'center'; p.styles.margin = '0';
+    block.children = [links, p];
+  }
+
+  // ==========================================
+  // 🔥 GALERIE I BENTO 🔥
+  // ==========================================
+  else if (variant === 'gallery-bento') { 
+    block.name = 'BENTO GRID'; block.styles.display = 'grid'; block.styles.gridTemplateColumns = 'repeat(3, 1fr)'; block.styles.gap = '16px'; block.styles.backgroundColor = 'transparent'; block.styles.padding = '0px'; 
+    const img1 = ctx.createBlock('img', 'rounded', 'Bento 1'); img1.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80'; img1.styles.gridColumn = 'span 2'; img1.styles.gridRow = 'span 2'; img1.styles.height = '100%'; 
+    const img2 = ctx.createBlock('img', 'rounded', 'Bento 2'); img2.src = 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=400&q=80'; img2.styles.height = '100%'; 
+    const img3 = ctx.createBlock('img', 'rounded', 'Bento 3'); img3.src = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80'; img3.styles.height = '100%'; 
+    block.children = [img1, img2, img3]; 
+  }
+  else if (variant === 'gallery-slider') { 
+    block.name = 'KARUZELA'; 
+    block.styles.display = 'flex'; 
+    block.styles.flexDirection = 'row'; 
+    block.styles.flexWrap = 'nowrap'; 
+    // 🔥 Używamy głównego overflow, żeby edytor nie nadpisywał
+    block.styles.overflow = 'auto'; 
+    block.styles.gap = '20px'; 
+    block.styles.padding = '10px 0'; 
+    block.styles.backgroundColor = 'transparent'; 
+    // 🔥 Ukryty pasek przewijania + Smooth Snapping
+    block.customCss = `#block-${block.id} { scroll-snap-type: x mandatory; scroll-behavior: smooth; } #block-${block.id}::-webkit-scrollbar { height: 6px; } #block-${block.id}::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; } #block-${block.id}::-webkit-scrollbar-thumb { background: var(--theme-color, #ff4500); border-radius: 10px; }`;
+
+    const slideSrcs = ['https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80', 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80', 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80']; 
+    block.children = slideSrcs.map((src, idx) => { 
+        const img = ctx.createBlock('img', 'rounded', `Slajd ${idx + 1}`); 
+        img.src = src; 
+        img.styles.width = '350px'; 
+        img.styles.height = '250px'; 
+        img.styles.flexShrink = '0'; 
+        img.styles.scrollSnapAlign = 'center'; 
+        return img; 
+    }); 
+  }
+
+  // ==========================================
+  // 🔥 MOCKUPY I KARTY 3D SAAS 🔥
+  // ==========================================
+  else if (variant === 'mockup-browser') { 
+    block.name = 'MOCKUP BROWSER'; block.styles.backgroundColor = '#1e1e1e'; block.styles.borderRadius = '12px'; block.styles.border = '1px solid #333'; block.styles.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5)'; block.styles.padding = '0'; block.styles.overflow = 'hidden'; block.styles.width = '100%';
+    const topBar = ctx.createBlock('graphic', 'classic', 'Pasek Safari'); topBar.text = '<div style="height:32px; background:#2d2d2d; display:flex; align-items:center; padding:0 12px; gap:8px;"><div style="width:12px;height:12px;border-radius:50%;background:#ff5f56"></div><div style="width:12px;height:12px;border-radius:50%;background:#ffbd2e"></div><div style="width:12px;height:12px;border-radius:50%;background:#27c93f"></div></div>'; topBar.styles.padding = '0'; topBar.styles.width = '100%';
+    const img = ctx.createBlock('img', 'classic', 'Zrzut ekranu'); img.src = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80'; img.styles.borderTopLeftRadius = '0'; img.styles.borderTopRightRadius = '0';
+    block.children = [topBar, img]; 
+  }
+  else if (variant === 'mockup-mobile') { 
+    block.name = 'MOCKUP MOBILE'; block.styles.backgroundColor = '#000000'; block.styles.borderRadius = '40px'; block.styles.border = '4px solid #1f2937'; block.styles.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5), inset 0 0 0 2px #000'; block.styles.padding = '12px'; block.styles.width = '320px'; block.styles.margin = '0 auto';
+    const img = ctx.createBlock('img', 'classic', 'Ekran Aplikacji'); img.src = 'https://images.unsplash.com/photo-1616423640778-28d1b53229bd?auto=format&fit=crop&w=600&q=80'; img.styles.height = '600px'; img.styles.borderRadius = '28px'; img.styles.objectFit = 'cover';
+    block.children = [img]; 
+  }
+  else if (variant === 'mockup-credit-card') {
+    block.name = 'KARTA 3D';
+    block.styles.width = '350px';
+    block.styles.height = '220px';
+    block.styles.margin = '40px auto';
+    block.styles.borderRadius = '20px';
+    block.styles.padding = '24px';
+    block.styles.display = 'flex';
+    block.styles.flexDirection = 'column';
+    block.styles.justifyContent = 'space-between';
+    block.styles.color = '#fff';
+    block.styles.boxShadow = '0 20px 40px -10px rgba(0,0,0,0.5)';
+    block.styles.background = 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
+    block.styles.border = '1px solid rgba(255,255,255,0.1)';
+    // 🔥 Płynny Hover 3D w czystym CSS 🔥
+    block.customCss = `
+      #block-${block.id} { transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); transform-style: preserve-3d; perspective: 1000px; }
+      #block-${block.id}:hover { transform: scale(1.05) rotateX(10deg) rotateY(-10deg); box-shadow: -20px 20px 30px -10px rgba(var(--theme-color-rgb), 0.3); }
+      #block-${block.id}::before { content: ''; position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent); opacity: 0; transition: opacity 0.5s ease; border-radius: inherit; pointer-events: none; }
+      #block-${block.id}:hover::before { opacity: 1; transform: translateX(100%); transition: transform 1s ease; }
+    `;
+    
+    const chip = ctx.createBlock('graphic', 'classic', 'Chip');
+    chip.text = '<svg width="40" height="30" viewBox="0 0 40 30" fill="none"><rect width="40" height="30" rx="6" fill="#fbbf24"/><path d="M10 0v30M20 0v30M30 0v30" stroke="#d97706" stroke-width="2" opacity="0.5"/><path d="M0 15h40" stroke="#d97706" stroke-width="2" opacity="0.5"/></svg>';
+    
+    const number = ctx.createBlock('p', 'classic', 'Numer');
+    number.text = '•••• •••• •••• 4242';
+    number.styles.fontSize = '22px'; number.styles.fontWeight = 'bold'; number.styles.letterSpacing = '4px'; number.styles.fontFamily = 'monospace';
+    
+    const details = ctx.createBlock('container', 'empty', 'Detale');
+    details.styles.flexDirection = 'row'; details.styles.justifyContent = 'space-between'; details.styles.padding = '0'; details.styles.border = 'none'; details.styles.backgroundColor = 'transparent';
+    const name = ctx.createBlock('p', 'classic', 'Imię'); name.text = 'JAN KOWALSKI'; name.styles.fontSize = '12px'; name.styles.letterSpacing = '1px';
+    const exp = ctx.createBlock('p', 'classic', 'Data'); exp.text = '12/28'; exp.styles.fontSize = '12px'; exp.styles.fontWeight = 'bold';
+    details.children = [name, exp];
+
+    block.children = [chip, number, details];
+  }
+  else if (variant === 'pricing-card') {
+    block.name = 'CENNIK SAAS';
+    block.styles.backgroundColor = '#ffffff';
+    block.styles.borderRadius = '24px';
+    block.styles.padding = '40px';
+    block.styles.boxShadow = '0 20px 40px -10px rgba(0,0,0,0.1)';
+    block.styles.border = '1px solid #e2e8f0';
+    block.styles.maxWidth = '350px';
+    block.styles.alignItems = 'center';
+    block.styles.transition = 'transform 0.3s ease';
+    block.hoverStyles = { transform: 'translateY(-10px)' };
+
+    const title = ctx.createBlock('h3', 'classic', 'Plan'); title.text = 'PRO PLAN'; title.styles.color = 'var(--theme-color, #ff4500)'; title.styles.fontSize = '14px'; title.styles.fontWeight = '800'; title.styles.letterSpacing = '2px';
+    const price = ctx.createBlock('h2', 'classic', 'Cena'); price.text = '$49<span style="font-size:16px; color:#94a3b8; font-weight:500;">/mc</span>'; price.styles.fontSize = '48px'; price.styles.color = '#0f172a'; price.styles.margin = '10px 0 20px 0';
+    const list = ctx.createBlock('list', 'features', 'Funkcje');
+    const btn = ctx.createBlock('button', 'classic', 'Kup'); btn.text = 'Wybierz Plan'; btn.styles.width = '100%'; btn.styles.marginTop = '20px'; btn.styles.padding = '15px'; btn.styles.borderRadius = '12px';
+    
+    block.children = [title, price, list, btn];
+  }
+
+  // ==========================================
+  // 🔥 SYSTEM ALERTÓW I SOCIAL PROOF 🔥
+  // ==========================================
+  else if (['alert-success', 'alert-warning', 'alert-tip', 'notice-box', 'alert-cosmos'].includes(variant)) { 
+    block.styles.position = 'relative'; block.styles.width = '450px'; block.styles.maxWidth = '100%'; block.styles.borderRadius = '12px'; block.styles.padding = '20px 24px'; block.styles.marginTop = '25px'; block.styles.overflow = 'visible'; block.styles.display = 'flex'; block.styles.flexDirection = 'column'; block.styles.gap = '8px';
+    
+    const badgeId = ctx.generateId(); const textId = ctx.generateId(); 
+    let badgeText = ''; let mainColor = ''; let bgColor = ''; let textColor = ''; 
+    
+    if (variant === 'alert-success') { badgeText = 'SUKCES'; mainColor = '#10b981'; bgColor = '#ecfdf5'; textColor = '#065f46'; } 
+    else if (variant === 'alert-warning') { badgeText = 'UWAGA'; mainColor = '#f59e0b'; bgColor = '#fffbeb'; textColor = '#92400e'; } 
+    else if (variant === 'alert-tip') { badgeText = 'WSKAZÓWKA'; mainColor = '#3b82f6'; bgColor = '#eff6ff'; textColor = '#1e3a8a'; } 
+    else if (variant === 'notice-box') { badgeText = 'SECURITY & SAFETY NOTICE'; mainColor = '#ef4444'; bgColor = '#fef2f2'; textColor = '#dc2626'; block.styles.border = `1px solid ${mainColor}`; } 
+    else if (variant === 'alert-cosmos') {
+      badgeText = 'KOSMICZNY ALERT'; mainColor = '#8b5cf6'; bgColor = 'rgba(15, 23, 42, 0.8)'; textColor = '#94a3b8'; block.styles.backdropFilter = 'blur(12px)'; block.styles.border = '1px solid rgba(139, 92, 246, 0.3)';
+      block.text = `<style>@keyframes neonPulse_${ctx.rnd} { 0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.2), 0 0 20px rgba(236, 72, 153, 0.2), inset 0 0 15px rgba(59, 130, 246, 0.1); } 50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(236, 72, 153, 0.4), inset 0 0 30px rgba(59, 130, 246, 0.3); } } #block-${block.id} { animation: neonPulse_${ctx.rnd} 4s infinite alternate; } #block-${badgeId} { background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6) !important; background-size: 200% 200% !important; animation: gradientFlow_${ctx.rnd} 5s ease infinite !important; } @keyframes gradientFlow_${ctx.rnd} { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }</style>`;
+    }
+    
+    block.styles.backgroundColor = bgColor; 
+    if (variant !== 'notice-box' && variant !== 'alert-cosmos') { block.styles.boxShadow = `inset 6px 0 0 ${mainColor}, 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05)`; } 
+    
+    block.children = [ 
+      { id: badgeId, type: 'h2', name: 'PLAKIETKA', text: badgeText, styles: { position: 'absolute', top: '0px', left: '24px', transform: 'translateY(-50%)', backgroundColor: mainColor, color: '#ffffff', padding: '4px 12px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', borderRadius: '6px', zIndex: 50, width: 'max-content', whiteSpace: 'nowrap', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', textShadow: variant === 'alert-cosmos' ? '0 0 4px rgba(255,255,255,0.5)' : 'none', clearRow: false } }, 
+      { id: textId, type: 'p', name: 'TREŚĆ', text: variant === 'alert-success' ? 'Wszystkie systemy działają poprawnie.' : variant === 'alert-warning' ? 'Ta operacja jest nieodwracalna.' : variant === 'alert-tip' ? 'Kliknij dwukrotnie w obrazek, aby otworzyć Menedżer Mediów.' : variant === 'alert-cosmos' ? '<strong style="color: #fff; font-size: 16px; display: block; margin-bottom: 4px;">Anomalia Wykryta</strong>System odnotował fluktuacje na poziomie horyzontu zdarzeń.' : 'Internal access should only be performed by qualified personnel in compliance with local electrical safety regulations and OHS standards.', styles: { color: textColor, fontWeight: '600', fontSize: '14px', lineHeight: '1.6', margin: 0, width: '100%', clearRow: true } } 
+    ]; 
+  }
+  else if (variant === 'review-classic') {
+    block.name = 'RECENZJA KLASYCZNA'; block.styles.backgroundColor = '#ffffff'; block.styles.borderRadius = '16px'; block.styles.padding = '30px'; block.styles.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.05)'; block.styles.border = '1px solid #f1f5f9'; block.styles.gap = '16px'; block.styles.maxWidth = '400px';
+    const stars = ctx.createBlock('p', 'classic', 'Gwiazdki'); stars.text = '⭐⭐⭐⭐⭐'; stars.styles.margin = '0'; stars.styles.fontSize = '20px';
+    const quote = ctx.createBlock('p', 'classic', 'Cytat'); quote.text = '"To narzędzie zmieniło sposób, w jaki pracujemy. Oszczędzamy kilkanaście godzin tygodniowo. Zdecydowanie polecam!"'; quote.styles.fontStyle = 'italic'; quote.styles.color = '#334155'; quote.styles.margin = '0'; quote.styles.lineHeight = '1.6';
+    const authorRow = ctx.createBlock('container', 'empty', 'Autor'); authorRow.styles.flexDirection = 'row'; authorRow.styles.alignItems = 'center'; authorRow.styles.gap = '12px'; authorRow.styles.padding = '0'; authorRow.styles.border = 'none'; authorRow.styles.backgroundColor = 'transparent';
+    const avatar = ctx.createBlock('img', 'avatar', 'Avatar'); avatar.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'; avatar.styles.width = '48px'; avatar.styles.height = '48px';
+    const authorInfo = ctx.createBlock('container', 'empty', 'Info'); authorInfo.styles.padding = '0'; authorInfo.styles.border = 'none'; authorInfo.styles.backgroundColor = 'transparent'; authorInfo.styles.gap = '2px';
+    const name = ctx.createBlock('p', 'classic', 'Imię'); name.text = 'Anna Nowak'; name.styles.fontWeight = '700'; name.styles.margin = '0'; name.styles.fontSize = '14px'; name.styles.color = '#0f172a';
+    const role = ctx.createBlock('p', 'classic', 'Stanowisko'); role.text = 'CEO, Startup S.A.'; role.styles.margin = '0'; role.styles.fontSize = '12px'; role.styles.color = '#64748b';
+    authorInfo.children = [name, role];
+    authorRow.children = [avatar, authorInfo];
+    block.children = [stars, quote, authorRow];
+  }
+  else if (variant === 'tweet-card') {
+    block.name = 'TWEET CARD'; block.styles.backgroundColor = '#ffffff'; block.styles.borderRadius = '16px'; block.styles.padding = '24px'; block.styles.border = '1px solid #e2e8f0'; block.styles.gap = '16px'; block.styles.maxWidth = '450px';
+    const topRow = ctx.createBlock('container', 'empty', 'Header'); topRow.styles.flexDirection = 'row'; topRow.styles.alignItems = 'center'; topRow.styles.justifyContent = 'space-between'; topRow.styles.padding = '0'; topRow.styles.border = 'none'; topRow.styles.backgroundColor = 'transparent';
+    const userRow = ctx.createBlock('container', 'empty', 'User'); userRow.styles.flexDirection = 'row'; userRow.styles.alignItems = 'center'; userRow.styles.gap = '12px'; userRow.styles.padding = '0'; userRow.styles.border = 'none'; userRow.styles.backgroundColor = 'transparent';
+    const avatar = ctx.createBlock('img', 'avatar', 'Avatar'); avatar.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'; avatar.styles.width = '48px'; avatar.styles.height = '48px';
+    const userInfo = ctx.createBlock('container', 'empty', 'Info'); userInfo.styles.padding = '0'; userInfo.styles.border = 'none'; userInfo.styles.backgroundColor = 'transparent'; userInfo.styles.gap = '0';
+    const name = ctx.createBlock('p', 'classic', 'Imię'); name.text = 'Michał Kowalski'; name.styles.fontWeight = '700'; name.styles.margin = '0'; name.styles.fontSize = '15px'; name.styles.color = '#0f172a';
+    const handle = ctx.createBlock('p', 'classic', 'Handle'); handle.text = '@michalkowalski'; handle.styles.margin = '0'; handle.styles.fontSize = '14px'; handle.styles.color = '#64748b';
+    userInfo.children = [name, handle]; userRow.children = [avatar, userInfo];
+    const twitterLogo = ctx.createBlock('p', 'classic', 'X Logo'); twitterLogo.text = '𝕏'; twitterLogo.styles.margin = '0'; twitterLogo.styles.fontSize = '24px'; twitterLogo.styles.color = '#0f172a';
+    topRow.children = [userRow, twitterLogo];
+    const tweetBody = ctx.createBlock('p', 'classic', 'Treść'); tweetBody.text = 'Właśnie przetestowałem to narzędzie i jestem w szoku! 🤯 Moja produktywność wzrosła o 200%. Nie wyobrażam sobie już powrotu do starych metod. Gorąco polecam wszystkim twórcom! 🔥👇'; tweetBody.styles.margin = '0'; tweetBody.styles.fontSize = '15px'; tweetBody.styles.color = '#0f172a'; tweetBody.styles.lineHeight = '1.5';
+    const bottomRow = ctx.createBlock('p', 'classic', 'Data'); bottomRow.text = '10:47 AM · 11 Maj 2026'; bottomRow.styles.margin = '0'; bottomRow.styles.fontSize = '14px'; bottomRow.styles.color = '#64748b';
+    block.children = [topRow, tweetBody, bottomRow];
+  }
+  else if (variant === 'avatar-stack') {
+    block.name = 'AVATAR STACK'; block.styles.flexDirection = 'row'; block.styles.alignItems = 'center'; block.styles.gap = '12px'; block.styles.padding = '10px'; block.styles.backgroundColor = 'transparent'; block.styles.border = 'none'; block.styles.width = 'max-content';
+    block.text = `<style>.avatar-stack-${ctx.rnd} { display: flex; flex-direction: row; } .avatar-stack-${ctx.rnd} img { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; } .avatar-stack-${ctx.rnd} img:not(:first-child) { margin-left: -15px; }</style><div style="display:flex; align-items:center; gap:16px;"><div class="avatar-stack-${ctx.rnd}"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"/><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80"/><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80"/><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"/></div><div style="display:flex; flex-direction:column;"><div style="display:flex; color:#f59e0b; font-size:14px;">⭐⭐⭐⭐⭐</div><span style="font-size:13px; font-weight:700; color:#0f172a;">Zaufało nam +10,000 osób</span></div></div>`;
+  }
+  else if (variant === 'logo-cloud') {
+    block.name = 'LOGO CLOUD'; block.styles.flexDirection = 'column'; block.styles.alignItems = 'center'; block.styles.gap = '20px'; block.styles.padding = '40px 20px'; block.styles.backgroundColor = 'transparent'; block.styles.border = 'none';
+    block.text = `<div style="font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Zaufali nam najlepsi</div><div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; align-items: center; opacity: 0.5; filter: grayscale(100%);"><svg height="30" viewBox="0 0 100 30" fill="#0f172a"><text x="0" y="22" font-size="24" font-weight="900" font-family="sans-serif">ACME Corp</text></svg><svg height="30" viewBox="0 0 100 30" fill="#0f172a"><text x="0" y="22" font-size="24" font-weight="900" font-family="sans-serif">Globex</text></svg><svg height="30" viewBox="0 0 100 30" fill="#0f172a"><text x="0" y="22" font-size="24" font-weight="900" font-family="sans-serif">Soylent</text></svg><svg height="30" viewBox="0 0 100 30" fill="#0f172a"><text x="0" y="22" font-size="24" font-weight="900" font-family="sans-serif">Initech</text></svg></div>`;
+  }
+  else if (variant === 'rating-badge') {
+    block.name = 'RATING BADGE'; block.styles.display = 'inline-flex'; block.styles.flexDirection = 'row'; block.styles.alignItems = 'center'; block.styles.gap = '10px'; block.styles.padding = '10px 20px'; block.styles.backgroundColor = '#f8fafc'; block.styles.border = '1px solid #e2e8f0'; block.styles.borderRadius = '999px'; block.styles.width = 'max-content';
+    block.text = `<div style="display:flex; color:#f59e0b; font-size:16px;">⭐⭐⭐⭐⭐</div><span style="font-size:14px; font-weight:700; color:#0f172a;">4.9/5 <span style="font-weight:500; color:#64748b;">(2,150+ opinii)</span></span>`;
+  }
+
+  return block;
+};

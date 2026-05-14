@@ -1,65 +1,47 @@
 import React from 'react';
 
-interface PanelProps {
-  handleAddBlock: (type: string, variant: string, label: string) => void;
-}
+const btnWrapper = "group relative w-full text-left p-3.5 transition-all duration-300 bg-transparent border-b border-white/5 last:border-b-0 hover:bg-black/40 overflow-hidden flex flex-col";
+const activeLine = "absolute left-0 top-0 bottom-0 w-[2px] bg-[color:var(--theme-color)] scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-center shadow-[0_0_10px_var(--theme-color)]";
+const dot = "w-1.5 h-1.5 rounded-full bg-white/20 group-hover:bg-[color:var(--theme-color)] group-hover:shadow-[0_0_8px_var(--theme-color)] transition-all duration-300 shrink-0";
 
-export default function DisplayEffectsPanel({ handleAddBlock }: PanelProps) {
+export default function DisplayEffectsPanel({ handleAddBlock }: { handleAddBlock: any }) {
   return (
-    <div className="flex flex-col gap-2 p-3 bg-white/5 border-x border-b border-[color:var(--theme-color)]/20 rounded-b-xl border-t-0 animate-in slide-in-from-top-2 duration-300">
-      
-      {/* 1. Tekst Konturowy */}
-      <button 
-        onClick={() => handleAddBlock('h1', 'stroke', 'Tekst Konturowy')}
-        className="w-full flex flex-col items-center justify-center p-4 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group shadow-sm"
-      >
-        <span 
-          className="text-3xl font-black tracking-widest uppercase transition-transform group-hover:scale-105"
-          style={{ WebkitTextStroke: '2px var(--theme-color)', color: 'transparent' }}
-        >
-          KONTUR
-        </span>
-        <span className="text-[9px] text-neutral-500 mt-2 uppercase tracking-widest group-hover:text-neutral-300">
-          Przezroczysty środek
-        </span>
+    <div className="flex flex-col">
+      <button onClick={() => handleAddBlock('h1', 'outline', 'Holographic Blueprint')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Holographic Blueprint</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Wektorowy obrys z pustym rdzeniem.</span>
       </button>
 
-      {/* 2. Tekst z Gradientem */}
-      <button 
-        onClick={() => handleAddBlock('h1', 'gradient', 'Tekst Gradientowy')}
-        className="w-full flex flex-col items-center justify-center p-4 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group shadow-sm"
-      >
-        <span 
-          className="text-3xl font-black tracking-tighter uppercase transition-transform group-hover:scale-105 bg-clip-text text-transparent"
-          style={{ 
-            backgroundImage: 'linear-gradient(90deg, var(--theme-color), #9333ea)', 
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}
-        >
-          GRADIENT
-        </span>
-        <span className="text-[9px] text-neutral-500 mt-2 uppercase tracking-widest group-hover:text-neutral-300">
-          Maska wielokolorowa
-        </span>
+      <button onClick={() => handleAddBlock('h1', 'blackmirror', 'Signal Interference')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Signal Interference</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Szum radiacyjny i cyfrowe zakłócenia CRT.</span>
       </button>
 
-      {/* 3. Neonowy Glow */}
-      <button 
-        onClick={() => handleAddBlock('h2', 'neon', 'Neonowy Glow')}
-        className="w-full flex flex-col items-center justify-center p-4 bg-[#0a0a0c] border border-white/5 rounded-lg hover:border-[color:var(--theme-color)]/50 hover:bg-white/5 transition-all group shadow-sm"
-      >
-        <span 
-          className="text-3xl font-bold uppercase transition-transform group-hover:scale-105 text-white"
-          style={{ textShadow: '0 0 10px var(--theme-color), 0 0 20px var(--theme-color), 0 0 40px var(--theme-color)' }}
-        >
-          NEON GLOW
-        </span>
-        <span className="text-[9px] text-neutral-500 mt-2 uppercase tracking-widest group-hover:text-neutral-300">
-          Zaawansowany cień (RGB)
-        </span>
+      <button onClick={() => handleAddBlock('h2', 'flicker-neon', 'Plasma Tube')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Plasma Tube</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Niestabilne wyładowania świetlówki neonowej.</span>
       </button>
 
+      <button onClick={() => handleAddBlock('h1', 'masked-liquid', 'Liquid Interface')} className={btnWrapper}>
+        <div className={activeLine}></div>
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className={dot}></div>
+          <span className="text-[11px] font-bold text-neutral-200 group-hover:text-white transition-colors">Liquid Interface</span>
+        </div>
+        <span className="text-[9px] text-neutral-500 leading-tight pl-4 group-hover:text-neutral-400 transition-colors">Tekst wypełniony organiczną symulacją płynu.</span>
+      </button>
     </div>
   );
 }
